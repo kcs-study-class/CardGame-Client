@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using KTC.Poker.Domain;
 using KTC.Poker.Protocol;
+using R3;
 
 namespace KTC.Poker.Session
 {
@@ -61,9 +62,13 @@ namespace KTC.Poker.Session
         public int MySeatIndex => _config.MySeat;
         public bool IsConnected { get; private set; }
 
-        public event Action Connected;
-        public event Action<TableStateMessage> StateUpdated;
-        public event Action<string> ErrorOccurred;
+        private readonly Subject<Unit> _connected = new Subject<Unit>();
+        private readonly Subject<TableStateMessage> _stateUpdated = new Subject<TableStateMessage>();
+        private readonly Subject<string> _errorOccurred = new Subject<string>();
+
+        public Observable<Unit> Connected => _connected;
+        public Observable<TableStateMessage> StateUpdated => _stateUpdated;
+        public Observable<string> ErrorOccurred => _errorOccurred;
 
         public LocalGameSession(LocalGameSessionConfig config)
         {
@@ -110,7 +115,7 @@ namespace KTC.Poker.Session
                 return;
             }
             IsConnected = true;
-            Connected?.Invoke();
+            _connected.OnNext(Unit.Default);
             StartHandInternal();
         }
 
@@ -176,10 +181,17 @@ namespace KTC.Poker.Session
 
         public void Dispose()
         {
+            if (_disposed)
+            {
+                return;
+            }
             _disposed = true;
-            Connected = null;
-            StateUpdated = null;
-            ErrorOccurred = null;
+            _connected.OnCompleted();
+            _stateUpdated.OnCompleted();
+            _errorOccurred.OnCompleted();
+            _connected.Dispose();
+            _stateUpdated.Dispose();
+            _errorOccurred.Dispose();
         }
 
         // ---- 進行 ----
@@ -331,7 +343,7 @@ namespace KTC.Poker.Session
 
         private void RaiseError(string message)
         {
-            ErrorOccurred?.Invoke(message);
+            _errorOccurred.OnNext(message);
         }
 
         // ---- スナップショット構築 ----
@@ -341,7 +353,7 @@ namespace KTC.Poker.Session
             _dispatching = true;
             try
             {
-                StateUpdated?.Invoke(BuildState(MySeatIndex));
+                _stateUpdated.OnNext(BuildState(MySeatIndex));
             }
             finally
             {

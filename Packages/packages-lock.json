@@ -28,6 +28,13 @@
       },
       "hash": "c14de1e6dc01ab42d2bb358730cff954bce0ce6b"
     },
+    "com.cysharp.yetanotherhttphandler": {
+      "version": "https://github.com/Cysharp/YetAnotherHttpHandler.git?path=src/YetAnotherHttpHandler#1.11.5",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3efebda78d62d3b484e6da2f2edb523a08d6786a"
+    },
     "com.cysharp.zstring": {
       "version": "https://github.com/Cysharp/ZString.git?path=src/ZString.Unity/Assets/Scripts/ZString",
       "depth": 0,
@@ -295,6 +302,12 @@
       "source": "git",
       "dependencies": {},
       "hash": "4f2baab796dc51424b752268cb3a2ddefc324b6d"
+    },
+    "nuget-packages": {
+      "version": "file:nuget-packages",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

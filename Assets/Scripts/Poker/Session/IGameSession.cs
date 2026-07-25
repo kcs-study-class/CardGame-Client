@@ -1,5 +1,6 @@
 using System;
 using KTC.Poker.Protocol;
+using R3;
 
 namespace KTC.Poker.Session
 {
@@ -10,6 +11,8 @@ namespace KTC.Poker.Session
     /// - <see cref="StateUpdated"/> で受け取った <see cref="TableStateMessage"/> を描画する
     /// - 自分の手番 (isYourTurn) なら <see cref="SendAction"/> でアクションを送る
     /// - ハンド終了 (isComplete) を確認したら <see cref="SendReady"/> で次ハンドへ
+    ///
+    /// 通知は R3 の Observable で公開する (購読解除は Dispose か CancellationToken 連携)。
     ///
     /// 実装が2系統ある:
     /// - <see cref="LocalGameSession"/>: ローカル完結 (エンジン+Bot 内蔵)。リファレンス実装
@@ -23,13 +26,13 @@ namespace KTC.Poker.Session
         bool IsConnected { get; }
 
         /// <summary>接続確立時に一度発火。</summary>
-        event Action Connected;
+        Observable<Unit> Connected { get; }
 
         /// <summary>卓状態のスナップショット受信 (アクション1つごとに届く)。</summary>
-        event Action<TableStateMessage> StateUpdated;
+        Observable<TableStateMessage> StateUpdated { get; }
 
         /// <summary>不正アクションや通信エラーの通知。UI はトースト表示などに使う。</summary>
-        event Action<string> ErrorOccurred;
+        Observable<string> ErrorOccurred { get; }
 
         /// <summary>セッションを開始する。成功すると Connected → 初期 StateUpdated が届く。</summary>
         void Connect();

@@ -3,6 +3,7 @@ using Cysharp.Text;
 using KTC.Boot;
 using KTC.SaveData;
 using KTC.UI;
+using LitMotion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -32,7 +33,7 @@ namespace KTC.Scene
         private float loadingMinimumDuration = 1.0f;
 
         private IDisposable _anyButtonListener;
-        private float _blinkPhase;
+        private MotionHandle _blinkMotion;
         private bool _isTransitioning;
         private bool _bootCompleted;
         private BootPipeline _bootPipeline;
@@ -44,6 +45,10 @@ namespace KTC.Scene
             if (versionText != null)
             {
                 versionText.text = ZString.Format("v{0}", Application.version);
+            }
+            if (pressPromptGroup != null)
+            {
+                pressPromptGroup.alpha = 0f; // ブート完了まで非表示 (完了時に点滅開始)
             }
             CreateBootStatusText();
             // ブート進行表示は日本語なので Noto を適用してから開始
@@ -110,6 +115,7 @@ namespace KTC.Scene
             {
                 _bootCompleted = true;
                 SetBootStatus("");
+                StartBlink(blinkSpeed);
                 _anyButtonListener = InputSystem.onAnyButtonPress.CallOnce(_ => OnAnyButtonPressed());
             }
             else
@@ -140,22 +146,23 @@ namespace KTC.Scene
             }
         }
 
-        private void Update()
+        /// <summary>プロンプト点滅 (LitMotion)。speed は従来の sin 角速度と互換の指定。</summary>
+        private void StartBlink(float speed)
         {
             if (pressPromptGroup == null)
             {
                 return;
             }
-            // ブート完了までスタートプロンプトは出さない
-            if (!_bootCompleted)
+            if (_blinkMotion.IsActive())
             {
-                pressPromptGroup.alpha = 0f;
-                return;
+                _blinkMotion.Cancel();
             }
-            // 位相を積算して速度変更時も連続的に点滅させる。完全消灯は避ける。
-            _blinkPhase += (_isTransitioning ? confirmedBlinkSpeed : blinkSpeed) * Time.unscaledDeltaTime;
-            float wave = 0.5f + 0.5f * Mathf.Sin(_blinkPhase);
-            pressPromptGroup.alpha = Mathf.Lerp(0.15f, 1f, wave);
+            float halfPeriod = Mathf.PI / Mathf.Max(0.01f, speed);
+            _blinkMotion = LMotion.Create(0.15f, 1f, halfPeriod)
+                .WithLoops(-1, LoopType.Yoyo)
+                .WithEase(Ease.InOutSine)
+                .Bind(pressPromptGroup, static (alpha, group) => group.alpha = alpha)
+                .AddTo(gameObject);
         }
 
         private async void OnAnyButtonPressed()
@@ -165,6 +172,7 @@ namespace KTC.Scene
                 return;
             }
             _isTransitioning = true;
+            StartBlink(confirmedBlinkSpeed); // 決定の高速点滅
 
             // ---- 初回フロー: 利用規約同意 → プレイヤー名入力 ----
             var saveService = SaveDataService.CreateDefault();

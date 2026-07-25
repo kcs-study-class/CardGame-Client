@@ -1,3 +1,4 @@
+using LitMotion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,8 +29,6 @@ namespace KTC.Scene.Transitions
         private static readonly string[] DotPatterns = { "Now Loading", "Now Loading.", "Now Loading..", "Now Loading..." };
 
         private float _targetProgress;
-        private float _dotTimer;
-        private int _dotIndex;
 
         private void Start()
         {
@@ -38,6 +37,24 @@ namespace KTC.Scene.Transitions
                 progressFill.fillAmount = 0f;
             }
             SceneController.Instance.SceneLoadProgress += OnSceneLoadProgress;
+
+            // ドット送りとカードフリップは LitMotion のループに任せる (GameObject 破棄で自動停止)
+            if (loadingText != null)
+            {
+                LMotion.Create(0f, DotPatterns.Length, dotInterval * DotPatterns.Length)
+                    .WithLoops(-1, LoopType.Restart)
+                    .Bind(loadingText, static (value, text) =>
+                        text.text = DotPatterns[Mathf.Min((int)value, DotPatterns.Length - 1)])
+                    .AddTo(gameObject);
+            }
+            if (loadingCard != null)
+            {
+                LMotion.Create(0f, 360f, 360f / Mathf.Max(1f, cardFlipSpeed))
+                    .WithLoops(-1, LoopType.Restart)
+                    .Bind(loadingCard, static (angle, card) =>
+                        card.localRotation = Quaternion.Euler(0f, angle, 0f))
+                    .AddTo(gameObject);
+            }
         }
 
         private void OnDestroy()
@@ -55,47 +72,15 @@ namespace KTC.Scene.Transitions
 
         private void Update()
         {
-            float deltaTime = Time.unscaledDeltaTime;
-            UpdateProgressBar(deltaTime);
-            UpdateDots(deltaTime);
-            UpdateCard(deltaTime);
-        }
-
-        private void UpdateProgressBar(float deltaTime)
-        {
             if (progressFill == null)
             {
                 return;
             }
             // 実進捗へ一定速度で追従させる。瞬間ジャンプよりも滑らかに見え、
             // 最低表示時間 (minimumDuration) 中の 0.99 張り付きとも相性が良い。
-            progressFill.fillAmount = Mathf.MoveTowards(progressFill.fillAmount, _targetProgress, barFollowSpeed * deltaTime);
-        }
-
-        private void UpdateDots(float deltaTime)
-        {
-            if (loadingText == null)
-            {
-                return;
-            }
-            _dotTimer += deltaTime;
-            if (_dotTimer < dotInterval)
-            {
-                return;
-            }
-            _dotTimer -= dotInterval;
-            _dotIndex = (_dotIndex + 1) % DotPatterns.Length;
-            loadingText.text = DotPatterns[_dotIndex];
-        }
-
-        private void UpdateCard(float deltaTime)
-        {
-            if (loadingCard == null)
-            {
-                return;
-            }
-            // Y 軸回転でカードが裏返り続けるフリップ演出。
-            loadingCard.Rotate(0f, cardFlipSpeed * deltaTime, 0f);
+            // (ターゲットが毎フレーム動く追従なのでトゥイーンではなく MoveTowards のまま)
+            progressFill.fillAmount = Mathf.MoveTowards(
+                progressFill.fillAmount, _targetProgress, barFollowSpeed * Time.unscaledDeltaTime);
         }
     }
 }
