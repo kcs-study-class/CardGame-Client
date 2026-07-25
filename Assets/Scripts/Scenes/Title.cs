@@ -1,5 +1,6 @@
 using System;
 using Cysharp.Text;
+using KTC.Boot;
 using KTC.SaveData;
 using KTC.UI;
 using TMPro;
@@ -33,25 +34,122 @@ namespace KTC.Scene
         private IDisposable _anyButtonListener;
         private float _blinkPhase;
         private bool _isTransitioning;
+        private bool _bootCompleted;
+        private BootPipeline _bootPipeline;
+        private BootContext _bootContext;
+        private TMP_Text _bootStatusText;
 
-        private void Start()
+        private async void Start()
         {
             if (versionText != null)
             {
                 versionText.text = ZString.Format("v{0}", Application.version);
             }
-            _anyButtonListener = InputSystem.onAnyButtonPress.CallOnce(_ => OnAnyButtonPressed());
+            CreateBootStatusText();
+            // ブート進行表示は日本語なので Noto を適用してから開始
+            var noto = await UnityFramework.Resource.ResourceController.Instance
+                .LoadAsync<TMP_FontAsset>("Fonts/NotoSansJP", destroyCancellationToken);
+            _loadedNotoFont = noto != null;
+            if (noto != null && _bootStatusText != null)
+            {
+                _bootStatusText.font = noto;
+            }
+            RunBootAsync();
+        }
+
+        private bool _loadedNotoFont;
+
+        /// <summary>ブート進行表示 (バージョン表記と同じキャンバスの右下に生成)。</summary>
+        private void CreateBootStatusText()
+        {
+            if (versionText == null)
+            {
+                return;
+            }
+            var go = new GameObject("BootStatusText", typeof(RectTransform));
+            go.layer = versionText.gameObject.layer;
+            go.transform.SetParent(versionText.transform.parent, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-30f, 20f);
+            rt.sizeDelta = new Vector2(1000f, 36f);
+            var text = go.AddComponent<TextMeshProUGUI>();
+            text.font = versionText.font;
+            text.fontSize = 22f;
+            text.color = versionText.color;
+            text.alignment = TextAlignmentOptions.MidlineRight;
+            text.raycastTarget = false;
+            _bootStatusText = text;
+        }
+
+        /// <summary>
+        /// タイトル表示の裏で走るブート処理。完了するまでスタート入力を受け付けない。
+        /// 失敗時は任意キーで「失敗したタスクから」リトライする。
+        /// </summary>
+        private async void RunBootAsync()
+        {
+            if (_bootPipeline == null)
+            {
+                _bootContext = new BootContext();
+                _bootPipeline = new BootPipeline(new IBootTask[]
+                {
+                    new LoadSaveDataTask(),
+                    new MaintenanceCheckTask(),
+                    new LoginTask(),
+                    new FetchNoticesTask(),
+                    new AssetUpdateCheckTask(),
+                });
+                _bootPipeline.TaskStarted += (index, total, name) =>
+                    SetBootStatus(ZString.Format("{0}... ({1}/{2})", name, index + 1, total));
+            }
+
+            var result = await _bootPipeline.RunAsync(_bootContext, destroyCancellationToken);
+            if (result.Success)
+            {
+                _bootCompleted = true;
+                SetBootStatus("");
+                _anyButtonListener = InputSystem.onAnyButtonPress.CallOnce(_ => OnAnyButtonPressed());
+            }
+            else
+            {
+                SetBootStatus(ZString.Format("{0}に失敗しました: {1}  - 任意キーでリトライ -", result.FailedTaskName, result.Message));
+                _anyButtonListener = InputSystem.onAnyButtonPress.CallOnce(_ =>
+                {
+                    _anyButtonListener?.Dispose();
+                    RunBootAsync();
+                });
+            }
+        }
+
+        private void SetBootStatus(string message)
+        {
+            if (_bootStatusText != null)
+            {
+                _bootStatusText.text = message;
+            }
         }
 
         private void OnDestroy()
         {
             _anyButtonListener?.Dispose();
+            if (_loadedNotoFont && UnityFramework.Resource.ResourceController.HasInstance)
+            {
+                UnityFramework.Resource.ResourceController.Instance.Release("Fonts/NotoSansJP");
+            }
         }
 
         private void Update()
         {
             if (pressPromptGroup == null)
             {
+                return;
+            }
+            // ブート完了までスタートプロンプトは出さない
+            if (!_bootCompleted)
+            {
+                pressPromptGroup.alpha = 0f;
                 return;
             }
             // 位相を積算して速度変更時も連続的に点滅させる。完全消灯は避ける。
