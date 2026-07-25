@@ -1,29 +1,34 @@
-using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Text;
 using KTC.SaveData;
-using KTC.UI;
 using TMPro;
 using UnityEngine;
-using UnityFramework.Resource;
+using UnityEngine.UI;
+using UnityFramework;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
 
 namespace KTC.Scene
 {
     /// <summary>
-    /// リザルト画面。直近の対戦の最終スタックから順位表を表示する。
-    /// (チップの所持金連動はサーバー同期設計と合わせて後日)
+    /// リザルト画面。UI はシーン配置。順位行は rowTemplate を複製して並べる
+    /// (テンプレート自体をエディタで調整できる)。
     /// </summary>
     public class Result : MonoBehaviour, IScenePreparer
     {
-        [SerializeField] private Canvas canvas;
+        [SerializeField] private TMP_Text myRankText;
+        [SerializeField] private Transform rowsContainer;
+        [SerializeField] private RectTransform rowTemplate; // 非アクティブで配置しておく
+        [SerializeField] private Button homeButton;
 
-        private const string FontAddress = "Fonts/NotoSansJP";
         private bool _isTransitioning;
         private bool _prepared;
 
-        /// <summary>フェードインで見せる前の準備 (SceneController から呼ばれる)。</summary>
+        private void Awake()
+        {
+            homeButton.onClick.AddListener(OnGoHome);
+        }
+
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
             if (_prepared)
@@ -31,12 +36,11 @@ namespace KTC.Scene
                 return;
             }
             _prepared = true;
-            if (GameLaunch.LastFinalState == null)
+            if (GameLaunch.LastFinalState != null)
             {
-                return; // 結果なし → Start 側でホームへ退避
+                BuildRanking();
             }
-            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, cancellationToken);
-            BuildUi(font);
+            await Awaitables.Completed;
         }
 
         private async void Start()
@@ -47,7 +51,6 @@ namespace KTC.Scene
                 await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Home, SceneIdExtensions.ToSceneName);
                 return;
             }
-            // SceneController を経由しない直接再生 (エディタ) 用フォールバック
             await Awaitable.NextFrameAsync(destroyCancellationToken);
             if (!_prepared)
             {
@@ -55,55 +58,49 @@ namespace KTC.Scene
             }
         }
 
-        private void OnDestroy()
-        {
-            if (ResourceController.HasInstance)
-            {
-                ResourceController.Instance.Release(FontAddress);
-            }
-        }
-
-        private void BuildUi(TMP_FontAsset font)
+        private void BuildRanking()
         {
             var state = GameLaunch.LastFinalState;
             int mySeat = GameLaunch.LastMySeat;
             var playerData = SaveDataService.CreateDefault().Load();
             string myName = string.IsNullOrEmpty(playerData.PlayerName) ? "あなた" : playerData.PlayerName;
 
-            var root = canvas.transform;
-            QuickUi.MakeBackground(root);
-            QuickUi.MakeText("Title", root, new Vector2(0f, 430f), new Vector2(600f, 80f), 52f, "リザルト", font);
-
-            // 最終スタック降順で順位表
             var ranking = state.seats
                 .Where(s => !s.sittingOut || s.stack > 0)
                 .OrderByDescending(s => s.stack)
                 .ToList();
 
             int myRank = ranking.FindIndex(s => s.seat == mySeat) + 1;
-            var rankText = QuickUi.MakeText("MyRank", root, new Vector2(0f, 310f), new Vector2(700f, 70f), 42f,
-                ZString.Format("あなたは {0}位!", myRank), font);
-            rankText.color = QuickUi.Accent;
+            myRankText.text = ZString.Format("あなたは {0}位!", myRank);
 
             for (int i = 0; i < ranking.Count; i++)
             {
                 var seat = ranking[i];
-                string name = seat.seat == mySeat ? myName : ZString.Format("CPU {0}", seat.seat);
-                var row = QuickUi.MakePanel(ZString.Format("Row{0}", i), root,
-                    new Vector2(0f, 180f - i * 86f), new Vector2(720f, 74f),
-                    seat.seat == mySeat ? QuickUi.Panel : QuickUi.PanelDark);
-                var label = QuickUi.MakeText("Label", row.transform, new Vector2(-40f, 0f), new Vector2(560f, 60f), 30f,
-                    ZString.Format("{0}位  {1}", i + 1, name), font, TextAlignmentOptions.MidlineLeft);
-                if (seat.seat == mySeat)
-                {
-                    label.color = QuickUi.Accent;
-                }
-                QuickUi.MakeText("Stack", row.transform, new Vector2(240f, 0f), new Vector2(200f, 60f), 30f,
-                    ZString.Format("{0}", seat.stack), font, TextAlignmentOptions.MidlineRight);
-            }
+                var row = Instantiate(rowTemplate, rowsContainer);
+                row.gameObject.SetActive(true);
+                bool isMe = seat.seat == mySeat;
 
-            QuickUi.MakeButton("HomeButton", root, new Vector2(0f, -420f), new Vector2(400f, 96f),
-                "ホームへ", font, OnGoHome, out _);
+                var background = row.GetComponent<Image>();
+                if (background != null)
+                {
+                    background.color = isMe ? KTC.UI.QuickUi.Panel : KTC.UI.QuickUi.PanelDark;
+                }
+                var label = row.Find("Label")?.GetComponent<TMP_Text>();
+                if (label != null)
+                {
+                    label.text = ZString.Format("{0}位  {1}", i + 1,
+                        isMe ? myName : ZString.Format("CPU {0}", seat.seat));
+                    if (isMe)
+                    {
+                        label.color = KTC.UI.QuickUi.Accent;
+                    }
+                }
+                var stack = row.Find("Stack")?.GetComponent<TMP_Text>();
+                if (stack != null)
+                {
+                    stack.text = ZString.Format("{0}", seat.stack);
+                }
+            }
         }
 
         private async void OnGoHome()

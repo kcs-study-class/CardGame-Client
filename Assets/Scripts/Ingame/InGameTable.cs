@@ -29,6 +29,7 @@ namespace KTC.Scene
     public class InGameTable : MonoBehaviour, IScenePreparer
     {
         [SerializeField] private Canvas canvas;
+        [SerializeField, Tooltip("シーン配置のカードデッキ。配布アニメの発射元")] private Transform deckAnchor;
 
         [Header("演出設定")]
         [SerializeField, Tooltip("Bot思考ディレイの最小秒")] private float botThinkMin = 0.4f;
@@ -46,7 +47,12 @@ namespace KTC.Scene
         private const float SeatRadiusX = 3.9f;
         private const float SeatRadiusZ = 2.35f;
         private const float HoleCardGap = 0.36f;
-        private static readonly Vector3 DeckPosition = new Vector3(0f, CardY + 0.06f, 1.55f);
+        private static readonly Vector3 FallbackDeckPosition = new Vector3(0f, CardY + 0.06f, 1.55f);
+
+        /// <summary>配布アニメの発射元 (シーンのデッキ位置。未設定なら中央奥)。</summary>
+        private Vector3 DeckPosition => deckAnchor != null
+            ? deckAnchor.position + new Vector3(0f, 0.06f, 0f)
+            : FallbackDeckPosition;
 
         private IGameSession _session;
         private TMP_FontAsset _font;

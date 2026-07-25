@@ -44,7 +44,20 @@ namespace UnityFramework.SceneManagement
                 foreach (var preparer in root.GetComponentsInChildren<IScenePreparer>(true))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    await preparer.PrepareAsync(cancellationToken);
+                    try
+                    {
+                        await preparer.PrepareAsync(cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception e)
+                    {
+                        // 準備の失敗で遷移全体 (フェードイン) を巻き込まない。
+                        // 画面が真っ暗のまま止まるより、壊れたシーンでも見せて原因を追える方が良い
+                        SafeLogger.LogError($"[SceneController] シーン準備 '{preparer.GetType().Name}' が失敗しました: {e.Message}");
+                    }
                 }
             }
         }
