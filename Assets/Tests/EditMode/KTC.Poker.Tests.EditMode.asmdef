@@ -6,7 +6,9 @@
         "UnityEditor.TestRunner",
         "KTC.Poker.Domain",
         "KTC.Poker.Protocol",
-        "KTC.Poker.Session"
+        "KTC.Poker.Session",
+        "KTC.SaveData",
+        "KTC.Core"
     ],
     "includePlatforms": [
         "Editor"
