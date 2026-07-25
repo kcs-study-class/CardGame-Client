@@ -128,7 +128,7 @@ namespace KTC.Scene
                 return;
             }
             _isTransitioning = true;
-            GameLaunch.NextConfig = new LocalGameSessionConfig
+            var config = new LocalGameSessionConfig
             {
                 SeatCount = _selectedSeats,
                 StartingStack = _selectedStack,
@@ -136,6 +136,15 @@ namespace KTC.Scene
                 BigBlind = BigBlind,
                 MySeat = 0,
             };
+            try
+            {
+                DebugGameSettings.Apply(config);
+            }
+            catch (System.Exception e)
+            {
+                UnityFramework.SafeLogger.LogWarning($"[Lobby] デバッグ設定の適用に失敗 (無視して続行): {e.Message}");
+            }
+            GameLaunch.NextConfig = config;
             await SceneController.Instance.LoadSceneViaTransitionSceneAsync(
                 SceneId.InGame, SceneId.TransitionLoading, SceneIdExtensions.ToSceneName,
                 minimumDuration: 0.8f);

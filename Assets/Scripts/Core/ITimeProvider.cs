@@ -28,4 +28,14 @@ namespace KTC.Core
         public TimeSpan Offset { get; set; } = TimeSpan.Zero;
         public DateTime UtcNow => DateTime.UtcNow + Offset;
     }
+
+    /// <summary>
+    /// ゲーム全体の時刻アクセスポイント。デイリー系・時限系の実装は必ずここを経由する
+    /// (DateTime.Now / UtcNow の直読み禁止)。デバッグメニューが Provider を差し替える。
+    /// </summary>
+    public static class GameClock
+    {
+        public static ITimeProvider Provider = new SystemTimeProvider();
+        public static DateTime UtcNow => Provider.UtcNow;
+    }
 }

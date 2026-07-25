@@ -20,6 +20,14 @@ namespace KTC.Poker.Session
         public int RandomSeed;
         /// <summary>Bot の思考ルーチン。null なら CallingBot。</summary>
         public IBotPolicy BotPolicy;
+
+        // ---- デバッグ用 (本番のリモート対戦には存在しない設定) ----
+
+        /// <summary>デバッグ: 全席のホールカードを公開する (リダクション無効化)。</summary>
+        public bool RevealAllHoleCards;
+
+        /// <summary>デバッグ/テスト: ハンド開始時のデッキを差し替える (積み込み)。null なら通常シャッフル。</summary>
+        public Func<Deck> DeckFactory;
     }
 
     /// <summary>
@@ -227,7 +235,9 @@ namespace KTC.Poker.Session
                 engineStacks[i] = _tableStacks[_engineToTable[i]];
             }
 
-            var deck = DeckFactory != null ? DeckFactory() : CreateShuffledDeck();
+            var deck = DeckFactory != null ? DeckFactory()
+                : _config.DeckFactory != null ? _config.DeckFactory()
+                : CreateShuffledDeck();
             _engine = new HandEngine(
                 _config.SmallBlind,
                 _config.BigBlind,
@@ -401,8 +411,10 @@ namespace KTC.Poker.Session
                 seatMsg.allIn = seatState.IsAllIn;
 
                 // リダクション: 見せてよいのは「自分の手札」か「ショーダウンで公開された手札」だけ
+                // (RevealAllHoleCards はデバッグ専用の全公開スイッチ)
                 bool reveal = tableSeat == viewerSeat
-                              || (revealShowdown && !seatState.HasFolded);
+                              || (revealShowdown && !seatState.HasFolded)
+                              || _config.RevealAllHoleCards;
                 if (reveal)
                 {
                     seatMsg.holeCards = new byte[]

@@ -205,6 +205,48 @@ namespace KTC.Poker.Tests
             Assert.That(recorder.Errors, Has.Count.EqualTo(before + 1));
         }
 
+        // ---- デバッグ設定 ----
+
+        [Test]
+        public void RevealAllHoleCardsで全手札が公開される()
+        {
+            var session = new LocalGameSession(new LocalGameSessionConfig
+            {
+                SeatCount = 4,
+                MySeat = 0,
+                RevealAllHoleCards = true,
+                DeckFactory = () => Rigged(Deck4P),
+            });
+            var recorder = new Recorder();
+            recorder.Attach(session);
+            session.Connect();
+
+            foreach (var seat in recorder.Last.seats)
+            {
+                Assert.That(seat.holeCards, Is.All.Not.EqualTo((byte)0),
+                    $"seat{seat.seat} の手札が公開されている");
+            }
+        }
+
+        [Test]
+        public void ConfigのDeckFactoryで積み込みできる()
+        {
+            var session = new LocalGameSession(new LocalGameSessionConfig
+            {
+                SeatCount = 4,
+                MySeat = 0,
+                DeckFactory = () => Rigged(Deck4P),
+            });
+            var recorder = new Recorder();
+            recorder.Attach(session);
+            session.Connect();
+
+            Assert.That(recorder.Last.seats[0].holeCards, Is.EqualTo(new[]
+            {
+                Card.Parse("8c").Value, Card.Parse("8d").Value,
+            }), "config経由の積み込みデッキが使われる");
+        }
+
         // ---- バスト・ゲームオーバー ----
 
         [Test]
