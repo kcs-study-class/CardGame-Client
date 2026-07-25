@@ -88,7 +88,28 @@ namespace KTC.Scene
             {
                 _errorText.text = "";
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // オートプレイ (モンキーテスト): 自分の手番をチェック/コールで自動進行。
+            // StateUpdated ハンドラ内からの SendAction は再入ガードで拒否されるため、Update で行う
+            if (DebugGameSettings.AutoPlay && _session != null && _lastState != null
+                && Time.unscaledTime >= _nextAutoActionAt)
+            {
+                if (_lastState.isComplete && !_lastState.isGameOver)
+                {
+                    _session.SendReady();
+                    _nextAutoActionAt = Time.unscaledTime + 0.6f;
+                }
+                else if (_lastState.isYourTurn)
+                {
+                    OnCheckCall();
+                    _nextAutoActionAt = Time.unscaledTime + 0.3f;
+                }
+            }
+#endif
         }
+
+        private float _nextAutoActionAt;
 
         // ---- セッションイベント ----
 
