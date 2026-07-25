@@ -15,11 +15,12 @@ namespace KTC.Scene
     /// ロビー (CPU対戦の卓設定)。人数・初期スタックを選んで対戦開始する。
     /// オンライン対戦時はこの画面がルーム選択に置き換わる想定。
     /// </summary>
-    public class Lobby : MonoBehaviour
+    public class Lobby : MonoBehaviour, IScenePreparer
     {
         [SerializeField] private Canvas canvas;
 
         private const string FontAddress = "Fonts/NotoSansJP";
+        private bool _prepared;
 
         private static readonly int[] SeatOptions = { 2, 4, 6 };
         private static readonly int[] StackOptions = { 100, 200, 500 };
@@ -33,11 +34,27 @@ namespace KTC.Scene
         private readonly Dictionary<int, Image> _seatButtons = new Dictionary<int, Image>();
         private readonly Dictionary<int, Image> _stackButtons = new Dictionary<int, Image>();
 
-        private async void Start()
+        /// <summary>フェードインで見せる前の準備 (SceneController から呼ばれる)。</summary>
+        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
-            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, destroyCancellationToken);
+            if (_prepared)
+            {
+                return;
+            }
+            _prepared = true;
+            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, cancellationToken);
             BuildUi(font);
             RefreshSelection();
+        }
+
+        private async void Start()
+        {
+            // SceneController を経由しない直接再生 (エディタ) 用フォールバック
+            await Awaitable.NextFrameAsync(destroyCancellationToken);
+            if (!_prepared)
+            {
+                await PrepareAsync(destroyCancellationToken);
+            }
         }
 
         private void OnDestroy()

@@ -15,12 +15,29 @@ namespace KTC.Scene
     /// リザルト画面。直近の対戦の最終スタックから順位表を表示する。
     /// (チップの所持金連動はサーバー同期設計と合わせて後日)
     /// </summary>
-    public class Result : MonoBehaviour
+    public class Result : MonoBehaviour, IScenePreparer
     {
         [SerializeField] private Canvas canvas;
 
         private const string FontAddress = "Fonts/NotoSansJP";
         private bool _isTransitioning;
+        private bool _prepared;
+
+        /// <summary>フェードインで見せる前の準備 (SceneController から呼ばれる)。</summary>
+        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
+        {
+            if (_prepared)
+            {
+                return;
+            }
+            _prepared = true;
+            if (GameLaunch.LastFinalState == null)
+            {
+                return; // 結果なし → Start 側でホームへ退避
+            }
+            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, cancellationToken);
+            BuildUi(font);
+        }
 
         private async void Start()
         {
@@ -30,9 +47,12 @@ namespace KTC.Scene
                 await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Home, SceneIdExtensions.ToSceneName);
                 return;
             }
-
-            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, destroyCancellationToken);
-            BuildUi(font);
+            // SceneController を経由しない直接再生 (エディタ) 用フォールバック
+            await Awaitable.NextFrameAsync(destroyCancellationToken);
+            if (!_prepared)
+            {
+                await PrepareAsync(destroyCancellationToken);
+            }
         }
 
         private void OnDestroy()

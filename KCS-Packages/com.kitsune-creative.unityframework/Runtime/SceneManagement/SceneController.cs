@@ -32,6 +32,24 @@ namespace UnityFramework.SceneManagement
         public int ActiveSceneBuildIndex => UnitySceneManager.GetActiveScene().buildIndex;
 
         /// <summary>
+        /// アクティブシーンの <see cref="IScenePreparer"/> をすべて実行する。
+        /// フェード付きロードでは「画面を見せる前」に呼ばれるため、
+        /// Addressables のロード/DL や UI 構築をここで完了させられる。
+        /// </summary>
+        private static async Awaitable RunScenePreparersAsync(CancellationToken cancellationToken)
+        {
+            var scene = UnitySceneManager.GetActiveScene();
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                foreach (var preparer in root.GetComponentsInChildren<IScenePreparer>(true))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await preparer.PrepareAsync(cancellationToken);
+                }
+            }
+        }
+
+        /// <summary>
         /// シーンを非同期にロードする。
         /// </summary>
         public async Awaitable LoadSceneAsync(string sceneName, LoadSceneMode mode = LoadSceneMode.Single, CancellationToken cancellationToken = default)
@@ -210,6 +228,9 @@ namespace UnityFramework.SceneManagement
                 }
                 SceneLoadProgress?.Invoke(sceneName, 1f);
 
+                // 画面を見せる前にシーンの準備 (UI構築・アセットロード等) を完了させる
+                await RunScenePreparersAsync(cancellationToken);
+
                 await transition.PlayInAsync(fadeInDuration, cancellationToken);
 
                 SceneLoadCompleted?.Invoke(sceneName);
@@ -271,6 +292,9 @@ namespace UnityFramework.SceneManagement
                     await Awaitable.NextFrameAsync(cancellationToken);
                 }
 
+                // Transition シーン自身の準備も見せる前に済ませる
+                await RunScenePreparersAsync(cancellationToken);
+
                 // 3. フェードイン (Transition シーンを表示)
                 await transition.PlayInAsync(fadeDuration, cancellationToken);
 
@@ -312,6 +336,9 @@ namespace UnityFramework.SceneManagement
                     await Awaitable.NextFrameAsync(cancellationToken);
                 }
                 SceneLoadProgress?.Invoke(targetSceneName, 1f);
+
+                // ターゲットシーンの準備 (UI構築・アセットロード等) を見せる前に完了させる
+                await RunScenePreparersAsync(cancellationToken);
 
                 // 8. フェードイン (ターゲットシーンを表示)
                 await transition.PlayInAsync(fadeDuration, cancellationToken);
