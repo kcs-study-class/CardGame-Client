@@ -17,6 +17,13 @@
       },
       "hash": "c14de1e6dc01ab42d2bb358730cff954bce0ce6b"
     },
+    "com.cysharp.zstring": {
+      "version": "https://github.com/Cysharp/ZString.git?path=src/ZString.Unity/Assets/Scripts/ZString",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e2b86f7ad433dd7dba2ac0b1a66d36f5105aa912"
+    },
     "com.kitsune-creative.unityframework": {
       "version": "file:../KCS-Packages/com.kitsune-creative.unityframework",
       "depth": 0,

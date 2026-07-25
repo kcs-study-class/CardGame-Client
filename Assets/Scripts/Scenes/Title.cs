@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Text;
 using KTC.SaveData;
 using KTC.UI;
 using TMPro;
@@ -37,7 +38,7 @@ namespace KTC.Scene
         {
             if (versionText != null)
             {
-                versionText.text = "v" + Application.version;
+                versionText.text = ZString.Format("v{0}", Application.version);
             }
             _anyButtonListener = InputSystem.onAnyButtonPress.CallOnce(_ => OnAnyButtonPressed());
         }
@@ -73,7 +74,7 @@ namespace KTC.Scene
 
             if (!data.IsTermsAccepted)
             {
-                var terms = await ModalController.Instance.OpenAsync<TermsModal>("Modals/Terms");
+                TermsModal terms = await ModalController.Instance.OpenAsync<TermsModal>("Modals/Terms");
                 if (terms == null)
                 {
                     _isTransitioning = false; // ロード失敗時はタイトルに留まる (ログは ModalController 側)
