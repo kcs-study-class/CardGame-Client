@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
-    "com.kitsune-creative.unityframework": "file:G:/Proj/UnityFramework/Packages/com.kitsune-creative.unityframework",
+    "com.kitsune-creative.unityframework": "file:../KCS-Packages/com.kitsune-creative.unityframework",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.14",
     "com.unity.collab-proxy": "2.11.4",

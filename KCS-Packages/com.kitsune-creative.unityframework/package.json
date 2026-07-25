@@ -1,0 +1,24 @@
+{
+  "name": "com.kitsune-creative.unityframework",
+  "version": "0.2.0",
+  "displayName": "Unity Framework",
+  "description": "Unityで使用する基礎フレームワーク。null安全な拡張メソッド、SingletonMonoBehaviour、SafeLogger、ServiceLocator、SoundController(Unity AudioSource / CRI ADX 両対応)、SceneController、NetworkControllerBase、ResourceController(Addressables)を提供します。",
+  "unity": "6000.0",
+  "keywords": [
+    "framework",
+    "extensions",
+    "utility",
+    "core",
+    "singleton",
+    "sound",
+    "addressables",
+    "cri-adx"
+  ],
+  "dependencies": {
+    "com.unity.addressables": "2.2.2"
+  },
+  "author": {
+    "name": "Kitsune Creative Studio",
+    "email": "k.tamura@kitsune-creative.studio"
+  }
+}
