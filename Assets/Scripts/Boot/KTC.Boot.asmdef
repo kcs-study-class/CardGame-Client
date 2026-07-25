@@ -1,0 +1,20 @@
+{
+    "name": "KTC.Boot",
+    "rootNamespace": "KTC.Boot",
+    "references": [
+        "KTC.Core",
+        "KTC.SaveData",
+        "UnityFramework.Runtime",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

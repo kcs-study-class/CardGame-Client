@@ -8,7 +8,8 @@
         "KTC.Poker.Protocol",
         "KTC.Poker.Session",
         "KTC.SaveData",
-        "KTC.Core"
+        "KTC.Core",
+        "KTC.Boot"
     ],
     "includePlatforms": [
         "Editor"
