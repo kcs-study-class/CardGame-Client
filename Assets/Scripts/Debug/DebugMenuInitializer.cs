@@ -91,6 +91,9 @@ namespace KTC.Scene
             menu.AddToggle("カード", "オートプレイ",
                 () => DebugGameSettings.AutoPlay,
                 value => DebugGameSettings.AutoPlay = value);
+            menu.AddToggle("カード", "演出スキップ",
+                () => DebugGameSettings.SkipEffects,
+                value => DebugGameSettings.SkipEffects = value);
             menu.AddInput("カード", "役判定 (5〜7枚)",
                 () => "",
                 EvaluateHand);

@@ -23,6 +23,9 @@ namespace KTC.Scene
         /// <summary>自分の手番を自動でチェック/コールする (モンキーテスト)。</summary>
         public static bool AutoPlay;
 
+        /// <summary>演出 (配布アニメ/思考ディレイ/ポット移動) をスキップする。</summary>
+        public static bool SkipEffects;
+
         /// <summary>デバッグ設定を卓設定に反映する。</summary>
         public static void Apply(LocalGameSessionConfig config)
         {
