@@ -13,18 +13,35 @@ namespace KTC.Scene
     /// ホーム画面 v1。プレイヤー情報とゲームモード選択。
     /// オンライン対戦・フレンド戦はサーバー実装後に解放 (現状ロック表示)。
     /// </summary>
-    public class Home : MonoBehaviour
+    public class Home : MonoBehaviour, IScenePreparer
     {
         [SerializeField] private Canvas canvas;
 
         private const string FontAddress = "Fonts/NotoSansJP";
         private bool _isTransitioning;
+        private bool _prepared;
+
+        /// <summary>フェードインで見せる前の準備 (SceneController から呼ばれる)。</summary>
+        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
+        {
+            if (_prepared)
+            {
+                return;
+            }
+            _prepared = true;
+            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, cancellationToken);
+            var data = SaveDataService.CreateDefault().Load();
+            BuildUi(font, data);
+        }
 
         private async void Start()
         {
-            var font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, destroyCancellationToken);
-            var data = SaveDataService.CreateDefault().Load();
-            BuildUi(font, data);
+            // SceneController を経由しない直接再生 (エディタ) 用フォールバック
+            await Awaitable.NextFrameAsync(destroyCancellationToken);
+            if (!_prepared)
+            {
+                await PrepareAsync(destroyCancellationToken);
+            }
         }
 
         private void OnDestroy()
