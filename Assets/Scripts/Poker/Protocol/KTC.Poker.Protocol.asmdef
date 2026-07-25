@@ -1,0 +1,14 @@
+{
+    "name": "KTC.Poker.Protocol",
+    "rootNamespace": "KTC.Poker.Protocol",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
