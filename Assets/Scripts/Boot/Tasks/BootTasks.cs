@@ -41,7 +41,7 @@ namespace KTC.Boot
 
     /// <summary>
     /// ログイン (スタブ)。
-    /// TODO(生徒課題): POST /api/v1/login {deviceId, name} に置き換える (API.md §2)。
+    /// TODO(生徒課題): GameHttpClient.Shared で POST /api/v1/login {deviceId, name} に置き換える (API.md §2)。
     /// 取得したトークンは context.AuthToken に格納し、以降の通信で使う。
     /// </summary>
     public sealed class LoginTask : IBootTask

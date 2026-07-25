@@ -4,6 +4,7 @@ using KTC.Poker.Domain;
 using KTC.Poker.Protocol;
 using KTC.Poker.Session;
 using NUnit.Framework;
+using R3;
 
 namespace KTC.Poker.Tests
 {
@@ -29,8 +30,8 @@ namespace KTC.Poker.Tests
 
             public void Attach(IGameSession session)
             {
-                session.StateUpdated += s => States.Add(s);
-                session.ErrorOccurred += e => Errors.Add(e);
+                session.StateUpdated.Subscribe(States.Add);
+                session.ErrorOccurred.Subscribe(Errors.Add);
             }
         }
 

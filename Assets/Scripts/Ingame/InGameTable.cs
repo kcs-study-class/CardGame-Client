@@ -5,6 +5,7 @@ using KTC.Poker.Protocol;
 using KTC.Poker.Session;
 using KTC.SaveData;
 using KTC.UI;
+using R3;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -91,10 +92,13 @@ namespace KTC.Scene
             BuildTableCards(config.SeatCount, config.MySeat);
 
             _session = new LocalGameSession(config);
-            _session.StateUpdated += OnStateUpdated;
-            _session.ErrorOccurred += OnSessionError;
+            _stateSubscription = _session.StateUpdated.Subscribe(OnStateUpdated);
+            _errorSubscription = _session.ErrorOccurred.Subscribe(OnSessionError);
             _session.Connect();
         }
+
+        private System.IDisposable _stateSubscription;
+        private System.IDisposable _errorSubscription;
 
         private const string CardBackAddress = "Cards/cardBack_red2.png";
         private readonly List<string> _loadedCardAddresses = new List<string>();
@@ -148,6 +152,8 @@ namespace KTC.Scene
 
         private void OnDestroy()
         {
+            _stateSubscription?.Dispose();
+            _errorSubscription?.Dispose();
             if (_session != null)
             {
                 _session.Dispose();
