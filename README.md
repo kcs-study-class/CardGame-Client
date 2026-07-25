@@ -36,12 +36,16 @@
 ## シーン構成 / 起動フロー
 
 ```
-Boot → Logo(スキップ中) → Title → (TransitionLoading) → Home → InGame → Result
+Boot → Logo(スキップ中) → Title → Home → Lobby → InGame → Result → Home
+                              (重い遷移には TransitionLoading を挟む)
 ```
 
-- `Title`: 任意ボタンで開始。裏でブート処理 (ログイン等) を行う予定
+- `Title`: 任意ボタンで開始。初回のみ利用規約同意 → プレイヤー名入力 (モーダル)。裏でブート処理 (ログイン等) を行う予定
+- `Home`: プレイヤー情報とモード選択 (CPU対戦のみ解放中)
+- `Lobby`: CPU対戦の卓設定 (人数/初期スタック)。オンライン対戦時はルーム選択に置き換わる想定
+- `InGame`: 実対戦テーブル (`InGameTable` — `IGameSession` のスナップショット購読で描画)。
+  ルール検証用の **1人デバッグ卓** (`DebugTable.cs`) はスクリプトとして残っており、デバッグメニューから起動予定
 - `TransitionLoading`: シーン遷移時のローディング演出 (`SceneLoadProgress` 購読)
-- `InGame`: 現在は **1人デバッグ卓** (`Assets/Scripts/Ingame/DebugTable.cs`) — 全席を自分で操作してルールエンジンを検証する
 - エディタのツールバー「Boot Start」ボタンで Boot シーンから起動できる
 
 ## テスト
