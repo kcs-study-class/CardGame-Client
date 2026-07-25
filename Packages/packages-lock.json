@@ -18,7 +18,7 @@
       "hash": "c14de1e6dc01ab42d2bb358730cff954bce0ce6b"
     },
     "com.kitsune-creative.unityframework": {
-      "version": "file:G:/Proj/UnityFramework/Packages/com.kitsune-creative.unityframework",
+      "version": "file:../KCS-Packages/com.kitsune-creative.unityframework",
       "depth": 0,
       "source": "local",
       "dependencies": {
