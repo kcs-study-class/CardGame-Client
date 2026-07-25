@@ -1,10 +1,13 @@
 using System;
+using KTC.SaveData;
+using KTC.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
+using UnityFramework.UI;
 
 namespace KTC.Scene
 {
@@ -63,6 +66,37 @@ namespace KTC.Scene
                 return;
             }
             _isTransitioning = true;
+
+            // ---- 初回フロー: 利用規約同意 → プレイヤー名入力 ----
+            var saveService = SaveDataService.CreateDefault();
+            var data = saveService.Load();
+
+            if (!data.IsTermsAccepted)
+            {
+                var terms = await ModalController.Instance.OpenAsync<TermsModal>("Modals/Terms");
+                if (terms == null)
+                {
+                    _isTransitioning = false; // ロード失敗時はタイトルに留まる (ログは ModalController 側)
+                    return;
+                }
+                await terms.WaitUntilClosedAsync();
+                data.IsTermsAccepted = true;
+                saveService.Save(data);
+            }
+
+            if (string.IsNullOrEmpty(data.PlayerName))
+            {
+                var nameModal = await ModalController.Instance.OpenAsync<NameInputModal>("Modals/NameInput");
+                if (nameModal == null)
+                {
+                    _isTransitioning = false;
+                    return;
+                }
+                await nameModal.WaitUntilClosedAsync();
+                data.PlayerName = nameModal.ResultName;
+                saveService.Save(data);
+            }
+
             // 注意: destroyCancellationToken は渡さない。遷移の途中で Title シーン自身が
             // アンロードされるため、渡すとロード処理が中途キャンセルされてしまう。
             await SceneController.Instance.LoadSceneViaTransitionSceneAsync(
