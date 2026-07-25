@@ -96,6 +96,24 @@ namespace KTC.Scene
                 EvaluateHand);
             menu.AddLabel("カード", "役判定結果", () => _handEvalResult);
 
+            // ---- WebView ----
+            menu.AddButton("WebView", "開く (example.com)", () =>
+            {
+                DebugMenuController.Instance.Close();
+                _ = UnityFramework.WebViews.WebViewController.Instance.OpenAsync(
+                    "https://example.com", new RectOffset(120, 120, 100, 100));
+            });
+            menu.AddButton("WebView", "開く (ルール: Wikipedia)", () =>
+            {
+                DebugMenuController.Instance.Close();
+                _ = UnityFramework.WebViews.WebViewController.Instance.OpenAsync(
+                    "https://ja.wikipedia.org/wiki/テキサス・ホールデム", new RectOffset(120, 120, 100, 100));
+            });
+            menu.AddButton("WebView", "閉じる", () => UnityFramework.WebViews.WebViewController.Instance.Close());
+            menu.AddLabel("WebView", "状態", () =>
+                UnityFramework.WebViews.WebViewController.HasInstance && UnityFramework.WebViews.WebViewController.Instance.IsOpen
+                    ? "表示中" : "非表示");
+
             // ---- 情報 ----
             menu.AddLabel("情報", "バージョン", () => Application.version);
             menu.AddLabel("情報", "Unity", () => Application.unityVersion);
