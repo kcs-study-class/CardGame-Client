@@ -13,6 +13,23 @@ namespace KTC.Scene
         /// <summary>次の対戦の卓設定 (Lobby が設定し InGame が消費する)。null なら既定値。</summary>
         public static LocalGameSessionConfig NextConfig;
 
+        /// <summary>接続先をサーバーにするか (デバッグメニューで切替。RemoteGameSession は生徒課題)。</summary>
+        public static bool UseRemoteSession;
+
+        /// <summary>ゲームサーバーの WebSocket URL。</summary>
+        public static string ServerUrl = "ws://localhost:8080/ws";
+
+        /// <summary>
+        /// 接続先設定に応じたセッションを生成する。UI (InGameTable) はこの戻り値の
+        /// <see cref="IGameSession"/> だけを見るため、ローカル/サーバーの差を知らない。
+        /// </summary>
+        public static IGameSession CreateSession(LocalGameSessionConfig config)
+        {
+            return UseRemoteSession
+                ? new RemoteGameSession(ServerUrl)
+                : (IGameSession)new LocalGameSession(config);
+        }
+
         /// <summary>直近の対戦の最終スナップショット (Result 表示用)。</summary>
         public static TableStateMessage LastFinalState;
 

@@ -158,20 +158,28 @@ namespace KTC.Scene
                 return;
             }
 
-            // バイインを所持チップから差し引く (精算は InGameTable が最終スタックを書き戻す)
-            var saveService = KTC.SaveData.SaveDataService.CreateDefault();
-            var data = saveService.Load();
-            if (data.Chips < _selectedStack)
+            if (GameLaunch.UseRemoteSession)
             {
-                _chips = data.Chips;
-                RefreshSelection();
-                return;
+                // サーバー対戦ではチップ管理 (バイイン/精算) はサーバーの責務。ローカルセーブは触らない
+                _isTransitioning = true;
             }
-            _isTransitioning = true;
-            data.Chips -= _selectedStack;
-            saveService.Save(data);
-            GameLaunch.ChipsAtStake = true;
-            GameLaunch.LastBuyIn = _selectedStack;
+            else
+            {
+                // バイインを所持チップから差し引く (精算は InGameTable が最終スタックを書き戻す)
+                var saveService = KTC.SaveData.SaveDataService.CreateDefault();
+                var data = saveService.Load();
+                if (data.Chips < _selectedStack)
+                {
+                    _chips = data.Chips;
+                    RefreshSelection();
+                    return;
+                }
+                _isTransitioning = true;
+                data.Chips -= _selectedStack;
+                saveService.Save(data);
+                GameLaunch.ChipsAtStake = true;
+                GameLaunch.LastBuyIn = _selectedStack;
+            }
 
             var config = new LocalGameSessionConfig
             {

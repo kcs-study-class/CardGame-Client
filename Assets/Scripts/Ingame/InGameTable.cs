@@ -148,6 +148,12 @@ namespace KTC.Scene
             raiseConfirmButton.onClick.AddListener(OnRaiseConfirm);
             raiseCancelButton.onClick.AddListener(CloseRaisePanel);
             raisePanel.SetActive(false);
+
+            // 最初のスナップショットが届くまでアクションは出さない (以降は RenderTable が制御)
+            foldButton.gameObject.SetActive(false);
+            checkCallButton.gameObject.SetActive(false);
+            raiseButton.gameObject.SetActive(false);
+            allInButton.gameObject.SetActive(false);
         }
 
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
@@ -177,7 +183,7 @@ namespace KTC.Scene
             CreateSeatViews(config.SeatCount, config.MySeat);
             BuildTableCards(config.SeatCount, config.MySeat);
 
-            _session = new LocalGameSession(config);
+            _session = GameLaunch.CreateSession(config);
             _stateSubscription = _session.StateUpdated.Subscribe(OnStateUpdated);
             _errorSubscription = _session.ErrorOccurred.Subscribe(OnSessionError);
             _session.Connect();
