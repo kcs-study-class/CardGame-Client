@@ -72,27 +72,48 @@ namespace KTC.Scene
         private System.IDisposable _stateSubscription;
         private System.IDisposable _errorSubscription;
 
+        [Header("HUD (シーン配置)")]
+        [SerializeField] private TMP_Text potText;
+        [SerializeField] private TMP_Text statusText;
+        [SerializeField] private TMP_Text errorText;
+        [SerializeField] private Button foldButton;
+        [SerializeField] private Button checkCallButton;
+        [SerializeField] private TextMeshProUGUI checkCallLabel;
+        [SerializeField] private Button raiseButton;
+        [SerializeField] private TextMeshProUGUI raiseLabel;
+        [SerializeField] private Button allInButton;
+        [SerializeField] private Button leaveButton;
+        [SerializeField] private GameObject resultPanel;
+        [SerializeField] private TMP_Text resultText;
+        [SerializeField] private Button nextHandButton;
+        [SerializeField] private Button toResultButton;
+
+        [Header("席パネル (テンプレート複製)")]
+        [SerializeField, Tooltip("非アクティブで配置した席パネルの雛形")] private RectTransform seatTemplate;
+        [SerializeField] private float seatUiRadiusX = 760f;
+        [SerializeField] private float seatUiRadiusY = 380f;
+        [SerializeField] private float seatUiYOffset = 40f;
+
         private Transform _cardsRoot;
         private readonly List<SeatView> _seatViews = new List<SeatView>();
         private readonly List<Vector2> _seatUiPositions = new List<Vector2>();
         private Card3D[] _communityViews;
-        private TMP_Text _potText;
-        private TMP_Text _statusText;
-        private TMP_Text _errorText;
-        private Button _foldButton;
-        private Button _checkCallButton;
-        private Button _raiseButton;
-        private Button _allInButton;
-        private TextMeshProUGUI _checkCallLabel;
-        private TextMeshProUGUI _raiseLabel;
-        private GameObject _resultPanel;
-        private TMP_Text _resultText;
-        private Button _nextHandButton;
-        private Button _toResultButton;
 
         private bool EffectsOn => _effectsEnabledInSave && !DebugGameSettings.SkipEffects;
 
         // ---- 準備 ----
+
+        private void Awake()
+        {
+            foldButton.onClick.AddListener(OnFold);
+            checkCallButton.onClick.AddListener(OnCheckCall);
+            raiseButton.onClick.AddListener(OnRaise);
+            allInButton.onClick.AddListener(OnAllIn);
+            leaveButton.onClick.AddListener(OnLeave);
+            nextHandButton.onClick.AddListener(OnNextHand);
+            toResultButton.onClick.AddListener(OnToResult);
+            resultPanel.SetActive(false);
+        }
 
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
@@ -115,7 +136,7 @@ namespace KTC.Scene
             var config = GameLaunch.NextConfig ?? new LocalGameSessionConfig();
             GameLaunch.NextConfig = null;
 
-            BuildUi(config.SeatCount, config.MySeat);
+            CreateSeatViews(config.SeatCount, config.MySeat);
             BuildTableCards(config.SeatCount, config.MySeat);
 
             _session = new LocalGameSession(config);
@@ -153,9 +174,9 @@ namespace KTC.Scene
 
         private void Update()
         {
-            if (_errorText != null && _errorText.text.Length > 0 && Time.unscaledTime >= _errorClearAt)
+            if (errorText != null && errorText.text.Length > 0 && Time.unscaledTime >= _errorClearAt)
             {
-                _errorText.text = "";
+                errorText.text = "";
             }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -231,7 +252,7 @@ namespace KTC.Scene
 
         private void OnSessionError(string message)
         {
-            _errorText.text = message;
+            errorText.text = message;
             _errorClearAt = Time.unscaledTime + 3f;
         }
 
@@ -385,21 +406,21 @@ namespace KTC.Scene
 
             ApplyCommunity(state, communityCount >= 0 ? communityCount : (showCards ? state.communityCards.Length : 0));
 
-            _potText.text = ZString.Format("POT {0}", state.pot);
-            _statusText.text = ZString.Format("Hand #{0}  {1}", state.handNumber,
+            potText.text = ZString.Format("POT {0}", state.pot);
+            statusText.text = ZString.Format("Hand #{0}  {1}", state.handNumber,
                 state.isComplete ? "終了" : StreetNames[Mathf.Clamp(state.street, 0, StreetNames.Length - 1)]);
 
             bool showActions = state.isYourTurn && !state.isComplete;
-            _foldButton.gameObject.SetActive(showActions);
-            _checkCallButton.gameObject.SetActive(showActions);
-            _raiseButton.gameObject.SetActive(showActions);
-            _allInButton.gameObject.SetActive(showActions);
+            foldButton.gameObject.SetActive(showActions);
+            checkCallButton.gameObject.SetActive(showActions);
+            raiseButton.gameObject.SetActive(showActions);
+            allInButton.gameObject.SetActive(showActions);
             if (showActions)
             {
                 var request = state.actionRequest;
-                _checkCallLabel.text = request.canCheck ? "チェック" : ZString.Format("コール {0}", request.callAmount);
-                _raiseButton.interactable = request.canRaise;
-                _raiseLabel.text = request.canRaise ? ZString.Format("レイズ {0}", request.minRaiseTo) : "レイズ不可";
+                checkCallLabel.text = request.canCheck ? "チェック" : ZString.Format("コール {0}", request.callAmount);
+                raiseButton.interactable = request.canRaise;
+                raiseLabel.text = request.canRaise ? ZString.Format("レイズ {0}", request.minRaiseTo) : "レイズ不可";
             }
 
             if (showResult)
@@ -408,7 +429,7 @@ namespace KTC.Scene
             }
             else
             {
-                _resultPanel.SetActive(false);
+                resultPanel.SetActive(false);
             }
         }
 
@@ -487,10 +508,10 @@ namespace KTC.Scene
 
         private void RenderResultOverlay(TableStateMessage state)
         {
-            _resultPanel.SetActive(true);
-            _resultText.text = BuildResultText(state);
-            _nextHandButton.gameObject.SetActive(!state.isGameOver);
-            _toResultButton.gameObject.SetActive(state.isGameOver);
+            resultPanel.SetActive(true);
+            resultText.text = BuildResultText(state);
+            nextHandButton.gameObject.SetActive(!state.isGameOver);
+            toResultButton.gameObject.SetActive(state.isGameOver);
         }
 
         private string BuildResultText(TableStateMessage state)
@@ -585,7 +606,7 @@ namespace KTC.Scene
         /// <summary>ハンド終了時: ポットの獲得額が勝者パネルへ飛ぶ。</summary>
         private async Awaitable PlayPotAnimationAsync(TableStateMessage state, System.Threading.CancellationToken ct)
         {
-            var potOrigin = _potText.rectTransform.anchoredPosition;
+            var potOrigin = potText.rectTransform.anchoredPosition;
             float wait = 0f;
             foreach (var pot in state.result.pots)
             {
@@ -645,42 +666,29 @@ namespace KTC.Scene
             }
         }
 
-        // ---- UI 構築 ----
+        // ---- 席パネル構築 ----
 
-        private void BuildUi(int seatCount, int mySeat)
+        /// <summary>
+        /// 席パネルをテンプレートから複製して楕円配置する。
+        /// パネルのデザインはシーン上の seatTemplate で調整でき、位置だけ席数依存で計算する。
+        /// </summary>
+        private void CreateSeatViews(int seatCount, int mySeat)
         {
-            var root = canvas.transform;
-
-            _potText = QuickUi.MakeText("Pot", root, new Vector2(0f, 240f), new Vector2(400f, 44f), 34f, "", _font);
-            _potText.color = QuickUi.Accent;
-            _statusText = QuickUi.MakeText("Status", root, new Vector2(0f, 500f), new Vector2(900f, 44f), 28f, "", _font);
-            _errorText = QuickUi.MakeText("Error", root, new Vector2(0f, 455f), new Vector2(900f, 36f), 22f, "", _font);
-            _errorText.color = QuickUi.Warn;
-
             for (int seat = 0; seat < seatCount; seat++)
             {
                 int displayIndex = (seat - mySeat + seatCount) % seatCount;
                 float angle = displayIndex * Mathf.PI * 2f / seatCount;
-                var pos = new Vector2(Mathf.Sin(angle) * 760f, -Mathf.Cos(angle) * 380f + 40f);
+                var pos = new Vector2(
+                    Mathf.Sin(angle) * seatUiRadiusX,
+                    -Mathf.Cos(angle) * seatUiRadiusY + seatUiYOffset);
                 _seatUiPositions.Add(pos);
-                _seatViews.Add(new SeatView(root, seat, pos, _font));
+
+                var frame = Instantiate(seatTemplate, seatTemplate.parent);
+                frame.name = ZString.Format("Seat{0}", seat);
+                frame.anchoredPosition = pos;
+                frame.gameObject.SetActive(true);
+                _seatViews.Add(new SeatView(frame));
             }
-
-            _foldButton = QuickUi.MakeButton("FoldButton", root, new Vector2(-585f, -480f), new Vector2(180f, 70f), "フォールド", _font, OnFold, out _);
-            _checkCallButton = QuickUi.MakeButton("CheckCallButton", root, new Vector2(-390f, -480f), new Vector2(180f, 70f), "チェック", _font, OnCheckCall, out _checkCallLabel);
-            _raiseButton = QuickUi.MakeButton("RaiseButton", root, new Vector2(-195f, -480f), new Vector2(180f, 70f), "レイズ", _font, OnRaise, out _raiseLabel);
-            _allInButton = QuickUi.MakeButton("AllInButton", root, new Vector2(0f, -480f), new Vector2(180f, 70f), "オールイン", _font, OnAllIn, out _);
-
-            var leave = QuickUi.MakeButton("LeaveButton", root, new Vector2(-830f, 490f), new Vector2(180f, 64f), "退出", _font, OnLeave, out var leaveLabel);
-            ((Image)leave.targetGraphic).color = QuickUi.Panel;
-            leaveLabel.color = QuickUi.Text;
-
-            var resultPanel = QuickUi.MakePanel("ResultPanel", root, new Vector2(0f, 180f), new Vector2(760f, 300f), QuickUi.PanelDark);
-            _resultPanel = resultPanel.gameObject;
-            _resultText = QuickUi.MakeText("ResultText", resultPanel.transform, new Vector2(0f, 20f), new Vector2(700f, 240f), 26f, "", _font);
-            _nextHandButton = QuickUi.MakeButton("NextHandButton", resultPanel.transform, new Vector2(0f, -110f), new Vector2(280f, 66f), "次のハンドへ", _font, OnNextHand, out _);
-            _toResultButton = QuickUi.MakeButton("ToResultButton", resultPanel.transform, new Vector2(0f, -110f), new Vector2(280f, 66f), "結果へ", _font, OnToResult, out _);
-            _resultPanel.SetActive(false);
         }
 
         private sealed class SeatView
@@ -692,16 +700,14 @@ namespace KTC.Scene
             public readonly TMP_Text StateText;
             public Card3D[] Cards;
 
-            public SeatView(Transform parent, int seat, Vector2 pos, TMP_FontAsset font)
+            public SeatView(RectTransform root)
             {
-                Frame = QuickUi.MakePanel(ZString.Format("Seat{0}", seat), parent, pos, new Vector2(250f, 108f), QuickUi.Panel);
-                var inner = QuickUi.MakePanel("Inner", Frame.transform, Vector2.zero, new Vector2(242f, 100f), QuickUi.Bg);
-                NameText = QuickUi.MakeText("Name", inner.transform, new Vector2(0f, 30f), new Vector2(230f, 34f), 22f, "", font);
-                StackText = QuickUi.MakeText("Stack", inner.transform, new Vector2(-58f, -18f), new Vector2(120f, 30f), 22f, "", font);
-                BetText = QuickUi.MakeText("Bet", inner.transform, new Vector2(58f, -18f), new Vector2(120f, 30f), 20f, "", font);
-                BetText.color = QuickUi.Accent;
-                StateText = QuickUi.MakeText("State", inner.transform, new Vector2(0f, -40f), new Vector2(200f, 28f), 18f, "", font);
-                StateText.color = QuickUi.Warn;
+                Frame = root.GetComponent<Image>();
+                var inner = root.Find("Inner");
+                NameText = inner.Find("Name").GetComponent<TMP_Text>();
+                StackText = inner.Find("Stack").GetComponent<TMP_Text>();
+                BetText = inner.Find("Bet").GetComponent<TMP_Text>();
+                StateText = inner.Find("State").GetComponent<TMP_Text>();
             }
         }
 
