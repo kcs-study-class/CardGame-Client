@@ -18,6 +18,7 @@ namespace KTC.Scene
     {
         [SerializeField] private TMP_Text myRankText;
         [SerializeField] private TMP_Text profitText;
+        [SerializeField] private TMP_Text xpText;
         [SerializeField] private Transform rowsContainer;
         [SerializeField] private RectTransform rowTemplate; // 非アクティブで配置しておく
         [SerializeField] private Button homeButton;
@@ -98,6 +99,18 @@ namespace KTC.Scene
             else
             {
                 profitText.gameObject.SetActive(false);
+            }
+
+            if (GameLaunch.LastXpGained > 0)
+            {
+                xpText.gameObject.SetActive(true);
+                xpText.text = GameLaunch.LastLeveledUp
+                    ? ZString.Format("獲得XP +{0}  レベルアップ!", GameLaunch.LastXpGained)
+                    : ZString.Format("獲得XP +{0}", GameLaunch.LastXpGained);
+            }
+            else
+            {
+                xpText.gameObject.SetActive(false);
             }
 
             for (int i = 0; i < ranking.Count; i++)

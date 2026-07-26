@@ -23,6 +23,24 @@ namespace KTC.SaveData
         public float SeVolume = 1f;
         public bool EffectsEnabled = true;
 
+        // ---- 成長・戦績 (v2)。サーバー移行後は DB (CardGame-Server/Docs/DB.md) が正となる ----
+        public long Xp;
+        public int MatchesPlayed;
+        public int HandsPlayed;
+        public int HandsWon;
+
+        /// <summary>累計XPからレベルを算出する (100XPごとに1レベル、Lv.1開始)。</summary>
+        public static int LevelForXp(long xp) => 1 + (int)(xp / 100);
+
+        /// <summary>XPを加算し、レベルを追従させる。レベルが上がったら true。</summary>
+        public bool AddXp(long amount)
+        {
+            int before = Level;
+            Xp += amount;
+            Level = LevelForXp(Xp);
+            return Level > before;
+        }
+
         /// <summary>初期データ (新規プレイヤー / セーブ破損時のフォールバック)。</summary>
         public static PlayerData CreateDefault()
         {
