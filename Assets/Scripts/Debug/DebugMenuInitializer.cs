@@ -99,6 +99,17 @@ namespace KTC.Scene
                 EvaluateHand);
             menu.AddLabel("カード", "役判定結果", () => _handEvalResult);
 
+            // ---- 通信 (サーバー結合。RemoteGameSession は生徒課題) ----
+            menu.AddToggle("通信", "接続先: サーバー",
+                () => KTC.Scene.GameLaunch.UseRemoteSession,
+                value => KTC.Scene.GameLaunch.UseRemoteSession = value);
+            menu.AddInput("通信", "サーバーURL",
+                () => KTC.Scene.GameLaunch.ServerUrl,
+                value => KTC.Scene.GameLaunch.ServerUrl = value);
+            menu.AddLabel("通信", "状態", () =>
+                KTC.Scene.GameLaunch.UseRemoteSession
+                    ? "サーバー (RemoteGameSession: 生徒課題)" : "ローカル (LocalGameSession)");
+
             // ---- WebView ----
             menu.AddButton("WebView", "開く (example.com)", () =>
             {
