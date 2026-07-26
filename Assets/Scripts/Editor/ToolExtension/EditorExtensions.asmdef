@@ -1,7 +1,10 @@
 {
     "name": "Unity.InternalAPIEditorBridge.020",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "Unity.Addressables.Editor",
+        "Unity.Addressables"
+    ],
     "includePlatforms": [
         "Editor"
     ],
