@@ -178,6 +178,7 @@ namespace KTC.Scene
                 SmallBlind = _selectedSmallBlind,
                 BigBlind = _selectedBigBlind,
                 MySeat = 0,
+                BotPolicy = new SimpleBot(),
             };
             try
             {

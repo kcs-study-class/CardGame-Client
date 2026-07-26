@@ -10,6 +10,7 @@ using R3;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityFramework.Audio;
 using UnityFramework.Resource;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
@@ -40,6 +41,13 @@ namespace KTC.Scene
         [SerializeField, Tooltip("ポット移動演出の時間")] private float potFlyDuration = 0.55f;
 
         private const string FontAddress = "Fonts/NotoSansJP";
+
+        // SE (Addressables アドレス)
+        private const string SeClick = "SE/Click";
+        private const string SeDeal = "SE/CardDeal";
+        private const string SeFlip = "SE/CardFlip";
+        private const string SeChip = "SE/Chip";
+        private const string SeWin = "SE/Win";
         private static readonly string[] StreetNames = { "プリフロップ", "フロップ", "ターン", "リバー", "ショーダウン" };
 
         // 3D配置 (シーンの Table に合わせた座標)
@@ -147,6 +155,8 @@ namespace KTC.Scene
             _font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, cancellationToken);
 
             await LoadCardTexturesAsync(cancellationToken);
+            await SoundController.Instance.PreloadAsync(
+                new[] { SeClick, SeDeal, SeFlip, SeChip, SeWin }, cancellationToken);
 
             var data = SaveDataService.CreateDefault().Load();
             if (!string.IsNullOrEmpty(data.PlayerName))
@@ -340,6 +350,7 @@ namespace KTC.Scene
                     await PlayPotAnimationAsync(next, ct);
                 }
                 RenderResultOverlay(next);
+                PlayWinnerHighlight(next);
                 return;
             }
 
@@ -359,6 +370,7 @@ namespace KTC.Scene
 
         private void SendAction(int actionType, int amount = 0)
         {
+            SoundController.Instance.PlaySE(SeClick, 1f, 1f);
             _session.SendAction(new PlayerActionMessage { actionType = actionType, amount = amount });
         }
 
@@ -680,6 +692,7 @@ namespace KTC.Scene
             }
 
             float delay = 0f;
+            _ = PlayScheduledSeAsync(SeDeal, order.Count, dealInterval, 0f, ct);
             foreach (var (view, cardIndex, _) in order)
             {
                 view.Cards[cardIndex].PlayDealFrom(DeckPosition, delay, dealDuration);
@@ -689,6 +702,7 @@ namespace KTC.Scene
 
             // 公開されている手札 (自分 / CPU手札公開デバッグ) をフリップ
             float flipDelay = 0f;
+            int flipCount = 0;
             foreach (var (view, cardIndex, seat) in order)
             {
                 byte value = cardIndex < seat.holeCards.Length ? seat.holeCards[cardIndex] : (byte)0;
@@ -696,11 +710,27 @@ namespace KTC.Scene
                 {
                     view.Cards[cardIndex].PlayFlipToFace(value, flipDelay, flipDuration);
                     flipDelay += 0.05f;
+                    flipCount++;
                 }
             }
             if (flipDelay > 0f)
             {
+                _ = PlayScheduledSeAsync(SeFlip, flipCount, 0.05f, 0f, ct);
                 await Awaitable.WaitForSecondsAsync(flipDelay + flipDuration * 2f, ct);
+            }
+        }
+
+        /// <summary>演出のタイミングに合わせて同じSEを等間隔で鳴らす (fire-and-forget)。</summary>
+        private async Awaitable PlayScheduledSeAsync(string id, int count, float interval, float initialDelay, System.Threading.CancellationToken ct)
+        {
+            if (initialDelay > 0f)
+            {
+                await Awaitable.WaitForSecondsAsync(initialDelay, ct);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                SoundController.Instance.PlaySE(id, 1f, 0.94f + i * 0.02f);
+                await Awaitable.WaitForSecondsAsync(interval, ct);
             }
         }
 
@@ -708,6 +738,7 @@ namespace KTC.Scene
         private async Awaitable PlayCommunityRevealAsync(TableStateMessage state, int fromCount, System.Threading.CancellationToken ct)
         {
             float delay = 0f;
+            _ = PlayScheduledSeAsync(SeFlip, state.communityCards.Length - fromCount, dealInterval * 2f, dealDuration, ct);
             for (int i = fromCount; i < state.communityCards.Length; i++)
             {
                 _communityViews[i].PlayDealFrom(DeckPosition, delay, dealDuration);
@@ -720,6 +751,7 @@ namespace KTC.Scene
         /// <summary>ハンド終了時: ポットの獲得額が勝者パネルへ飛ぶ。</summary>
         private async Awaitable PlayPotAnimationAsync(TableStateMessage state, System.Threading.CancellationToken ct)
         {
+            SoundController.Instance.PlaySE(SeChip, 1f, 1f);
             var potOrigin = potText.rectTransform.anchoredPosition;
             float wait = 0f;
             foreach (var pot in state.result.pots)
@@ -746,6 +778,41 @@ namespace KTC.Scene
             if (wait > 0f)
             {
                 await Awaitable.WaitForSecondsAsync(wait + 0.15f, ct);
+            }
+
+            // 自分が勝っていたら勝利SE
+            foreach (var pot in state.result.pots)
+            {
+                if (System.Array.IndexOf(pot.winnerSeats, state.yourSeat) >= 0)
+                {
+                    SoundController.Instance.PlaySE(SeWin, 1f, 1f);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>勝者の席パネルをアクセント色で点滅ハイライトする。</summary>
+        private void PlayWinnerHighlight(TableStateMessage state)
+        {
+            if (!EffectsOn)
+            {
+                return;
+            }
+            var winners = new HashSet<int>();
+            foreach (var pot in state.result.pots)
+            {
+                foreach (int seat in pot.winnerSeats)
+                {
+                    winners.Add(seat);
+                }
+            }
+            foreach (int seat in winners)
+            {
+                var frame = _seatViews[seat].Frame;
+                LMotion.Create(QuickUi.Panel, QuickUi.Accent, 0.28f)
+                    .WithLoops(6, LoopType.Yoyo)
+                    .Bind(frame, static (color, image) => image.color = color)
+                    .AddTo(frame.gameObject);
             }
         }
 
