@@ -529,7 +529,32 @@ namespace KTC.Scene
             }
             view.StackText.text = ZString.Format("{0}", seat.stack);
             view.BetText.text = seat.streetBet > 0 ? ZString.Format("Bet {0}", seat.streetBet) : "";
+            view.StateText.color = QuickUi.Warn;
             view.StateText.text = seat.folded ? "フォールド" : seat.allIn ? "オールイン" : "";
+
+            // ショーダウン時は役名を席に出す (フォールドした席はそのまま)
+            if (state.isComplete && !seat.folded)
+            {
+                string category = ShowdownCategoryName(state.result, seat.seat);
+                if (category != null)
+                {
+                    view.StateText.color = QuickUi.Accent;
+                    view.StateText.text = category;
+                }
+            }
+        }
+
+        /// <summary>ショーダウン参加席の役名。非参加 (フォールド決着含む) は null。</summary>
+        private static string ShowdownCategoryName(HandResultMessage result, int seat)
+        {
+            foreach (var hand in result.showdownHands)
+            {
+                if (hand.seat == seat)
+                {
+                    return ((HandCategory)hand.category).ToDisplayName();
+                }
+            }
+            return null;
         }
 
         private void RenderSeatCards(SeatView view, SeatStateMessage seat)
@@ -579,6 +604,11 @@ namespace KTC.Scene
                         if (i > 0) sb.Append(", ");
                         int seat = pot.winnerSeats[i];
                         sb.Append(seat == state.yourSeat ? _playerName : ZString.Format("CPU {0}", seat));
+                        string category = ShowdownCategoryName(result, seat);
+                        if (category != null)
+                        {
+                            sb.Append(ZString.Format(" ({0})", category));
+                        }
                     }
                     sb.AppendLine();
                 }
