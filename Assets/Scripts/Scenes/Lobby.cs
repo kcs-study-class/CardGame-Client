@@ -1,10 +1,13 @@
+using Cysharp.Text;
 using KTC.Poker.Session;
+using KTC.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityFramework;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
+using UnityFramework.UI;
 
 namespace KTC.Scene
 {
@@ -18,19 +21,24 @@ namespace KTC.Scene
         [SerializeField] private Button[] seatButtons;   // 2人 / 4人 / 6人
         [SerializeField] private Button[] stackButtons;  // 100 / 200 / 500
 
+        [Header("ブラインド")]
+        [SerializeField] private Button blindsButton;
+        [SerializeField] private TextMeshProUGUI blindsLabel;
+
         [Header("操作")]
         [SerializeField] private Button startButton;
         [SerializeField] private Button backButton;
 
         private static readonly int[] SeatOptions = { 2, 4, 6 };
         private static readonly int[] StackOptions = { 100, 200, 500 };
-        private const int SmallBlind = 1;
-        private const int BigBlind = 2;
 
         private int _selectedSeats = 4;
         private int _selectedStack = 200;
+        private int _selectedSmallBlind = 1;
+        private int _selectedBigBlind = 2;
         private bool _isTransitioning;
         private bool _prepared;
+        private bool _blindsModalOpen;
 
         private void Awake()
         {
@@ -44,6 +52,7 @@ namespace KTC.Scene
                 int stack = StackOptions[i];
                 stackButtons[i].onClick.AddListener(() => { _selectedStack = stack; RefreshSelection(); });
             }
+            blindsButton.onClick.AddListener(OnOpenBlinds);
             startButton.onClick.AddListener(OnStartBattle);
             backButton.onClick.AddListener(OnBack);
         }
@@ -78,15 +87,38 @@ namespace KTC.Scene
             {
                 ApplySelected(stackButtons[i], StackOptions[i] == _selectedStack);
             }
+            blindsLabel.text = ZString.Format("SB {0} / BB {1}", _selectedSmallBlind, _selectedBigBlind);
         }
 
         private static void ApplySelected(Button button, bool selected)
         {
-            ((Image)button.targetGraphic).color = selected ? KTC.UI.QuickUi.Accent : KTC.UI.QuickUi.Panel;
-            var label = button.GetComponentInChildren<TextMeshProUGUI>();
-            if (label != null)
+            QuickUi.SetSelected(button, selected);
+        }
+
+        /// <summary>ブラインド選択モーダルを開き、閉じられたら選択を反映する。</summary>
+        private async void OnOpenBlinds()
+        {
+            if (_isTransitioning || _blindsModalOpen)
             {
-                label.color = selected ? KTC.UI.QuickUi.TextDark : KTC.UI.QuickUi.Text;
+                return;
+            }
+            _blindsModalOpen = true;
+            try
+            {
+                var modal = await ModalController.Instance.OpenAsync<BlindsModal>("Modals/Blinds");
+                if (modal == null)
+                {
+                    return;
+                }
+                modal.SetCurrent(_selectedSmallBlind, _selectedBigBlind);
+                await modal.WaitUntilClosedAsync();
+                _selectedSmallBlind = modal.SelectedSmallBlind;
+                _selectedBigBlind = modal.SelectedBigBlind;
+                RefreshSelection();
+            }
+            finally
+            {
+                _blindsModalOpen = false;
             }
         }
 
@@ -101,8 +133,8 @@ namespace KTC.Scene
             {
                 SeatCount = _selectedSeats,
                 StartingStack = _selectedStack,
-                SmallBlind = SmallBlind,
-                BigBlind = BigBlind,
+                SmallBlind = _selectedSmallBlind,
+                BigBlind = _selectedBigBlind,
                 MySeat = 0,
             };
             try
