@@ -28,10 +28,31 @@ namespace KTC.Poker.Protocol
     public static class MessageTypes
     {
         // サーバー → クライアント
+        public const string JoinAck = "joinAck";
         public const string TableState = "tableState";
+        public const string Error = "error";
         // クライアント → サーバー
         public const string PlayerAction = "playerAction";
         public const string Ready = "ready";
+    }
+
+    /// <summary>サーバー → クライアント: 着席確定 (自席番号と卓設定)。</summary>
+    [Serializable]
+    public class JoinAckMessage
+    {
+        public int yourSeat;
+        public int seatCount;
+        public int smallBlind;
+        public int bigBlind;
+        public int startingStack;
+    }
+
+    /// <summary>サーバー → クライアント: 不正アクション等の通知 (状態は変わらない)。</summary>
+    [Serializable]
+    public class ErrorMessage
+    {
+        public string code;
+        public string message;
     }
 
     /// <summary>
