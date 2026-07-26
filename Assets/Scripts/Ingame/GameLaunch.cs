@@ -19,6 +19,14 @@ namespace KTC.Scene
         /// <summary>直近の対戦で自分が座っていた席。</summary>
         public static int LastMySeat;
 
+        /// <summary>
+        /// バイインを所持チップから差し引いて開始した対戦か。
+        /// Lobby が差し引き後に true にし、InGameTable の精算 (最終スタックの書き戻し) で false に戻る。
+        /// デバッグ起動などバイインなしの対戦では精算しない (無からチップが湧くのを防ぐ)。
+        /// サーバー対戦ではバイイン/精算ともサーバー側の責務になる。
+        /// </summary>
+        public static bool ChipsAtStake;
+
         /// <summary>Result 表示後のクリア。</summary>
         public static void ClearResult()
         {

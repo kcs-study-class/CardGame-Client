@@ -29,6 +29,9 @@ namespace KTC.Scene
         [SerializeField] private Button startButton;
         [SerializeField] private Button backButton;
 
+        [Header("所持チップ表示")]
+        [SerializeField] private TMP_Text chipsText;
+
         private static readonly int[] SeatOptions = { 2, 4, 6 };
         private static readonly int[] StackOptions = { 100, 200, 500 };
 
@@ -36,6 +39,7 @@ namespace KTC.Scene
         private int _selectedStack = 200;
         private int _selectedSmallBlind = 1;
         private int _selectedBigBlind = 2;
+        private long _chips;
         private bool _isTransitioning;
         private bool _prepared;
         private bool _blindsModalOpen;
@@ -64,6 +68,20 @@ namespace KTC.Scene
                 return;
             }
             _prepared = true;
+            _chips = KTC.SaveData.SaveDataService.CreateDefault().Load().Chips;
+
+            // 現在の選択がバイインできない場合は払える最大の選択肢へ落とす
+            if (_selectedStack > _chips)
+            {
+                for (int i = StackOptions.Length - 1; i >= 0; i--)
+                {
+                    if (StackOptions[i] <= _chips)
+                    {
+                        _selectedStack = StackOptions[i];
+                        break;
+                    }
+                }
+            }
             RefreshSelection();
             await Awaitables.Completed;
         }
@@ -85,9 +103,19 @@ namespace KTC.Scene
             }
             for (int i = 0; i < stackButtons.Length; i++)
             {
-                ApplySelected(stackButtons[i], StackOptions[i] == _selectedStack);
+                bool affordable = StackOptions[i] <= _chips;
+                stackButtons[i].interactable = affordable;
+                ApplySelected(stackButtons[i], affordable && StackOptions[i] == _selectedStack);
             }
             blindsLabel.text = ZString.Format("SB {0} / BB {1}", _selectedSmallBlind, _selectedBigBlind);
+
+            // 初期スタック分をバイインとして所持チップから支払う
+            bool canStart = _selectedStack <= _chips;
+            startButton.interactable = canStart;
+            chipsText.text = canStart
+                ? ZString.Format("所持チップ: {0:N0} (バイイン {1})", _chips, _selectedStack)
+                : ZString.Format("所持チップ: {0:N0} — チップが足りません", _chips);
+            chipsText.color = canStart ? KTC.UI.QuickUi.Text : KTC.UI.QuickUi.Warn;
         }
 
         private static void ApplySelected(Button button, bool selected)
@@ -128,7 +156,21 @@ namespace KTC.Scene
             {
                 return;
             }
+
+            // バイインを所持チップから差し引く (精算は InGameTable が最終スタックを書き戻す)
+            var saveService = KTC.SaveData.SaveDataService.CreateDefault();
+            var data = saveService.Load();
+            if (data.Chips < _selectedStack)
+            {
+                _chips = data.Chips;
+                RefreshSelection();
+                return;
+            }
             _isTransitioning = true;
+            data.Chips -= _selectedStack;
+            saveService.Save(data);
+            GameLaunch.ChipsAtStake = true;
+
             var config = new LocalGameSessionConfig
             {
                 SeatCount = _selectedSeats,
