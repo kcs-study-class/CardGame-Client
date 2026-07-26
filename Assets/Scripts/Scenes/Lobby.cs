@@ -170,6 +170,7 @@ namespace KTC.Scene
             data.Chips -= _selectedStack;
             saveService.Save(data);
             GameLaunch.ChipsAtStake = true;
+            GameLaunch.LastBuyIn = _selectedStack;
 
             var config = new LocalGameSessionConfig
             {

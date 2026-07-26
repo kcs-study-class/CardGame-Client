@@ -19,6 +19,9 @@ namespace KTC.Scene
         /// <summary>直近の対戦で自分が座っていた席。</summary>
         public static int LastMySeat;
 
+        /// <summary>直近の対戦のバイイン額 (収支表示用)。バイインなしの対戦 (デバッグ起動) は 0。</summary>
+        public static int LastBuyIn;
+
         /// <summary>
         /// バイインを所持チップから差し引いて開始した対戦か。
         /// Lobby が差し引き後に true にし、InGameTable の精算 (最終スタックの書き戻し) で false に戻る。
@@ -32,6 +35,7 @@ namespace KTC.Scene
         {
             LastFinalState = null;
             LastMySeat = 0;
+            LastBuyIn = 0;
         }
     }
 }

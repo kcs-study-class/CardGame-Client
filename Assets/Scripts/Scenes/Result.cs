@@ -17,6 +17,7 @@ namespace KTC.Scene
     public class Result : MonoBehaviour, IScenePreparer
     {
         [SerializeField] private TMP_Text myRankText;
+        [SerializeField] private TMP_Text profitText;
         [SerializeField] private Transform rowsContainer;
         [SerializeField] private RectTransform rowTemplate; // 非アクティブで配置しておく
         [SerializeField] private Button homeButton;
@@ -72,6 +73,32 @@ namespace KTC.Scene
 
             int myRank = ranking.FindIndex(s => s.seat == mySeat) + 1;
             myRankText.text = ZString.Format("あなたは {0}位!", myRank);
+
+            // 収支 (バイインした対戦のみ。デバッグ起動は LastBuyIn=0 で非表示)
+            if (GameLaunch.LastBuyIn > 0)
+            {
+                int myStack = 0;
+                foreach (var seat in state.seats)
+                {
+                    if (seat.seat == mySeat)
+                    {
+                        myStack = seat.stack;
+                        break;
+                    }
+                }
+                int profit = myStack - GameLaunch.LastBuyIn;
+                profitText.gameObject.SetActive(true);
+                profitText.text = profit >= 0
+                    ? ZString.Format("収支 +{0:N0}", profit)
+                    : ZString.Format("収支 {0:N0}", profit);
+                profitText.color = profit > 0 ? KTC.UI.QuickUi.Accent
+                    : profit < 0 ? KTC.UI.QuickUi.Warn
+                    : KTC.UI.QuickUi.Text;
+            }
+            else
+            {
+                profitText.gameObject.SetActive(false);
+            }
 
             for (int i = 0; i < ranking.Count; i++)
             {
