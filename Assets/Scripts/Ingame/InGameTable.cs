@@ -68,6 +68,8 @@ namespace KTC.Scene
         private bool _presenting;
         private TableStateMessage _presentedState; // 画面に反映済みの状態
         private TableStateMessage _lastState;       // 入力判定用 (= _presentedState)
+        private TableStateMessage _latestReceived;  // 精算用 (演出の遅延に左右されない最新スナップショット)
+        private bool _chipsSettled;
 
         private System.IDisposable _stateSubscription;
         private System.IDisposable _errorSubscription;
@@ -263,6 +265,7 @@ namespace KTC.Scene
 
         private void OnStateUpdated(TableStateMessage state)
         {
+            _latestReceived = state;
             _stateQueue.Enqueue(state);
             if (!_presenting)
             {
@@ -421,6 +424,7 @@ namespace KTC.Scene
         {
             if (_isLeaving) return;
             _isLeaving = true;
+            SettleChips();
             GameLaunch.LastFinalState = _lastState;
             GameLaunch.LastMySeat = _session.MySeatIndex;
             await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Result, SceneIdExtensions.ToSceneName);
@@ -430,7 +434,35 @@ namespace KTC.Scene
         {
             if (_isLeaving) return;
             _isLeaving = true;
+            SettleChips();
             await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Home, SceneIdExtensions.ToSceneName);
+        }
+
+        /// <summary>
+        /// バイイン精算: 自席の最終スタックを所持チップへ書き戻す。
+        /// Lobby がバイインを差し引いた対戦のみ (GameLaunch.ChipsAtStake)。
+        /// 途中退出はその時点のスタックで精算 (ポットに出したぶんは没収 = 実卓と同じ)。
+        /// サーバー対戦になったらこの精算はサーバーの責務になり、この処理は呼ばれない想定。
+        /// </summary>
+        private void SettleChips()
+        {
+            if (_chipsSettled || !GameLaunch.ChipsAtStake) return;
+            _chipsSettled = true;
+            GameLaunch.ChipsAtStake = false;
+
+            var state = _latestReceived ?? _lastState;
+            if (state == null) return;
+            foreach (var seat in state.seats)
+            {
+                if (seat.seat == state.yourSeat)
+                {
+                    var service = SaveDataService.CreateDefault();
+                    var data = service.Load();
+                    data.Chips += seat.stack;
+                    service.Save(data);
+                    break;
+                }
+            }
         }
 
         // ---- 描画 ----
