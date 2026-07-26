@@ -94,5 +94,16 @@ namespace KTC.UI
             labelText.color = TextDark;
             return button;
         }
+
+        /// <summary>選択トグル系ボタンの選択状態を配色で表す (選択=アクセント)。</summary>
+        public static void SetSelected(Button button, bool selected)
+        {
+            ((Image)button.targetGraphic).color = selected ? Accent : Panel;
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (label != null)
+            {
+                label.color = selected ? TextDark : Text;
+            }
+        }
     }
 }
