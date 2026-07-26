@@ -88,6 +88,16 @@ namespace KTC.Scene
         [SerializeField] private Button nextHandButton;
         [SerializeField] private Button toResultButton;
 
+        [Header("レイズ額パネル (シーン配置)")]
+        [SerializeField] private GameObject raisePanel;
+        [SerializeField] private Slider raiseSlider;
+        [SerializeField] private TMP_Text raiseAmountText;
+        [SerializeField] private Button raiseMinButton;
+        [SerializeField] private Button raisePotButton;
+        [SerializeField] private Button raiseMaxButton;
+        [SerializeField] private Button raiseConfirmButton;
+        [SerializeField] private Button raiseCancelButton;
+
         [Header("席パネル (テンプレート複製)")]
         [SerializeField, Tooltip("非アクティブで配置した席パネルの雛形")] private RectTransform seatTemplate;
         [SerializeField] private float seatUiRadiusX = 760f;
@@ -113,6 +123,16 @@ namespace KTC.Scene
             nextHandButton.onClick.AddListener(OnNextHand);
             toResultButton.onClick.AddListener(OnToResult);
             resultPanel.SetActive(false);
+
+            raiseSlider.wholeNumbers = true;
+            raiseSlider.onValueChanged.AddListener(value =>
+                raiseAmountText.text = ZString.Format("レイズ額 {0}", (int)value));
+            raiseMinButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.actionRequest.minRaiseTo : 0));
+            raisePotButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.currentBet + _lastState.pot : 0));
+            raiseMaxButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.actionRequest.maxRaiseTo : 0));
+            raiseConfirmButton.onClick.AddListener(OnRaiseConfirm);
+            raiseCancelButton.onClick.AddListener(CloseRaisePanel);
+            raisePanel.SetActive(false);
         }
 
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
@@ -347,10 +367,38 @@ namespace KTC.Scene
             SendAction(_lastState.actionRequest.canCheck ? (int)ActionType.Check : (int)ActionType.Call);
         }
 
+        /// <summary>レイズボタン: 額指定パネルを開く (送信は決定ボタンで行う)。</summary>
         private void OnRaise()
         {
             if (_lastState == null || !_lastState.isYourTurn || !_lastState.actionRequest.canRaise) return;
-            SendAction((int)ActionType.RaiseTo, _lastState.actionRequest.minRaiseTo);
+            var request = _lastState.actionRequest;
+            raiseSlider.minValue = request.minRaiseTo;
+            raiseSlider.maxValue = request.maxRaiseTo;
+            raiseSlider.SetValueWithoutNotify(request.minRaiseTo);
+            raiseAmountText.text = ZString.Format("レイズ額 {0}", request.minRaiseTo);
+            raisePanel.SetActive(true);
+        }
+
+        private void SetRaiseSlider(int raiseTo)
+        {
+            raiseSlider.value = Mathf.Clamp(raiseTo, raiseSlider.minValue, raiseSlider.maxValue);
+            raiseAmountText.text = ZString.Format("レイズ額 {0}", (int)raiseSlider.value);
+        }
+
+        private void OnRaiseConfirm()
+        {
+            if (_lastState == null || !_lastState.isYourTurn || !_lastState.actionRequest.canRaise)
+            {
+                CloseRaisePanel();
+                return;
+            }
+            SendAction((int)ActionType.RaiseTo, (int)raiseSlider.value);
+            CloseRaisePanel();
+        }
+
+        private void CloseRaisePanel()
+        {
+            raisePanel.SetActive(false);
         }
 
         private void OnAllIn()
@@ -420,7 +468,11 @@ namespace KTC.Scene
                 var request = state.actionRequest;
                 checkCallLabel.text = request.canCheck ? "チェック" : ZString.Format("コール {0}", request.callAmount);
                 raiseButton.interactable = request.canRaise;
-                raiseLabel.text = request.canRaise ? ZString.Format("レイズ {0}", request.minRaiseTo) : "レイズ不可";
+                raiseLabel.text = request.canRaise ? ZString.Format("レイズ {0}〜", request.minRaiseTo) : "レイズ不可";
+            }
+            else
+            {
+                CloseRaisePanel();
             }
 
             if (showResult)
@@ -686,6 +738,8 @@ namespace KTC.Scene
                 var frame = Instantiate(seatTemplate, seatTemplate.parent);
                 frame.name = ZString.Format("Seat{0}", seat);
                 frame.anchoredPosition = pos;
+                // 描画順はテンプレート位置に合わせる (末尾追加のままだと後続HUD (レイズパネル等) より前面に来てしまう)
+                frame.SetSiblingIndex(seatTemplate.GetSiblingIndex() + 1 + seat);
                 frame.gameObject.SetActive(true);
                 _seatViews.Add(new SeatView(frame));
             }
