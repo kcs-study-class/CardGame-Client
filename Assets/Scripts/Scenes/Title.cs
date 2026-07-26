@@ -59,6 +59,7 @@ namespace KTC.Scene
             {
                 _bootStatusText.font = noto;
             }
+            GameAudio.PlayBgm(GameAudio.MenuBgm);
             RunBootAsync();
         }
 

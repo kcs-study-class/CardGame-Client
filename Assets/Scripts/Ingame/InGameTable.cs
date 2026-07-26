@@ -162,6 +162,7 @@ namespace KTC.Scene
             await LoadCardTexturesAsync(cancellationToken);
             await SoundController.Instance.PreloadAsync(
                 new[] { SeClick, SeDeal, SeFlip, SeChip, SeWin }, cancellationToken);
+            GameAudio.PlayBgm(GameAudio.TableBgm);
 
             var data = SaveDataService.CreateDefault().Load();
             if (!string.IsNullOrEmpty(data.PlayerName))
