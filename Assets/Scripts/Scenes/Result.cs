@@ -42,6 +42,7 @@ namespace KTC.Scene
             {
                 BuildRanking();
             }
+            GameAudio.PlayBgm(GameAudio.MenuBgm);
             await Awaitables.Completed;
         }
 

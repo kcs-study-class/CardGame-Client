@@ -83,6 +83,7 @@ namespace KTC.Scene
                 }
             }
             RefreshSelection();
+            GameAudio.PlayBgm(GameAudio.MenuBgm);
             await Awaitables.Completed;
         }
 

@@ -56,6 +56,7 @@ namespace KTC.Scene
             }
             _prepared = true;
             RefreshPlayerInfo();
+            GameAudio.PlayBgm(GameAudio.MenuBgm);
             await Awaitables.Completed;
         }
 
