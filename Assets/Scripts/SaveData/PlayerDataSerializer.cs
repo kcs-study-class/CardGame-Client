@@ -11,7 +11,7 @@ namespace KTC.SaveData
         /// ペイロードのデータバージョン。フィールドを追加・変更したら +1 し、
         /// Deserialize の switch に旧バージョンの読み取り (マイグレーション) を追加する。
         /// </summary>
-        public const int CurrentDataVersion = 1;
+        public const int CurrentDataVersion = 2;
 
         public static byte[] Serialize(PlayerData data)
         {
@@ -32,6 +32,11 @@ namespace KTC.SaveData
                 writer.Write(data.BgmVolume);
                 writer.Write(data.SeVolume);
                 writer.Write(data.EffectsEnabled);
+                // ---- v2: 成長・戦績 ----
+                writer.Write(data.Xp);
+                writer.Write(data.MatchesPlayed);
+                writer.Write(data.HandsPlayed);
+                writer.Write(data.HandsWon);
                 writer.Flush();
                 return stream.ToArray();
             }
@@ -54,9 +59,10 @@ namespace KTC.SaveData
                 switch (version)
                 {
                     case 1:
+                        // v1 → v2: 成長・戦績フィールドはデフォルト値 (0) のまま
                         return ReadVersion1(reader);
-                    // 例: case 2 を追加したら、version1 は読み取り後に新フィールドへ
-                    //     デフォルト値を補完する形でマイグレーションする
+                    case 2:
+                        return ReadVersion2(reader);
                     default:
                         throw new InvalidDataException($"未対応のセーブデータバージョンです: {version}");
                 }
@@ -77,6 +83,16 @@ namespace KTC.SaveData
                 SeVolume = reader.ReadSingle(),
                 EffectsEnabled = reader.ReadBoolean(),
             };
+        }
+
+        private static PlayerData ReadVersion2(BinaryReader reader)
+        {
+            var data = ReadVersion1(reader);
+            data.Xp = reader.ReadInt64();
+            data.MatchesPlayed = reader.ReadInt32();
+            data.HandsPlayed = reader.ReadInt32();
+            data.HandsWon = reader.ReadInt32();
+            return data;
         }
     }
 }

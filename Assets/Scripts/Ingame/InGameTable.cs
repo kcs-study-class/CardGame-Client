@@ -79,6 +79,11 @@ namespace KTC.Scene
         private TableStateMessage _latestReceived;  // 精算用 (演出の遅延に左右されない最新スナップショット)
         private bool _chipsSettled;
 
+        // セッション内の戦績集計 (精算時にセーブへ反映)
+        private int _handsCompleted;
+        private int _handsWonByMe;
+        private int _lastCountedHand;
+
         private System.IDisposable _stateSubscription;
         private System.IDisposable _errorSubscription;
 
@@ -276,6 +281,20 @@ namespace KTC.Scene
         private void OnStateUpdated(TableStateMessage state)
         {
             _latestReceived = state;
+
+            // 戦績集計 (ハンド完了スナップショットを1回だけ数える)
+            if (state.isComplete && state.handNumber != _lastCountedHand)
+            {
+                _lastCountedHand = state.handNumber;
+                _handsCompleted++;
+                var payouts = state.result.payouts;
+                if (payouts != null && state.yourSeat >= 0 && state.yourSeat < payouts.Length
+                    && payouts[state.yourSeat] > 0)
+                {
+                    _handsWonByMe++;
+                }
+            }
+
             _stateQueue.Enqueue(state);
             if (!_presenting)
             {
@@ -451,10 +470,10 @@ namespace KTC.Scene
         }
 
         /// <summary>
-        /// バイイン精算: 自席の最終スタックを所持チップへ書き戻す。
+        /// バイイン精算: 自席の最終スタックを所持チップへ書き戻し、XP・戦績を反映する。
         /// Lobby がバイインを差し引いた対戦のみ (GameLaunch.ChipsAtStake)。
         /// 途中退出はその時点のスタックで精算 (ポットに出したぶんは没収 = 実卓と同じ)。
-        /// サーバー対戦になったらこの精算はサーバーの責務になり、この処理は呼ばれない想定。
+        /// サーバー対戦になったら精算・XP・戦績ともサーバーの責務になり、この処理は呼ばれない想定。
         /// </summary>
         private void SettleChips()
         {
@@ -471,6 +490,16 @@ namespace KTC.Scene
                     var service = SaveDataService.CreateDefault();
                     var data = service.Load();
                     data.Chips += seat.stack;
+
+                    // XP: 参加ハンド×5 + 勝利ハンド×20
+                    long xp = _handsCompleted * 5L + _handsWonByMe * 20L;
+                    GameLaunch.LastXpGained = xp;
+                    GameLaunch.LastLeveledUp = data.AddXp(xp);
+
+                    data.MatchesPlayed++;
+                    data.HandsPlayed += _handsCompleted;
+                    data.HandsWon += _handsWonByMe;
+
                     service.Save(data);
                     break;
                 }

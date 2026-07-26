@@ -23,6 +23,7 @@ namespace KTC.Scene
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text levelText;
         [SerializeField] private TMP_Text chipsText;
+        [SerializeField] private TMP_Text statsText;
         [SerializeField] private Button settingsButton;
 
         [Header("メニュー")]
@@ -84,6 +85,10 @@ namespace KTC.Scene
             nameText.text = displayName;
             levelText.text = ZString.Format("Lv.{0}", data.Level);
             chipsText.text = ZString.Format("チップ: {0:N0}", data.Chips);
+            statsText.text = data.HandsPlayed > 0
+                ? ZString.Format("対戦 {0} / ハンド {1} / 勝率 {2}%",
+                    data.MatchesPlayed, data.HandsPlayed, data.HandsWon * 100 / data.HandsPlayed)
+                : "戦績はまだありません";
         }
 
         private async void OnCpuBattle()
