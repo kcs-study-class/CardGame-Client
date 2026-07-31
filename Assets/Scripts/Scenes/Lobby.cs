@@ -116,7 +116,7 @@ namespace KTC.Scene
             chipsText.text = canStart
                 ? ZString.Format("所持チップ: {0:N0} (バイイン {1})", _chips, _selectedStack)
                 : ZString.Format("所持チップ: {0:N0} — チップが足りません", _chips);
-            chipsText.color = canStart ? KTC.UI.QuickUi.Text : KTC.UI.QuickUi.Warn;
+            chipsText.color = canStart ? QuickUi.Text : QuickUi.Warn;
         }
 
         private static void ApplySelected(Button button, bool selected)

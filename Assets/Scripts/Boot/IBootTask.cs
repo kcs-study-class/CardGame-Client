@@ -1,42 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using KTC.SaveData;
-using UnityEngine;
+using UnityFramework.Boot;
 
 namespace KTC.Boot
 {
     /// <summary>
-    /// タイトル画面の裏で走るブート処理1つ分の契約。
+    /// このゲームのブートタスク契約 (共有コンテキスト = <see cref="BootContext"/>)。
+    /// パイプライン本体は UnityFramework.Boot に汎用実装がある。
     /// ログイン・お知らせ取得などのサーバー系タスクは、生徒課題で
     /// スタブ実装を実通信 (CardGame-Server/Docs/API.md) に差し替える。
     /// </summary>
-    public interface IBootTask
+    public interface IBootTask : IBootTask<BootContext>
     {
-        /// <summary>進行表示に使う名前 (例: "ログイン")。</summary>
-        string DisplayName { get; }
-
-        /// <summary>
-        /// タスクを実行する。失敗は例外ではなく <see cref="BootTaskResult.Fail"/> で返す
-        /// (例外はランナーが握りつぶして Fail 扱いにする)。
-        /// </summary>
-        Awaitable<BootTaskResult> RunAsync(BootContext context, CancellationToken cancellationToken);
-    }
-
-    /// <summary>ブートタスク1つの結果。</summary>
-    public readonly struct BootTaskResult
-    {
-        public bool Success { get; }
-        public string Message { get; }
-
-        private BootTaskResult(bool success, string message)
-        {
-            Success = success;
-            Message = message;
-        }
-
-        public static BootTaskResult Ok() => new BootTaskResult(true, "");
-        public static BootTaskResult Fail(string message) => new BootTaskResult(false, message ?? "");
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System.Linq;
 using Cysharp.Text;
 using KTC.SaveData;
+using UnityFramework.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -93,9 +94,9 @@ namespace KTC.Scene
                 profitText.text = profit >= 0
                     ? ZString.Format("収支 +{0:N0}", profit)
                     : ZString.Format("収支 {0:N0}", profit);
-                profitText.color = profit > 0 ? KTC.UI.QuickUi.Accent
-                    : profit < 0 ? KTC.UI.QuickUi.Warn
-                    : KTC.UI.QuickUi.Text;
+                profitText.color = profit > 0 ? QuickUi.Accent
+                    : profit < 0 ? QuickUi.Warn
+                    : QuickUi.Text;
             }
             else
             {
@@ -124,7 +125,7 @@ namespace KTC.Scene
                 var background = row.GetComponent<Image>();
                 if (background != null)
                 {
-                    background.color = isMe ? KTC.UI.QuickUi.Panel : KTC.UI.QuickUi.PanelDark;
+                    background.color = isMe ? QuickUi.Panel : QuickUi.PanelDark;
                 }
                 var label = row.Find("Label")?.GetComponent<TMP_Text>();
                 if (label != null)
@@ -133,7 +134,7 @@ namespace KTC.Scene
                         isMe ? myName : ZString.Format("CPU {0}", seat.seat));
                     if (isMe)
                     {
-                        label.color = KTC.UI.QuickUi.Accent;
+                        label.color = QuickUi.Accent;
                     }
                 }
                 var stack = row.Find("Stack")?.GetComponent<TMP_Text>();

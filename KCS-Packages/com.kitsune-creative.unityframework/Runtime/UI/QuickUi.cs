@@ -2,26 +2,27 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace KTC.UI
+namespace UnityFramework.UI
 {
     /// <summary>
     /// ランタイム生成UIの共通ヘルパー (プロトタイプ用)。
     /// アートパス前の画面はこれで組み、確定したらプレハブ化していく方針。
+    /// パレットはダークテーマの既定値。プロジェクト固有の色は起動時に上書きしてよい。
     /// </summary>
     public static class QuickUi
     {
-        // 共通パレット (ダークテーマ)
-        public static readonly Color Bg = new Color(0.055f, 0.055f, 0.086f, 1f);
-        public static readonly Color Panel = new Color(0.125f, 0.125f, 0.173f, 1f);
-        public static readonly Color PanelDark = new Color(0.10f, 0.10f, 0.14f, 1f);
-        public static readonly Color Accent = new Color(0.878f, 0.706f, 0.361f, 1f);
-        public static readonly Color Text = new Color(0.925f, 0.925f, 0.949f, 1f);
-        public static readonly Color TextDark = new Color(0.1f, 0.1f, 0.12f, 1f);
-        public static readonly Color Warn = new Color(0.85f, 0.35f, 0.35f, 1f);
-        public static readonly Color CardFace = new Color(0.941f, 0.902f, 0.824f, 1f);
-        public static readonly Color CardBack = new Color(0.173f, 0.227f, 0.396f, 1f);
-        public static readonly Color RedSuit = new Color(0.78f, 0.16f, 0.16f, 1f);
-        public static readonly Color Disabled = new Color(0.35f, 0.35f, 0.40f, 1f);
+        // 共通パレット (ダークテーマ既定値)
+        public static Color Bg = new Color(0.055f, 0.055f, 0.086f, 1f);
+        public static Color Panel = new Color(0.125f, 0.125f, 0.173f, 1f);
+        public static Color PanelDark = new Color(0.10f, 0.10f, 0.14f, 1f);
+        public static Color Accent = new Color(0.878f, 0.706f, 0.361f, 1f);
+        public static Color Text = new Color(0.925f, 0.925f, 0.949f, 1f);
+        public static Color TextDark = new Color(0.1f, 0.1f, 0.12f, 1f);
+        public static Color Warn = new Color(0.85f, 0.35f, 0.35f, 1f);
+        public static Color CardFace = new Color(0.941f, 0.902f, 0.824f, 1f);
+        public static Color CardBack = new Color(0.173f, 0.227f, 0.396f, 1f);
+        public static Color RedSuit = new Color(0.78f, 0.16f, 0.16f, 1f);
+        public static Color Disabled = new Color(0.35f, 0.35f, 0.40f, 1f);
 
         public static RectTransform MakeRect(string name, Transform parent, Vector2 pos, Vector2 size)
         {

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using KTC.SaveData;
 using NUnit.Framework;
+using UnityFramework.SaveData;
 
 namespace KTC.Poker.Tests
 {
@@ -17,7 +18,7 @@ namespace KTC.Poker.Tests
         {
             _directory = Path.Combine(Path.GetTempPath(), "ktc-save-tests-" + Guid.NewGuid().ToString("N"));
             _filePath = Path.Combine(_directory, "save.bin");
-            _keys = SaveKeys.Derive("test-device-A");
+            _keys = SaveKeys.Derive("test-secret", "test-device-A");
             _service = new SaveDataService(_filePath, _keys);
         }
 
@@ -122,7 +123,7 @@ namespace KTC.Poker.Tests
         public void 別端末の鍵では復号できない()
         {
             _service.Save(MakeSample());
-            var otherDevice = new SaveDataService(_filePath, SaveKeys.Derive("test-device-B"));
+            var otherDevice = new SaveDataService(_filePath, SaveKeys.Derive("test-secret", "test-device-B"));
 
             Assert.That(otherDevice.Load().Chips, Is.EqualTo(1000), "端末間コピーは無効");
         }

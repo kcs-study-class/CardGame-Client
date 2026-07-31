@@ -4,6 +4,7 @@ using System.Threading;
 using KTC.Boot;
 using NUnit.Framework;
 using UnityEngine;
+using UnityFramework.Boot;
 
 namespace KTC.Poker.Tests
 {

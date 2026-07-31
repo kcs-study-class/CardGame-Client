@@ -3,6 +3,7 @@ using KTC.SaveData;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityFramework;
+using UnityFramework.Boot;
 
 namespace KTC.Boot
 {
