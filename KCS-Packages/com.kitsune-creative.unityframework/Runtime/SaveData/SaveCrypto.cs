@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace KTC.SaveData
+namespace UnityFramework.SaveData
 {
     /// <summary>
     /// セーブファイルの暗号化・復号 (encrypt-then-MAC)。

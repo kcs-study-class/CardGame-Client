@@ -9,7 +9,8 @@
         "KTC.Poker.Session",
         "KTC.SaveData",
         "KTC.Core",
-        "KTC.Boot"
+        "KTC.Boot",
+        "UnityFramework.Runtime"
     ],
     "includePlatforms": [
         "Editor"
