@@ -1,0 +1,17 @@
+{
+    "name": "KTC.SaveData",
+    "rootNamespace": "KTC.SaveData",
+    "references": [
+        "KTC.Core",
+        "UnityFramework.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

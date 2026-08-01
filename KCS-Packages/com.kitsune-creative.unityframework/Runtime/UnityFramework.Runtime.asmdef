@@ -1,0 +1,25 @@
+{
+    "name": "UnityFramework.Runtime",
+    "rootNamespace": "UnityFramework",
+    "references": [
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.criware.criware-unity",
+            "expression": "",
+            "define": "UNITYFRAMEWORK_CRI_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

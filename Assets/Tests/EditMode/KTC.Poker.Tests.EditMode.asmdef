@@ -1,0 +1,31 @@
+{
+    "name": "KTC.Poker.Tests.EditMode",
+    "rootNamespace": "KTC.Poker.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "KTC.Poker.Domain",
+        "KTC.Poker.Protocol",
+        "KTC.Poker.Session",
+        "KTC.SaveData",
+        "KTC.Core",
+        "KTC.Boot",
+        "UnityFramework.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "R3.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

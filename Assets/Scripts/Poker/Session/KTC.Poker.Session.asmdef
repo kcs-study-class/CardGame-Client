@@ -1,0 +1,17 @@
+{
+    "name": "KTC.Poker.Session",
+    "rootNamespace": "KTC.Poker.Session",
+    "references": [
+        "KTC.Poker.Domain",
+        "KTC.Poker.Protocol"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

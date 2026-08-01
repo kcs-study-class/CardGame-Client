@@ -20,6 +20,7 @@ namespace UnityFramework.SceneManagement.Generated
         Home = 4,
         InGame = 5,
         Result = 6,
+        Lobby = 7,
     }
 
     public static class SceneIdExtensions
@@ -34,6 +35,7 @@ namespace UnityFramework.SceneManagement.Generated
             SceneId.Home => "Home",
             SceneId.InGame => "InGame",
             SceneId.Result => "Result",
+            SceneId.Lobby => "Lobby",
             _ => null,
         };
 
