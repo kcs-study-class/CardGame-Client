@@ -1,6 +1,5 @@
 #if UNITY_EDITOR
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
@@ -19,7 +18,7 @@ using Toolbar = UnityEditor.Toolbar;
 [InitializeOnLoad]
 public static class StartScenePlayButton
 {
-    [CanBeNull] private const string DEFAULT_BOOT_SCENE_PATH = "Assets/Scenes/Boot.unity";
+    private const string DefaultBootScenePath = "Assets/Scenes/Boot.unity";
 
     private const string BootStartText = "Boot Start";
     private const string StopText = "Stop";
@@ -36,31 +35,33 @@ public static class StartScenePlayButton
     private class MainDevelopmentBootToolButton : MainToolbarElement
     {
         private readonly Action _action;
-        private bool _isPlaying = false;
 
         /// <summary>
         ///   <para>Specify the content and function of a main toolbar button.</para>
         /// </summary>
         /// <param name="action">The action to perform when the user selects the button.</param>
-        /// <param name="isPlaying"></param>
-        public MainDevelopmentBootToolButton(Action action, bool isPlaying)
+        public MainDevelopmentBootToolButton(Action action)
         {
             this.content = new MainToolbarContent();
             this._action = action;
-            this._isPlaying = isPlaying;
         }
 
         internal override VisualElement CreateElement()
         {
-            string text = _isPlaying ? StopText : BootStartText;
-            Texture2D texture = (_isPlaying ? StopTexture : PlayTexture) as Texture2D;
-            CustomEditorToolbarButton element = new CustomEditorToolbarButton(text, texture, this._action);
-
+            var element = new CustomEditorToolbarButton(BootStartText, PlayTexture as Texture2D, this._action);
             element.AddToClassList("unity-editor-toolbar-element");
             element.tooltip = DevelopmentBootTooltip;
-            element.style.backgroundColor = _isPlaying ? Color.red : Color.green;
-            element.style.color = _isPlaying ? Color.white : Color.black;
-            element.IconElement.tintColor = _isPlaying ? Color.white : Color.black;
+
+            // 生成済み要素を保持し、再生状態の反映は ApplyVisualState で直接行う
+            // (MainToolbar.Refresh による再生成は 6000.3 で反映されないため頼らない)
+            _liveButton = element;
+            ApplyVisualState(element, EditorApplication.isPlayingOrWillChangePlaymode);
+
+            // 自己修復: ドメインリロードとイベントの順序に依存しないよう、
+            // 要素自身が定期的に実状態と表示を同期する (変化時のみ書き換え)
+            element.schedule.Execute(() =>
+                ApplyVisualState(element, EditorApplication.isPlayingOrWillChangePlaymode))
+                .Every(250);
             return (VisualElement)element;
         }
     }
@@ -70,9 +71,12 @@ public static class StartScenePlayButton
     /// </summary>
     private class CustomEditorToolbarButton : ToolbarButton
     {
-        private EditorToolbarContent m_Content;
+        private EditorToolbarContent _content;
 
-        public Image IconElement => m_Content.iconElement;
+        public Image IconElement => _content.iconElement;
+
+        /// <summary>ラベルの TextElement (状態反映で文言を書き換えるために保持)。</summary>
+        public TextElement LabelElement { get; private set; }
 
         /// <summary>
         ///   <para>Constructor.</para>
@@ -95,7 +99,20 @@ public static class StartScenePlayButton
             : base(clickEvent)
         {
             this.AddToClassList("unity-editor-toolbar-element");
-            this.m_Content = new EditorToolbarContent((VisualElement)this, text, new EditorToolbarIcon(icon));
+            this._content = new EditorToolbarContent((VisualElement)this, text, new EditorToolbarIcon(icon));
+
+            // EditorToolbarContent が生成したラベル要素を拾っておく (自分自身は除外)
+            LabelElement = this.Q<Label>();
+            if (LabelElement == null)
+            {
+                this.Query<TextElement>().ForEach(t =>
+                {
+                    if (t != this && LabelElement == null)
+                    {
+                        LabelElement = t;
+                    }
+                });
+            }
         }
     }
 #endif
@@ -105,6 +122,39 @@ public static class StartScenePlayButton
     private const string DevelopmentBootTooltip = "DevelopmentBoot";
     private const string MainToolbarElementPath = DevelopmentBootTooltip;
     private static bool _isPlaying = false;
+    private static CustomEditorToolbarButton _liveButton;
+    private static bool? _lastAppliedState;
+
+    /// <summary>再生状態をボタンの見た目に反映する (生成済み要素を直接書き換える)。</summary>
+    private static void ApplyVisualState(CustomEditorToolbarButton element, bool isPlaying)
+    {
+        if (element == null || _lastAppliedState == isPlaying)
+        {
+            return;
+        }
+        _lastAppliedState = isPlaying;
+        element.style.backgroundColor = isPlaying ? Color.red : Color.green;
+        element.style.color = isPlaying ? Color.white : Color.black;
+        if (element.IconElement != null)
+        {
+            element.IconElement.image = (isPlaying ? StopTexture : PlayTexture) as Texture2D;
+            element.IconElement.tintColor = isPlaying ? Color.white : Color.black;
+        }
+        // 文言の実体は EditorToolbarContent が生やした子の TextElement。
+        // ルート (ToolbarButton 自身も TextElement) に文字を入れると二重描画になるため空にする
+        string label = isPlaying ? StopText : BootStartText;
+        var labelColor = isPlaying ? Color.white : Color.black;
+        element.Query<TextElement>().ForEach(t =>
+        {
+            if (t == element)
+            {
+                t.text = string.Empty;
+                return;
+            }
+            t.text = label;
+            t.style.color = labelColor;
+        });
+    }
 #else
     private static Label _bootLabel = default;
     private static ToolbarButton _playBootSceneButton = default;
@@ -123,10 +173,7 @@ public static class StartScenePlayButton
     [MainToolbarElement(MainToolbarElementPath, defaultDockPosition = MainToolbarDockPosition.Middle)]
     public static MainToolbarElement Create()
     {
-        return new MainDevelopmentBootToolButton(
-            action: OnClickButton,
-            _isPlaying
-        );
+        return new MainDevelopmentBootToolButton(action: OnClickButton);
     }
 #endif
 
@@ -143,7 +190,7 @@ public static class StartScenePlayButton
             .FirstOrDefault(s => s.enabled && s.path.Contains("Boot"));
 
         // Defaultのパスを仮で入れておく.
-        string scenePath = DEFAULT_BOOT_SCENE_PATH;
+        string scenePath = DefaultBootScenePath;
 
         if (bootScene != null)
         {
@@ -242,7 +289,14 @@ public static class StartScenePlayButton
             }
 #if UNITY_6000_3_OR_NEWER
             _isPlaying = false;
-            MainToolbar.Refresh(MainToolbarElementPath);
+            if (_liveButton != null)
+            {
+                ApplyVisualState(_liveButton, false);
+            }
+            else
+            {
+                MainToolbar.Refresh(MainToolbarElementPath); // 要素未生成時のみ (CreateElement 側で反映される)
+            }
 #else
             if (_playBootSceneButton != null
                 && _playBootSceneButton.style != null)
@@ -269,7 +323,14 @@ public static class StartScenePlayButton
         {
 #if UNITY_6000_3_OR_NEWER
             _isPlaying = true;
-            MainToolbar.Refresh(MainToolbarElementPath);
+            if (_liveButton != null)
+            {
+                ApplyVisualState(_liveButton, true);
+            }
+            else
+            {
+                MainToolbar.Refresh(MainToolbarElementPath); // 要素未生成時のみ (CreateElement 側で反映される)
+            }
 #else
             if (_bootLabel == null)
             {

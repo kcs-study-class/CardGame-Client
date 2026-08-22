@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Audio;
 
 namespace UnityFramework.Audio
@@ -22,12 +23,12 @@ namespace UnityFramework.Audio
         private const string PrefMute = "UnityFramework.SoundController.IsMuted";
 
         [Header("Backend")]
-        [SerializeField] private SoundBackendType _backendType = SoundBackendType.Unity;
+        [SerializeField, FormerlySerializedAs("_backendType")] private SoundBackendType backendType = SoundBackendType.Unity;
 
         [Header("Unity Backend Settings")]
-        [SerializeField] private AudioMixerGroup _bgmMixerGroup;
-        [SerializeField] private AudioMixerGroup _seMixerGroup;
-        [SerializeField, Min(1)] private int _sePoolSize = 8;
+        [SerializeField, FormerlySerializedAs("_bgmMixerGroup")] private AudioMixerGroup bgmMixerGroup;
+        [SerializeField, FormerlySerializedAs("_seMixerGroup")] private AudioMixerGroup seMixerGroup;
+        [SerializeField, Min(1), FormerlySerializedAs("_sePoolSize")] private int sePoolSize = 8;
 
         private ISoundBackend _backend;
 
@@ -41,7 +42,7 @@ namespace UnityFramework.Audio
             }
         }
 
-        public SoundBackendType BackendType => _backendType;
+        public SoundBackendType BackendType => backendType;
 
         public float MasterVolume { get => Backend.MasterVolume; set => Backend.MasterVolume = value; }
         public float BGMVolume { get => Backend.BGMVolume; set => Backend.BGMVolume = value; }
@@ -65,21 +66,21 @@ namespace UnityFramework.Audio
 
         private ISoundBackend CreateBackend()
         {
-            switch (_backendType)
+            switch (backendType)
             {
                 case SoundBackendType.Unity:
-                    return new UnitySoundBackend(transform, _sePoolSize, _bgmMixerGroup, _seMixerGroup);
+                    return new UnitySoundBackend(transform, sePoolSize, bgmMixerGroup, seMixerGroup);
 
                 case SoundBackendType.CriAdx:
 #if UNITY_FRAMEWORK_USE_CRI
-                    return new CriAdxSoundBackend(transform, _sePoolSize);
+                    return new CriAdxSoundBackend(transform, sePoolSize);
 #else
                     SafeLogger.LogError("[SoundController] CRI ADX backend が選択されていますが、UNITY_FRAMEWORK_USE_CRI シンボルが定義されていません。Unity backend にフォールバックします。");
-                    return new UnitySoundBackend(transform, _sePoolSize, _bgmMixerGroup, _seMixerGroup);
+                    return new UnitySoundBackend(transform, sePoolSize, bgmMixerGroup, seMixerGroup);
 #endif
 
                 default:
-                    return new UnitySoundBackend(transform, _sePoolSize, _bgmMixerGroup, _seMixerGroup);
+                    return new UnitySoundBackend(transform, sePoolSize, bgmMixerGroup, seMixerGroup);
             }
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace UnityFramework.Debugging
@@ -23,7 +24,7 @@ namespace UnityFramework.Debugging
     [DisallowMultipleComponent]
     public class DebugMenuController : SingletonMonoBehaviour<DebugMenuController>
     {
-        [SerializeField] private int _sortingOrder = 31000; // ModalCanvas(30000) より上、Fade(32767) より下
+        [SerializeField, FormerlySerializedAs("_sortingOrder")] private int sortingOrder = 31000; // ModalCanvas(30000) より上、Fade(32767) より下
 
         private const float LabelRefreshInterval = 0.25f;
         private const int LogCapacity = 100;
@@ -233,7 +234,7 @@ namespace UnityFramework.Debugging
             canvasGo.layer = 5;
             _canvas = canvasGo.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _canvas.sortingOrder = _sortingOrder;
+            _canvas.sortingOrder = sortingOrder;
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);

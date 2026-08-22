@@ -32,6 +32,7 @@
 
 - カードの通信表現は **1 byte** (`(suit << 4) | rank`、A=14、0=裏面)
 - プロトコル詳細: [CardGame-Server/Docs/API.md](https://github.com/kcs-study-class/CardGame-Server/blob/main/Docs/API.md)
+- コーディング規約 (命名規則): [Docs/CODING.md](Docs/CODING.md)
 
 ## シーン構成 / 起動フロー
 
