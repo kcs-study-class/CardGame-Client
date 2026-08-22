@@ -90,7 +90,7 @@ namespace KTC.Poker.Domain
         /// </summary>
         public static Card FromValue(byte value)
         {
-            if (!TryFromValue(value, out var card))
+            if (!TryFromValue(value, out Card card))
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "カードのbyte値として不正です。");
             }
@@ -161,7 +161,7 @@ namespace KTC.Poker.Domain
         /// <summary>"As" / "Td" 形式の2文字表記から生成する。大文字小文字は許容する。</summary>
         public static Card Parse(string text)
         {
-            if (!TryParse(text, out var card))
+            if (!TryParse(text, out Card card))
             {
                 throw new FormatException($"カード表記として解釈できません: '{text}'");
             }

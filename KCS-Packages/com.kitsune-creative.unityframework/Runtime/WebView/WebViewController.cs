@@ -23,7 +23,7 @@ namespace UnityFramework.WebViews
     public class WebViewController : SingletonMonoBehaviour<WebViewController>
     {
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
-        private WindowsWebView _impl;
+        private WindowsWebView _impl = null;
 #endif
 
         /// <summary>この環境でゲーム内表示が可能か (false の場合 OpenAsync は外部ブラウザに逃がす)。</summary>
@@ -76,7 +76,7 @@ namespace UnityFramework.WebViews
             }
             if (!_impl.IsOpen)
             {
-                return FallbackToExternalBrowser(url, _impl.LastError ?? "タイムアウト");
+                return FallbackToExternalBrowser(url, _impl.LastError != null ? _impl.LastError : "タイムアウト");
             }
             return true;
 #else

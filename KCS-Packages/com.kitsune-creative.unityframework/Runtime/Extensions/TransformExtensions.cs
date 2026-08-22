@@ -22,7 +22,7 @@ namespace UnityFramework.Extensions
         {
             for (int i = self.childCount - 1; i >= 0; i--)
             {
-                var child = self.GetChild(i).gameObject;
+                GameObject child = self.GetChild(i).gameObject;
                 if (Application.isPlaying)
                 {
                     UnityObject.Destroy(child);
@@ -36,42 +36,42 @@ namespace UnityFramework.Extensions
 
         public static void SetPositionX(this Transform self, float x)
         {
-            var pos = self.position;
+            Vector3 pos = self.position;
             pos.x = x;
             self.position = pos;
         }
 
         public static void SetPositionY(this Transform self, float y)
         {
-            var pos = self.position;
+            Vector3 pos = self.position;
             pos.y = y;
             self.position = pos;
         }
 
         public static void SetPositionZ(this Transform self, float z)
         {
-            var pos = self.position;
+            Vector3 pos = self.position;
             pos.z = z;
             self.position = pos;
         }
 
         public static void SetLocalPositionX(this Transform self, float x)
         {
-            var pos = self.localPosition;
+            Vector3 pos = self.localPosition;
             pos.x = x;
             self.localPosition = pos;
         }
 
         public static void SetLocalPositionY(this Transform self, float y)
         {
-            var pos = self.localPosition;
+            Vector3 pos = self.localPosition;
             pos.y = y;
             self.localPosition = pos;
         }
 
         public static void SetLocalPositionZ(this Transform self, float z)
         {
-            var pos = self.localPosition;
+            Vector3 pos = self.localPosition;
             pos.z = z;
             self.localPosition = pos;
         }

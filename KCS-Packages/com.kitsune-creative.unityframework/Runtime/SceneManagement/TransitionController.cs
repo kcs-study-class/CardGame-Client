@@ -20,10 +20,10 @@ namespace UnityFramework.SceneManagement
         [SerializeField] private Color _fadeColor = Color.black;
         [SerializeField] private int _sortingOrder = 32767;
 
-        private Canvas _canvas;
-        private CanvasGroup _canvasGroup;
-        private Image _fadeImage;
-        private bool _isTransitioning;
+        private Canvas _canvas = null;
+        private CanvasGroup _canvasGroup = null;
+        private Image _fadeImage = null;
+        private bool _isTransitioning = false;
 
         /// <summary>
         /// カスタムトランジション。設定されていれば <see cref="PlayOutAsync"/> / <see cref="PlayInAsync"/> がこちらを使う。
@@ -65,7 +65,7 @@ namespace UnityFramework.SceneManagement
         {
             if (_canvas != null) return;
 
-            var canvasGo = new GameObject("[TransitionCanvas]");
+            GameObject canvasGo = new GameObject("[TransitionCanvas]");
             canvasGo.transform.SetParent(transform, worldPositionStays: false);
 
             _canvas = canvasGo.AddComponent<Canvas>();
@@ -80,9 +80,9 @@ namespace UnityFramework.SceneManagement
             _canvasGroup.blocksRaycasts = false;
             _canvasGroup.interactable = false;
 
-            var imageGo = new GameObject("FadeImage");
+            GameObject imageGo = new GameObject("FadeImage");
             imageGo.transform.SetParent(canvasGo.transform, worldPositionStays: false);
-            var rt = imageGo.AddComponent<RectTransform>();
+            RectTransform rt = imageGo.AddComponent<RectTransform>();
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.zero;
@@ -195,7 +195,7 @@ namespace UnityFramework.SceneManagement
 
         private void UpdateInputBlocking()
         {
-            var blocking = _canvasGroup.alpha > 0.01f;
+            bool blocking = _canvasGroup.alpha > 0.01f;
             _canvasGroup.blocksRaycasts = blocking;
             _canvasGroup.interactable = blocking;
         }
@@ -257,7 +257,7 @@ namespace UnityFramework.SceneManagement
                 ActiveTransitionKey = null;
                 return;
             }
-            if (!_registry.TryGetValue(key, out var transition))
+            if (!_registry.TryGetValue(key, out ITransition transition))
             {
                 SafeLogger.LogWarning($"[TransitionController] '{key}' が登録されていません。先に RegisterTransition で登録してください。現在のトランジションを維持します。");
                 return;

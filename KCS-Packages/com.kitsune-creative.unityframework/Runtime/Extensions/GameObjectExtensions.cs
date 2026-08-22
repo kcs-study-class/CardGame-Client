@@ -9,7 +9,7 @@ namespace UnityFramework.Extensions
         /// </summary>
         public static T GetOrAddComponent<T>(this GameObject self) where T : Component
         {
-            return self.TryGetComponent<T>(out var component) ? component : self.AddComponent<T>();
+            return self.TryGetComponent<T>(out T component) ? component : self.AddComponent<T>();
         }
 
         /// <summary>

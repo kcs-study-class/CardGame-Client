@@ -13,7 +13,7 @@ namespace UnityFramework
         {
             get
             {
-                var src = new AwaitableCompletionSource();
+                AwaitableCompletionSource src = new AwaitableCompletionSource();
                 src.SetResult();
                 return src.Awaitable;
             }
@@ -22,7 +22,7 @@ namespace UnityFramework
         /// <summary>指定値で即座に完了する <see cref="Awaitable{T}"/> を返す。</summary>
         public static Awaitable<T> FromResult<T>(T value)
         {
-            var src = new AwaitableCompletionSource<T>();
+            AwaitableCompletionSource<T> src = new AwaitableCompletionSource<T>();
             src.SetResult(value);
             return src.Awaitable;
         }

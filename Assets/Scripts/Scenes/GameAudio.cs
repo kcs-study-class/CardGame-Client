@@ -12,8 +12,8 @@ namespace KTC.Scene
         public const string MENU_BGM = "BGM/Menu";
         public const string TABLE_BGM = "BGM/Table";
 
-        private static string CurrentBgm;
-        private static bool VolumesApplied;
+        private static string CurrentBgm = null;
+        private static bool VolumesApplied = false;
 
         /// <summary>
         /// セーブ済み音量を SoundController に反映する (起動後、最初の再生前に1回)。
@@ -26,8 +26,8 @@ namespace KTC.Scene
                 return;
             }
             VolumesApplied = true;
-            var data = SaveDataService.CreateDefault().Load();
-            var sound = SoundController.Instance;
+            PlayerData data = SaveDataService.CreateDefault().Load();
+            SoundController sound = SoundController.Instance;
             sound.MasterVolume = data.MasterVolume;
             sound.BGMVolume = data.BgmVolume;
             sound.SEVolume = data.SeVolume;

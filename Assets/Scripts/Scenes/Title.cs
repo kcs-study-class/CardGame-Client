@@ -1,6 +1,7 @@
 using System;
 using Cysharp.Text;
 using KTC.Boot;
+using UnityFramework.Boot;
 using KTC.SaveData;
 using KTC.UI;
 using LitMotion;
@@ -20,8 +21,8 @@ namespace KTC.Scene
     /// </summary>
     public class Title : MonoBehaviour
     {
-        [SerializeField, FormerlySerializedAs("pressPromptGroup")] private CanvasGroup _pressPromptGroup;
-        [SerializeField, FormerlySerializedAs("versionText")] private TMP_Text _versionText;
+        [SerializeField, FormerlySerializedAs("pressPromptGroup")] private CanvasGroup _pressPromptGroup = null;
+        [SerializeField, FormerlySerializedAs("versionText")] private TMP_Text _versionText = null;
 
         [Header("演出設定")]
         [SerializeField, Tooltip("待機中の点滅速度"), FormerlySerializedAs("blinkSpeed")]
@@ -33,13 +34,13 @@ namespace KTC.Scene
         [SerializeField, Tooltip("ローディング画面の最低表示時間 (秒)"), FormerlySerializedAs("loadingMinimumDuration")]
         private float _loadingMinimumDuration = 1.0f;
 
-        private IDisposable _anyButtonListener;
-        private MotionHandle _blinkMotion;
-        private bool _isTransitioning;
-        private bool _bootCompleted;
-        private BootPipeline _bootPipeline;
-        private BootContext _bootContext;
-        private TMP_Text _bootStatusText;
+        private IDisposable _anyButtonListener = null;
+        private MotionHandle _blinkMotion = default;
+        private bool _isTransitioning = false;
+        private bool _bootCompleted = false;
+        private BootPipeline _bootPipeline = null;
+        private BootContext _bootContext = null;
+        private TMP_Text _bootStatusText = null;
 
         private async void Start()
         {
@@ -53,7 +54,7 @@ namespace KTC.Scene
             }
             CreateBootStatusText();
             // ブート進行表示は日本語なので Noto を適用してから開始
-            var noto = await UnityFramework.Resource.ResourceController.Instance
+            TMP_FontAsset noto = await UnityFramework.Resource.ResourceController.Instance
                 .LoadAsync<TMP_FontAsset>("Fonts/NotoSansJP", destroyCancellationToken);
             _loadedNotoFont = noto != null;
             if (noto != null && _bootStatusText != null)
@@ -64,7 +65,7 @@ namespace KTC.Scene
             RunBootAsync();
         }
 
-        private bool _loadedNotoFont;
+        private bool _loadedNotoFont = false;
 
         /// <summary>ブート進行表示 (バージョン表記と同じキャンバスの右下に生成)。</summary>
         private void CreateBootStatusText()
@@ -73,16 +74,16 @@ namespace KTC.Scene
             {
                 return;
             }
-            var go = new GameObject("BootStatusText", typeof(RectTransform));
+            GameObject go = new GameObject("BootStatusText", typeof(RectTransform));
             go.layer = _versionText.gameObject.layer;
             go.transform.SetParent(_versionText.transform.parent, false);
-            var rt = (RectTransform)go.transform;
+            RectTransform rt = (RectTransform)go.transform;
             rt.anchorMin = new Vector2(1f, 0f);
             rt.anchorMax = new Vector2(1f, 0f);
             rt.pivot = new Vector2(1f, 0f);
             rt.anchoredPosition = new Vector2(-30f, 20f);
             rt.sizeDelta = new Vector2(1000f, 36f);
-            var text = go.AddComponent<TextMeshProUGUI>();
+            TextMeshProUGUI text = go.AddComponent<TextMeshProUGUI>();
             text.font = _versionText.font;
             text.fontSize = 22f;
             text.color = _versionText.color;
@@ -112,7 +113,7 @@ namespace KTC.Scene
                     SetBootStatus(ZString.Format("{0}... ({1}/{2})", name, index + 1, total));
             }
 
-            var result = await _bootPipeline.RunAsync(_bootContext, destroyCancellationToken);
+            BootResult result = await _bootPipeline.RunAsync(_bootContext, destroyCancellationToken);
             if (result.Success)
             {
                 _bootCompleted = true;
@@ -177,8 +178,8 @@ namespace KTC.Scene
             StartBlink(_confirmedBlinkSpeed); // 決定の高速点滅
 
             // ---- 初回フロー: 利用規約同意 → プレイヤー名入力 ----
-            var saveService = SaveDataService.CreateDefault();
-            var data = saveService.Load();
+            SaveDataService saveService = SaveDataService.CreateDefault();
+            PlayerData data = saveService.Load();
 
             if (!data.IsTermsAccepted)
             {
@@ -195,7 +196,7 @@ namespace KTC.Scene
 
             if (string.IsNullOrEmpty(data.PlayerName))
             {
-                var nameModal = await ModalController.Instance.OpenAsync<NameInputModal>("Modals/NameInput");
+                NameInputModal nameModal = await ModalController.Instance.OpenAsync<NameInputModal>("Modals/NameInput");
                 if (nameModal == null)
                 {
                     _isTransitioning = false;

@@ -19,7 +19,7 @@ namespace KTC.Poker.Session
     public sealed class RemoteGameSession : IGameSession
     {
         private readonly WebSocketTextClient _client;
-        private bool _disposed;
+        private bool _disposed = false;
 
         private readonly Subject<Unit> _connected = new Subject<Unit>();
         private readonly Subject<TableStateMessage> _stateUpdated = new Subject<TableStateMessage>();
@@ -88,7 +88,7 @@ namespace KTC.Poker.Session
             {
                 return;
             }
-            var envelope = JsonUtility.FromJson<GameMessageEnvelope>(json);
+            GameMessageEnvelope envelope = JsonUtility.FromJson<GameMessageEnvelope>(json);
             if (envelope == null || string.IsNullOrEmpty(envelope.type))
             {
                 return;
@@ -97,7 +97,7 @@ namespace KTC.Poker.Session
             switch (envelope.type)
             {
                 case MessageTypes.JOIN_ACK:
-                    var ack = JsonUtility.FromJson<JoinAckMessage>(envelope.payload);
+                    JoinAckMessage ack = JsonUtility.FromJson<JoinAckMessage>(envelope.payload);
                     MySeatIndex = ack.yourSeat;
                     IsConnected = true;
                     _connected.OnNext(Unit.Default);
@@ -108,7 +108,7 @@ namespace KTC.Poker.Session
                     break;
 
                 case MessageTypes.ERROR:
-                    var error = JsonUtility.FromJson<ErrorMessage>(envelope.payload);
+                    ErrorMessage error = JsonUtility.FromJson<ErrorMessage>(envelope.payload);
                     _errorOccurred.OnNext(error.message);
                     break;
             }

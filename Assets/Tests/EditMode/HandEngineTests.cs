@@ -41,7 +41,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void ブラインドと初手番_3人()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             Assert.That(engine.SmallBlindIndex, Is.EqualTo(1));
             Assert.That(engine.BigBlindIndex, Is.EqualTo(2));
             Assert.That(engine.Seats[1].TotalCommitted, Is.EqualTo(1), "SB投入");
@@ -58,7 +58,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void ヘッズアップはボタンがSBで先に行動()
         {
-            var engine = new HandEngine(1, 2, new[] { 100, 100 }, 0,
+            HandEngine engine = new HandEngine(1, 2, new[] { 100, 100 }, 0,
                 Rigged("2c 7d 3c 8d 4s 5s Jc Qd Kh"));
             Assert.That(engine.SmallBlindIndex, Is.EqualTo(0), "HUはボタンがSB");
             Assert.That(engine.BigBlindIndex, Is.EqualTo(1));
@@ -70,11 +70,11 @@ namespace KTC.Poker.Tests
         [Test]
         public void リンプ一周でBBオプション_チェックでフロップへ()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             engine.Apply(PlayerAction.Call());  // seat0
             engine.Apply(PlayerAction.Call());  // seat1 (SB +1)
             Assert.That(engine.CurrentSeatIndex, Is.EqualTo(2), "BBに手番が回る");
-            var legal = engine.GetLegalActions();
+            LegalActions legal = engine.GetLegalActions();
             Assert.That(legal.CanCheck, Is.True, "BBオプション: チェック可");
             Assert.That(legal.CanRaise, Is.True, "BBオプション: レイズ可");
             engine.Apply(PlayerAction.Check());
@@ -88,7 +88,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void BBオプションのレイズでアクション再開()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             engine.Apply(PlayerAction.Call());
             engine.Apply(PlayerAction.Call());
             engine.Apply(PlayerAction.RaiseTo(6)); // BBオプションレイズ
@@ -101,7 +101,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 全員フォールドでBBが即勝利()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             engine.Apply(PlayerAction.Fold()); // seat0
             engine.Apply(PlayerAction.Fold()); // seat1
             Assert.That(engine.IsComplete, Is.True);
@@ -115,7 +115,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void チェックで全ストリート進行しショーダウン()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             engine.Apply(PlayerAction.Call());
             engine.Apply(PlayerAction.Call());
             engine.Apply(PlayerAction.Check()); // → フロップ
@@ -143,7 +143,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void ミニマムレイズ未満は拒否()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             Assert.That(() => engine.Apply(PlayerAction.RaiseTo(3)),
                 Throws.InvalidOperationException, "最小レイズは4");
             engine.Apply(PlayerAction.RaiseTo(4)); // ちょうど最小はOK
@@ -153,7 +153,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void ミニマムレイズ幅は直前のフルレイズ幅で更新される()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             engine.Apply(PlayerAction.RaiseTo(6));  // 幅4
             Assert.That(engine.MinRaiseTo, Is.EqualTo(10));
             engine.Apply(PlayerAction.RaiseTo(10)); // 幅4
@@ -168,16 +168,16 @@ namespace KTC.Poker.Tests
         public void ショートオールインはアクションを再オープンしない()
         {
             // seat2 (BB) がスタック12でショートオールイン
-            var deck = Rigged("2c 7d Ah 3c 8d Ad 4s 5s Jc Qd Kh"); // s0: Ah,Ad
-            var engine = new HandEngine(1, 2, new[] { 100, 100, 12 }, 0, deck);
+            Deck deck = Rigged("2c 7d Ah 3c 8d Ad 4s 5s Jc Qd Kh"); // s0: Ah,Ad
+            HandEngine engine = new HandEngine(1, 2, new[] { 100, 100, 12 }, 0, deck);
             engine.Apply(PlayerAction.RaiseTo(10)); // seat0
             engine.Apply(PlayerAction.Fold());      // seat1
-            var bbLegal = engine.GetLegalActions();
+            LegalActions bbLegal = engine.GetLegalActions();
             Assert.That(bbLegal.MinRaiseTo, Is.EqualTo(12), "オールインしかできないので12");
             engine.Apply(PlayerAction.RaiseTo(12)); // ショートオールイン (幅2 < 8)
 
             Assert.That(engine.CurrentSeatIndex, Is.EqualTo(0), "seat0は差額のコール判断が必要");
-            var legal = engine.GetLegalActions();
+            LegalActions legal = engine.GetLegalActions();
             Assert.That(legal.CanRaise, Is.False, "行動済みプレイヤーは再レイズ不可");
             Assert.That(legal.CanCall, Is.True);
             Assert.That(legal.CallAmount, Is.EqualTo(2));
@@ -196,12 +196,12 @@ namespace KTC.Poker.Tests
         public void ショートオールイン後も未行動プレイヤーはレイズ可能()
         {
             // seat1 (SB, スタック13) がショートオールイン、seat2 (BB) は未行動
-            var deck = Rigged("As Kd 2h Ah Kc 3h 4c 5c 8s 9s Jd"); // s1: As,Ah / s2: Kd,Kc
-            var engine = new HandEngine(1, 2, new[] { 200, 13, 200 }, 0, deck);
+            Deck deck = Rigged("As Kd 2h Ah Kc 3h 4c 5c 8s 9s Jd"); // s1: As,Ah / s2: Kd,Kc
+            HandEngine engine = new HandEngine(1, 2, new[] { 200, 13, 200 }, 0, deck);
             engine.Apply(PlayerAction.RaiseTo(10)); // seat0
             engine.Apply(PlayerAction.RaiseTo(13)); // seat1 ショートオールイン (幅3 < 8)
 
-            var bbLegal = engine.GetLegalActions();
+            LegalActions bbLegal = engine.GetLegalActions();
             Assert.That(bbLegal.SeatIndex, Is.EqualTo(2));
             Assert.That(bbLegal.CanRaise, Is.True, "未行動プレイヤーのレイズ権は残る");
             Assert.That(bbLegal.MinRaiseTo, Is.EqualTo(21), "13 + 直前フルレイズ幅8");
@@ -226,8 +226,8 @@ namespace KTC.Poker.Tests
         {
             // スタック 10/50/100 が全員オールイン
             // s1: Ks,7d / s2: Qs,8d / s0: Ah,Ad / ボード: 2c 3c 4h 9s Th
-            var deck = Rigged("Ks Qs Ah 7d 8d Ad 2c 3c 4h 9s Th");
-            var engine = new HandEngine(1, 2, new[] { 10, 50, 100 }, 0, deck);
+            Deck deck = Rigged("Ks Qs Ah 7d 8d Ad 2c 3c 4h 9s Th");
+            HandEngine engine = new HandEngine(1, 2, new[] { 10, 50, 100 }, 0, deck);
             engine.Apply(PlayerAction.RaiseTo(10));  // seat0 オールイン (フルレイズ幅8)
             engine.Apply(PlayerAction.RaiseTo(50));  // seat1 オールイン
             engine.Apply(PlayerAction.RaiseTo(100)); // seat2 オールイン
@@ -248,8 +248,8 @@ namespace KTC.Poker.Tests
         public void スプリットポットの端数はボタン左隣に近い順()
         {
             // s0とs2がボードのロイヤルフラッシュで引き分け。SBの死に金1でポットは奇数21
-            var deck = Rigged("2c 4c 3d 2d 4d 3h As Ks Qs Js Ts");
-            var engine = new HandEngine(1, 2, new[] { 10, 10, 10 }, 0, deck);
+            Deck deck = Rigged("2c 4c 3d 2d 4d 3h As Ks Qs Js Ts");
+            HandEngine engine = new HandEngine(1, 2, new[] { 10, 10, 10 }, 0, deck);
             engine.Apply(PlayerAction.RaiseTo(10)); // seat0 オールイン
             engine.Apply(PlayerAction.Fold());      // seat1 (SB 1 が死に金)
             engine.Apply(PlayerAction.Call());      // seat2 オールイン
@@ -266,7 +266,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 不正アクションは拒否される()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             Assert.That(() => engine.Apply(PlayerAction.Check()),
                 Throws.InvalidOperationException, "BBに対してチェックは不可");
 
@@ -282,7 +282,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 終了後のアクションは拒否される()
         {
-            var engine = NewEngine3P();
+            HandEngine engine = NewEngine3P();
             engine.Apply(PlayerAction.Fold());
             engine.Apply(PlayerAction.Fold());
             Assert.That(engine.IsComplete, Is.True);

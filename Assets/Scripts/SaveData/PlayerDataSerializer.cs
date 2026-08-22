@@ -19,11 +19,11 @@ namespace KTC.SaveData
             {
                 throw new ArgumentNullException(nameof(data));
             }
-            using (var stream = new MemoryStream())
-            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+            using (MemoryStream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
             {
                 writer.Write(CURRENT_DATA_VERSION);
-                writer.Write(data.PlayerName ?? "");
+                writer.Write(data.PlayerName != null ? data.PlayerName : "");
                 writer.Write(data.Chips);
                 writer.Write(data.Level);
                 writer.Write(data.TutorialFlags);
@@ -52,8 +52,8 @@ namespace KTC.SaveData
             {
                 throw new ArgumentNullException(nameof(payload));
             }
-            using (var stream = new MemoryStream(payload))
-            using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
+            using (MemoryStream stream = new MemoryStream(payload))
+            using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
             {
                 int version = reader.ReadInt32();
                 switch (version)
@@ -87,7 +87,7 @@ namespace KTC.SaveData
 
         private static PlayerData ReadVersion2(BinaryReader reader)
         {
-            var data = ReadVersion1(reader);
+            PlayerData data = ReadVersion1(reader);
             data.Xp = reader.ReadInt64();
             data.MatchesPlayed = reader.ReadInt32();
             data.HandsPlayed = reader.ReadInt32();

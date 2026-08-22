@@ -24,7 +24,7 @@ namespace UnityFramework
             }
             lock (Lock)
             {
-                var type = typeof(T);
+                Type type = typeof(T);
                 if (Services.ContainsKey(type))
                 {
                     SafeLogger.LogWarning($"[ServiceLocator] {type.Name} は既に登録されています。RegisterOrReplace を使うか、先に Unregister してください。登録をスキップしました。");
@@ -57,7 +57,7 @@ namespace UnityFramework
         {
             lock (Lock)
             {
-                if (Services.TryGetValue(typeof(T), out var service))
+                if (Services.TryGetValue(typeof(T), out object service))
                 {
                     return (T)service;
                 }
@@ -73,7 +73,7 @@ namespace UnityFramework
         {
             lock (Lock)
             {
-                return Services.TryGetValue(typeof(T), out var service) ? (T)service : null;
+                return Services.TryGetValue(typeof(T), out object service) ? (T)service : null;
             }
         }
 
@@ -84,7 +84,7 @@ namespace UnityFramework
         {
             lock (Lock)
             {
-                if (Services.TryGetValue(typeof(T), out var obj))
+                if (Services.TryGetValue(typeof(T), out object obj))
                 {
                     service = (T)obj;
                     return true;

@@ -15,12 +15,12 @@ namespace UnityFramework.UI
     [RequireComponent(typeof(RectTransform))]
     public sealed class SafeAreaFitter : MonoBehaviour
     {
-        [SerializeField, Tooltip("左端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreLeft")] private bool _ignoreLeft;
-        [SerializeField, Tooltip("右端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreRight")] private bool _ignoreRight;
-        [SerializeField, Tooltip("上端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreTop")] private bool _ignoreTop;
-        [SerializeField, Tooltip("下端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreBottom")] private bool _ignoreBottom;
+        [SerializeField, Tooltip("左端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreLeft")] private bool _ignoreLeft = false;
+        [SerializeField, Tooltip("右端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreRight")] private bool _ignoreRight = false;
+        [SerializeField, Tooltip("上端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreTop")] private bool _ignoreTop = false;
+        [SerializeField, Tooltip("下端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreBottom")] private bool _ignoreBottom = false;
 
-        private RectTransform _rect;
+        private RectTransform _rect = null;
 
         private void OnEnable()
         {
@@ -51,10 +51,10 @@ namespace UnityFramework.UI
                 return;
             }
 
-            var anchorMin = new Vector2(
+            Vector2 anchorMin = new Vector2(
                 _ignoreLeft ? 0f : safeArea.xMin / width,
                 _ignoreBottom ? 0f : safeArea.yMin / height);
-            var anchorMax = new Vector2(
+            Vector2 anchorMax = new Vector2(
                 _ignoreRight ? 1f : safeArea.xMax / width,
                 _ignoreTop ? 1f : safeArea.yMax / height);
 

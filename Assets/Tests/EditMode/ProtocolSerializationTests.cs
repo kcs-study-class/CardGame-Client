@@ -13,8 +13,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void TableStateMessageはJSONで往復できる()
         {
-            var original = new TableStateMessage
-            {
+            TableStateMessage original = new TableStateMessage {
                 handNumber = 3,
                 street = 1,
                 communityCards = new byte[] { 14, 30, 50 },
@@ -42,7 +41,7 @@ namespace KTC.Poker.Tests
             };
 
             string json = JsonUtility.ToJson(original);
-            var restored = JsonUtility.FromJson<TableStateMessage>(json);
+            TableStateMessage restored = JsonUtility.FromJson<TableStateMessage>(json);
 
             Assert.That(restored.handNumber, Is.EqualTo(3));
             Assert.That(restored.communityCards, Is.EqualTo(new byte[] { 14, 30, 50 }));
@@ -56,18 +55,17 @@ namespace KTC.Poker.Tests
         [Test]
         public void 封筒による二重エンコードが往復できる()
         {
-            var action = new PlayerActionMessage { actionType = 3, amount = 40 };
-            var envelope = new GameMessageEnvelope
-            {
+            PlayerActionMessage action = new PlayerActionMessage { actionType = 3, amount = 40 };
+            GameMessageEnvelope envelope = new GameMessageEnvelope {
                 type = MessageTypes.PLAYER_ACTION,
                 payload = JsonUtility.ToJson(action),
             };
 
             string wire = JsonUtility.ToJson(envelope);
-            var receivedEnvelope = JsonUtility.FromJson<GameMessageEnvelope>(wire);
+            GameMessageEnvelope receivedEnvelope = JsonUtility.FromJson<GameMessageEnvelope>(wire);
             Assert.That(receivedEnvelope.type, Is.EqualTo("playerAction"));
 
-            var receivedAction = JsonUtility.FromJson<PlayerActionMessage>(receivedEnvelope.payload);
+            PlayerActionMessage receivedAction = JsonUtility.FromJson<PlayerActionMessage>(receivedEnvelope.payload);
             Assert.That(receivedAction.actionType, Is.EqualTo(3));
             Assert.That(receivedAction.amount, Is.EqualTo(40));
         }

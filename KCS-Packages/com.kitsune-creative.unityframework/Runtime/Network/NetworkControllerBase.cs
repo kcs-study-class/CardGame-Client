@@ -53,9 +53,9 @@ namespace UnityFramework.Network
         /// </summary>
         protected async Awaitable<NetworkResponse<TResponse>> SendAsync<TResponse>(string method, string path, string jsonBody, CancellationToken cancellationToken)
         {
-            var url = BuildUrl(path);
+            string url = BuildUrl(path);
 
-            using var request = new UnityWebRequest(url, method)
+            using UnityWebRequest request = new UnityWebRequest(url, method)
             {
                 downloadHandler = new DownloadHandlerBuffer(),
                 timeout = TimeoutSeconds > 0 ? TimeoutSeconds : 0,
@@ -80,7 +80,7 @@ namespace UnityFramework.Network
 
             try
             {
-                var operation = request.SendWebRequest();
+                UnityWebRequestAsyncOperation operation = request.SendWebRequest();
                 while (!operation.isDone)
                 {
                     if (cancellationToken.IsCancellationRequested)
@@ -108,7 +108,7 @@ namespace UnityFramework.Network
         {
             if (string.IsNullOrEmpty(path))
             {
-                return BaseUrl ?? string.Empty;
+                return BaseUrl != null ? BaseUrl : string.Empty;
             }
             if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -124,9 +124,9 @@ namespace UnityFramework.Network
 
         private void ApplyDefaultHeaders(UnityWebRequest request)
         {
-            var headers = DefaultHeaders;
+            IReadOnlyDictionary<string, string> headers = DefaultHeaders;
             if (headers == null) return;
-            foreach (var kv in headers)
+            foreach (KeyValuePair<string, string> kv in headers)
             {
                 request.SetRequestHeader(kv.Key, kv.Value);
             }
@@ -134,8 +134,8 @@ namespace UnityFramework.Network
 
         private NetworkResponse<TResponse> ProcessResponse<TResponse>(UnityWebRequest request)
         {
-            var statusCode = request.responseCode;
-            var rawBody = request.downloadHandler?.text;
+            long statusCode = request.responseCode;
+            string rawBody = request.downloadHandler?.text;
 
             switch (request.result)
             {
@@ -153,7 +153,7 @@ namespace UnityFramework.Network
                             return NetworkResponse<TResponse>.Success(default, statusCode, rawBody);
                         }
 
-                        var data = Deserialize<TResponse>(rawBody);
+                        TResponse data = Deserialize<TResponse>(rawBody);
                         return NetworkResponse<TResponse>.Success(data, statusCode, rawBody);
                     }
                     catch (Exception ex)
@@ -171,7 +171,7 @@ namespace UnityFramework.Network
                     return NetworkResponse<TResponse>.Error(NetworkResponseStatus.DataProcessingError, request.error, statusCode, rawBody);
 
                 default:
-                    return NetworkResponse<TResponse>.Error(NetworkResponseStatus.ConnectionError, request.error ?? "Unknown error", statusCode, rawBody);
+                    return NetworkResponse<TResponse>.Error(NetworkResponseStatus.ConnectionError, request.error != null ? request.error : "Unknown error", statusCode, rawBody);
             }
         }
     }

@@ -34,7 +34,7 @@ namespace KTC.Poker.Domain
         public int CurrentBet { get; private set; }
 
         /// <summary>直前のフルレイズ幅。ショートオールインでは更新されない。</summary>
-        private int _lastRaiseSize;
+        private int _lastRaiseSize = 0;
 
         /// <summary>手番の座席。ハンド完了時は -1。</summary>
         public int CurrentSeatIndex { get; private set; } = -1;
@@ -54,7 +54,7 @@ namespace KTC.Poker.Domain
             get
             {
                 int sum = 0;
-                foreach (var seat in _seats)
+                foreach (SeatState seat in _seats)
                 {
                     sum += seat.TotalCommitted;
                 }
@@ -76,7 +76,11 @@ namespace KTC.Poker.Domain
             {
                 throw new ArgumentOutOfRangeException(nameof(buttonIndex));
             }
-            _deck = deck ?? throw new ArgumentNullException(nameof(deck));
+            if (deck == null)
+            {
+                throw new ArgumentNullException(nameof(deck));
+            }
+            _deck = deck;
             if (deck.Remaining < stacks.Count * 2 + 5)
             {
                 throw new ArgumentException("デッキの残り枚数が不足しています。", nameof(deck));
@@ -134,7 +138,7 @@ namespace KTC.Poker.Domain
             {
                 throw new InvalidOperationException("ハンドは終了しています。");
             }
-            var seat = _seats[CurrentSeatIndex];
+            SeatState seat = _seats[CurrentSeatIndex];
             int toCall = CurrentBet - seat.StreetBet;
             int maxRaiseTo = seat.StreetBet + seat.Stack;
             // フルレイズ以降未行動なら (=HasActed が false なら) レイズ権がある。
@@ -156,8 +160,8 @@ namespace KTC.Poker.Domain
         /// <summary>現在の手番プレイヤーのアクションを適用し、ハンドを進行させる。</summary>
         public void Apply(PlayerAction action)
         {
-            var legal = GetLegalActions();
-            var seat = _seats[CurrentSeatIndex];
+            LegalActions legal = GetLegalActions();
+            SeatState seat = _seats[CurrentSeatIndex];
 
             switch (action.Type)
             {
@@ -222,7 +226,7 @@ namespace KTC.Poker.Domain
             if (raiseSize >= _lastRaiseSize)
             {
                 _lastRaiseSize = raiseSize;
-                foreach (var other in _seats)
+                foreach (SeatState other in _seats)
                 {
                     if (other != seat && !other.HasFolded && !other.IsAllIn)
                     {
@@ -246,7 +250,7 @@ namespace KTC.Poker.Domain
         private void AfterAction()
         {
             // フォールドで1人残り → 即決着
-            var survivors = _seats.Where(s => !s.HasFolded).ToList();
+            List<SeatState> survivors = _seats.Where(s => !s.HasFolded).ToList();
             if (survivors.Count == 1)
             {
                 CompleteByFold(survivors[0]);
@@ -270,7 +274,7 @@ namespace KTC.Poker.Domain
             for (int i = 0; i < _seats.Count; i++)
             {
                 index = NextSeat(index);
-                var seat = _seats[index];
+                SeatState seat = _seats[index];
                 if (seat.HasFolded || seat.IsAllIn)
                 {
                     continue;
@@ -296,7 +300,7 @@ namespace KTC.Poker.Domain
                 CurrentStreet = (Street)((int)CurrentStreet + 1);
                 DealCommunity(CurrentStreet == Street.Flop ? 3 : 1);
 
-                foreach (var seat in _seats)
+                foreach (SeatState seat in _seats)
                 {
                     seat.StreetBet = 0;
                     seat.HasActed = false;
@@ -319,9 +323,9 @@ namespace KTC.Poker.Domain
             CurrentSeatIndex = -1;
 
             // 役の評価
-            var hands = new Dictionary<int, HandValue>();
-            var cardBuffer = new List<Card>(7);
-            foreach (var seat in _seats)
+            Dictionary<int, HandValue> hands = new Dictionary<int, HandValue>();
+            List<Card> cardBuffer = new List<Card>(7);
+            foreach (SeatState seat in _seats)
             {
                 if (seat.HasFolded)
                 {
@@ -334,22 +338,22 @@ namespace KTC.Poker.Domain
             }
 
             // 投入額の階層でポットを分割 (フォールドしたプレイヤーの死に金も各階層に含める)
-            var liveLevels = _seats
+            List<int> liveLevels = _seats
                 .Where(s => !s.HasFolded)
-                .Select(s => s.TotalCommitted)
+                    .Select(s => s.TotalCommitted)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList();
 
-            var pots = new List<PotResult>();
-            var payouts = new int[_seats.Count];
+            List<PotResult> pots = new List<PotResult>();
+            int[] payouts = new int[_seats.Count];
             int allocated = 0;
             int prev = 0;
             for (int levelIndex = 0; levelIndex < liveLevels.Count; levelIndex++)
             {
                 int level = liveLevels[levelIndex];
                 int amount = 0;
-                foreach (var seat in _seats)
+                foreach (SeatState seat in _seats)
                 {
                     amount += Math.Clamp(seat.TotalCommitted - prev, 0, level - prev);
                 }
@@ -365,13 +369,13 @@ namespace KTC.Poker.Domain
                     continue;
                 }
 
-                var eligible = _seats
+                List<int> eligible = _seats
                     .Where(s => !s.HasFolded && s.TotalCommitted >= level)
                     .Select(s => s.SeatIndex)
                     .ToList();
-                var bestValue = eligible.Select(i => hands[i]).Max();
+                HandValue bestValue = eligible.Select(i => hands[i]).Max();
                 // 端数チップはボタンの左隣から近い順に配る
-                var winners = eligible
+                List<int> winners = eligible
                     .Where(i => hands[i] == bestValue)
                     .OrderBy(i => (i - ButtonIndex - 1 + _seats.Count) % _seats.Count)
                     .ToList();
@@ -385,7 +389,7 @@ namespace KTC.Poker.Domain
                 pots.Add(new PotResult(amount, eligible, winners));
             }
 
-            foreach (var seat in _seats)
+            foreach (SeatState seat in _seats)
             {
                 seat.Stack += payouts[seat.SeatIndex];
             }
@@ -402,7 +406,7 @@ namespace KTC.Poker.Domain
         private void CompleteByFold(SeatState winner)
         {
             CurrentSeatIndex = -1;
-            var payouts = new int[_seats.Count];
+            int[] payouts = new int[_seats.Count];
             payouts[winner.SeatIndex] = Pot;
             winner.Stack += Pot;
 
@@ -444,14 +448,14 @@ namespace KTC.Poker.Domain
 
         private void PostBlind(int seatIndex, int amount)
         {
-            var seat = _seats[seatIndex];
+            SeatState seat = _seats[seatIndex];
             Commit(seat, Math.Min(amount, seat.Stack));
         }
 
         private int CountActiveNonAllIn()
         {
             int count = 0;
-            foreach (var seat in _seats)
+            foreach (SeatState seat in _seats)
             {
                 if (!seat.HasFolded && !seat.IsAllIn)
                 {

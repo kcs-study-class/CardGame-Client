@@ -44,7 +44,7 @@ namespace KTC.SaveData
         /// </summary>
         public PlayerData Load()
         {
-            if (!_store.TryLoad(out var payload, out var reason))
+            if (!_store.TryLoad(out byte[] payload, out string reason))
             {
                 if (reason != null)
                 {

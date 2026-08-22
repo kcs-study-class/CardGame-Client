@@ -13,9 +13,9 @@ namespace KTC.UI
     /// </summary>
     public class NameInputModal : ModalBase
     {
-        [SerializeField, FormerlySerializedAs("nameInput")] private TMP_InputField _nameInput;
-        [SerializeField, FormerlySerializedAs("okButton")] private Button _okButton;
-        [SerializeField, FormerlySerializedAs("hintText")] private TMP_Text _hintText;
+        [SerializeField, FormerlySerializedAs("nameInput")] private TMP_InputField _nameInput = null;
+        [SerializeField, FormerlySerializedAs("okButton")] private Button _okButton = null;
+        [SerializeField, FormerlySerializedAs("hintText")] private TMP_Text _hintText = null;
 
         /// <summary>決定された名前 (正規化済み)。キャンセル不可のため閉じた時点で必ず有効。</summary>
         public string ResultName { get; private set; } = "";
@@ -30,14 +30,14 @@ namespace KTC.UI
 
         private void Refresh()
         {
-            bool valid = PlayerNameValidator.Validate(_nameInput.text, out _, out var error);
+            bool valid = PlayerNameValidator.Validate(_nameInput.text, out _, out string error);
             _okButton.interactable = valid;
             _hintText.text = valid ? "" : error;
         }
 
         private async void OnOkClicked()
         {
-            if (!PlayerNameValidator.Validate(_nameInput.text, out var normalized, out _))
+            if (!PlayerNameValidator.Validate(_nameInput.text, out string normalized, out _))
             {
                 return;
             }

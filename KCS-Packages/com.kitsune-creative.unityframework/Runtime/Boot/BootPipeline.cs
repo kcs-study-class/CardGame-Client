@@ -34,7 +34,7 @@ namespace UnityFramework.Boot
         }
 
         public static BootTaskResult Ok() => new BootTaskResult(true, "");
-        public static BootTaskResult Fail(string message) => new BootTaskResult(false, message ?? "");
+        public static BootTaskResult Fail(string message) => new BootTaskResult(false, message != null ? message : "");
     }
 
     /// <summary>ブートパイプライン全体の結果。</summary>
@@ -52,7 +52,7 @@ namespace UnityFramework.Boot
         }
 
         public static BootResult Ok() => new BootResult(true, "", "");
-        public static BootResult Fail(string taskName, string message) => new BootResult(false, taskName, message ?? "");
+        public static BootResult Fail(string taskName, string message) => new BootResult(false, taskName, message != null ? message : "");
     }
 
     /// <summary>
@@ -64,14 +64,18 @@ namespace UnityFramework.Boot
     public class BootPipeline<TContext>
     {
         private readonly IReadOnlyList<IBootTask<TContext>> _tasks;
-        private int _resumeIndex;
+        private int _resumeIndex = 0;
 
         /// <summary>タスク開始時に発火 (index, total, displayName)。進行表示用。</summary>
         public event Action<int, int, string> TaskStarted;
 
         public BootPipeline(IReadOnlyList<IBootTask<TContext>> tasks)
         {
-            _tasks = tasks ?? throw new ArgumentNullException(nameof(tasks));
+            if (tasks == null)
+            {
+                throw new ArgumentNullException(nameof(tasks));
+            }
+            _tasks = tasks;
         }
 
         public async Awaitable<BootResult> RunAsync(TContext context, CancellationToken cancellationToken)
@@ -83,7 +87,7 @@ namespace UnityFramework.Boot
 
             for (int i = _resumeIndex; i < _tasks.Count; i++)
             {
-                var task = _tasks[i];
+                IBootTask<TContext> task = _tasks[i];
                 cancellationToken.ThrowIfCancellationRequested();
                 TaskStarted?.Invoke(i, _tasks.Count, task.DisplayName);
 

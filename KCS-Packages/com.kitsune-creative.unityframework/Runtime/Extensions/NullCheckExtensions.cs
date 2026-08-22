@@ -33,7 +33,7 @@ namespace UnityFramework.Extensions
         /// null 合体演算子 (??) や is null パターンと組み合わせて使う。
         /// </summary>
         /// <example>
-        /// <code>var go = mayBeDestroyed.OrNull() ?? fallback;</code>
+        /// <code>GameObject go = mayBeDestroyed.OrNull() ?? fallback;</code>
         /// </example>
         public static T OrNull<T>(this T self) where T : UnityObject
         {

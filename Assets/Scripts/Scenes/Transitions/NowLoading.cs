@@ -13,9 +13,9 @@ namespace KTC.Scene.Transitions
     /// </summary>
     public class NowLoading : MonoBehaviour
     {
-        [SerializeField, FormerlySerializedAs("progressFill")] private Image _progressFill;
-        [SerializeField, FormerlySerializedAs("loadingText")] private TMP_Text _loadingText;
-        [SerializeField, FormerlySerializedAs("loadingCard")] private RectTransform _loadingCard;
+        [SerializeField, FormerlySerializedAs("progressFill")] private Image _progressFill = null;
+        [SerializeField, FormerlySerializedAs("loadingText")] private TMP_Text _loadingText = null;
+        [SerializeField, FormerlySerializedAs("loadingCard")] private RectTransform _loadingCard = null;
 
         [Header("演出設定")]
         [SerializeField, Tooltip("ドットが増える間隔 (秒)"), FormerlySerializedAs("dotInterval")]
@@ -29,7 +29,7 @@ namespace KTC.Scene.Transitions
 
         private static readonly string[] DOT_PATTERNS = { "Now Loading", "Now Loading.", "Now Loading..", "Now Loading..." };
 
-        private float _targetProgress;
+        private float _targetProgress = 0f;
 
         private void Start()
         {

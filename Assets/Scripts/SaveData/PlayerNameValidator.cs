@@ -14,7 +14,7 @@ namespace KTC.SaveData
         /// </summary>
         public static bool Validate(string raw, out string normalized, out string error)
         {
-            normalized = (raw ?? "").Trim();
+            normalized = (raw != null ? raw : "").Trim();
             if (normalized.Length == 0)
             {
                 error = "名前を入力してください";

@@ -48,7 +48,7 @@ public static class StartScenePlayButton
 
         internal override VisualElement CreateElement()
         {
-            var element = new CustomEditorToolbarButton(BOOT_START_TEXT, PLAY_TEXTURE as Texture2D, this._action);
+            CustomEditorToolbarButton element = new CustomEditorToolbarButton(BOOT_START_TEXT, PLAY_TEXTURE as Texture2D, this._action);
             element.AddToClassList("unity-editor-toolbar-element");
             element.tooltip = DEVELOPMENT_BOOT_TOOLTIP;
 
@@ -71,7 +71,7 @@ public static class StartScenePlayButton
     /// </summary>
     private class CustomEditorToolbarButton : ToolbarButton
     {
-        private EditorToolbarContent _content;
+        private EditorToolbarContent _content = null;
 
         public Image IconElement => _content.iconElement;
 
@@ -122,8 +122,8 @@ public static class StartScenePlayButton
     private const string DEVELOPMENT_BOOT_TOOLTIP = "DevelopmentBoot";
     private const string MAIN_TOOLBAR_ELEMENT_PATH = DEVELOPMENT_BOOT_TOOLTIP;
     private static bool IsPlaying = false;
-    private static CustomEditorToolbarButton LiveButton;
-    private static bool? LastAppliedState;
+    private static CustomEditorToolbarButton LiveButton = null;
+    private static bool? LastAppliedState = null;
 
     /// <summary>再生状態をボタンの見た目に反映する (生成済み要素を直接書き換える)。</summary>
     private static void ApplyVisualState(CustomEditorToolbarButton element, bool isPlaying)
@@ -143,7 +143,7 @@ public static class StartScenePlayButton
         // 文言の実体は EditorToolbarContent が生やした子の TextElement。
         // ルート (ToolbarButton 自身も TextElement) に文字を入れると二重描画になるため空にする
         string label = isPlaying ? STOP_TEXT : BOOT_START_TEXT;
-        var labelColor = isPlaying ? Color.white : Color.black;
+        Color labelColor = isPlaying ? Color.white : Color.black;
         element.Query<TextElement>().ForEach(t =>
         {
             if (t == element)

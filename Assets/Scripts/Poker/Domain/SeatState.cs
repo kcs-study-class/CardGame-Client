@@ -24,7 +24,7 @@ namespace KTC.Poker.Domain
         public bool IsAllIn => !HasFolded && Stack == 0 && TotalCommitted > 0;
 
         /// <summary>直近のフルレイズ以降にアクション済みかどうか (エンジン内部制御用)。</summary>
-        internal bool HasActed;
+        internal bool HasActed = false;
 
         private readonly Card[] _holeCards = new Card[2];
         public IReadOnlyList<Card> HoleCards => _holeCards;

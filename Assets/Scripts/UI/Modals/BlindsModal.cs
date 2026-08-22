@@ -16,8 +16,8 @@ namespace KTC.UI
         public static readonly (int Small, int Big)[] OPTIONS = { (1, 2), (2, 4), (5, 10), (10, 20) };
 
         [Header("選択肢 (OPTIONS と同順に割り当て)")]
-        [SerializeField, FormerlySerializedAs("optionButtons")] private Button[] _optionButtons;
-        [SerializeField, FormerlySerializedAs("closeButton")] private Button _closeButton;
+        [SerializeField, FormerlySerializedAs("optionButtons")] private Button[] _optionButtons = null;
+        [SerializeField, FormerlySerializedAs("closeButton")] private Button _closeButton = null;
 
         protected override bool CloseOnBackdropClick => true;
 
@@ -28,7 +28,7 @@ namespace KTC.UI
         {
             for (int i = 0; i < _optionButtons.Length; i++)
             {
-                var (small, big) = OPTIONS[i];
+                (int small, int big) = OPTIONS[i];
                 _optionButtons[i].onClick.AddListener(() => OnSelect(small, big));
             }
             _closeButton.onClick.AddListener(() => _ = CloseAsync());

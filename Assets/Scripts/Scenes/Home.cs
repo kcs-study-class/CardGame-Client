@@ -20,24 +20,24 @@ namespace KTC.Scene
     public class Home : MonoBehaviour, IScenePreparer
     {
         [Header("ヘッダー")]
-        [SerializeField, FormerlySerializedAs("initialText")] private TMP_Text _initialText;
-        [SerializeField, FormerlySerializedAs("nameText")] private TMP_Text _nameText;
-        [SerializeField, FormerlySerializedAs("levelText")] private TMP_Text _levelText;
-        [SerializeField, FormerlySerializedAs("chipsText")] private TMP_Text _chipsText;
-        [SerializeField, FormerlySerializedAs("statsText")] private TMP_Text _statsText;
-        [SerializeField, FormerlySerializedAs("settingsButton")] private Button _settingsButton;
+        [SerializeField, FormerlySerializedAs("initialText")] private TMP_Text _initialText = null;
+        [SerializeField, FormerlySerializedAs("nameText")] private TMP_Text _nameText = null;
+        [SerializeField, FormerlySerializedAs("levelText")] private TMP_Text _levelText = null;
+        [SerializeField, FormerlySerializedAs("chipsText")] private TMP_Text _chipsText = null;
+        [SerializeField, FormerlySerializedAs("statsText")] private TMP_Text _statsText = null;
+        [SerializeField, FormerlySerializedAs("settingsButton")] private Button _settingsButton = null;
 
         [Header("メニュー")]
-        [SerializeField, FormerlySerializedAs("cpuButton")] private Button _cpuButton;
-        [SerializeField, FormerlySerializedAs("rulesButton")] private Button _rulesButton;
-        [SerializeField, FormerlySerializedAs("closeRulesButton")] private Button _closeRulesButton;
+        [SerializeField, FormerlySerializedAs("cpuButton")] private Button _cpuButton = null;
+        [SerializeField, FormerlySerializedAs("rulesButton")] private Button _rulesButton = null;
+        [SerializeField, FormerlySerializedAs("closeRulesButton")] private Button _closeRulesButton = null;
 
         [Header("ルール表示")]
         [SerializeField, FormerlySerializedAs("rulesUrl")] private string _rulesUrl = "https://ja.wikipedia.org/wiki/テキサス・ホールデム";
 
-        private bool _prepared;
-        private bool _isTransitioning;
-        private bool _rulesOpen;
+        private bool _prepared = false;
+        private bool _isTransitioning = false;
+        private bool _rulesOpen = false;
 
         private void Awake()
         {
@@ -81,7 +81,7 @@ namespace KTC.Scene
 
         private void RefreshPlayerInfo()
         {
-            var data = SaveDataService.CreateDefault().Load();
+            PlayerData data = SaveDataService.CreateDefault().Load();
             string displayName = string.IsNullOrEmpty(data.PlayerName) ? "プレイヤー" : data.PlayerName;
             _initialText.text = displayName.Substring(0, 1);
             _nameText.text = displayName;
@@ -105,7 +105,7 @@ namespace KTC.Scene
 
         private async void OnOpenSettings()
         {
-            var modal = await ModalController.Instance.OpenAsync<SettingsModal>("Modals/Settings");
+            SettingsModal modal = await ModalController.Instance.OpenAsync<SettingsModal>("Modals/Settings");
             if (modal != null)
             {
                 await modal.WaitUntilClosedAsync();

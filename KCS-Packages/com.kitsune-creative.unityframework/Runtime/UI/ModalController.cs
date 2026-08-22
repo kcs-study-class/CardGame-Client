@@ -26,9 +26,9 @@ namespace UnityFramework.UI
         [SerializeField] private Color _dimColor = new Color(0f, 0f, 0f, 0.6f);
         [SerializeField] private Vector2 _referenceResolution = new Vector2(1920f, 1080f);
 
-        private Canvas _canvas;
-        private RectTransform _contentRoot;
-        private Image _dim;
+        private Canvas _canvas = null;
+        private RectTransform _contentRoot = null;
+        private Image _dim = null;
         private readonly List<ModalBase> _stack = new List<ModalBase>();
 
         /// <summary>開いているモーダルがあるか。</summary>
@@ -48,7 +48,7 @@ namespace UnityFramework.UI
         {
             if (_canvas != null) return;
 
-            var canvasGo = new GameObject("[ModalCanvas]");
+            GameObject canvasGo = new GameObject("[ModalCanvas]");
             canvasGo.transform.SetParent(transform, worldPositionStays: false);
             canvasGo.layer = 5;
 
@@ -56,7 +56,7 @@ namespace UnityFramework.UI
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             _canvas.sortingOrder = _sortingOrder;
 
-            var scaler = canvasGo.AddComponent<CanvasScaler>();
+            CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = _referenceResolution;
             scaler.matchWidthOrHeight = 0.5f;
@@ -65,10 +65,10 @@ namespace UnityFramework.UI
             _contentRoot = (RectTransform)canvasGo.transform;
 
             // 背景ディム (モーダル表示中の入力ブロック + クリック閉じ)
-            var dimGo = new GameObject("Dim");
+            GameObject dimGo = new GameObject("Dim");
             dimGo.transform.SetParent(_contentRoot, false);
             dimGo.layer = 5;
-            var dimRt = dimGo.AddComponent<RectTransform>();
+            RectTransform dimRt = dimGo.AddComponent<RectTransform>();
             dimRt.anchorMin = Vector2.zero;
             dimRt.anchorMax = Vector2.one;
             dimRt.offsetMin = Vector2.zero;
@@ -76,7 +76,7 @@ namespace UnityFramework.UI
             _dim = dimGo.AddComponent<Image>();
             _dim.color = _dimColor;
             _dim.raycastTarget = true;
-            var dimButton = dimGo.AddComponent<Button>();
+            Button dimButton = dimGo.AddComponent<Button>();
             dimButton.transition = Selectable.Transition.None;
             dimButton.onClick.AddListener(OnBackdropClicked);
             dimGo.SetActive(false);
@@ -90,15 +90,15 @@ namespace UnityFramework.UI
         {
             EnsureSetup();
 
-            var prefab = await ResourceController.Instance.LoadAsync<GameObject>(address, cancellationToken);
+            GameObject prefab = await ResourceController.Instance.LoadAsync<GameObject>(address, cancellationToken);
             if (prefab == null)
             {
                 SafeLogger.LogError($"[ModalController] モーダルのロードに失敗しました: {address}");
                 return null;
             }
 
-            var instanceGo = Instantiate(prefab, _contentRoot);
-            var modal = instanceGo.GetComponent<T>();
+            GameObject instanceGo = Instantiate(prefab, _contentRoot);
+            T modal = instanceGo.GetComponent<T>();
             if (modal == null)
             {
                 SafeLogger.LogError($"[ModalController] プレハブ '{address}' のルートに {typeof(T).Name} がありません。");
@@ -147,7 +147,7 @@ namespace UnityFramework.UI
 
         private void OnBackdropClicked()
         {
-            var top = Top;
+            ModalBase top = Top;
             if (top != null && top.CloseOnBackdropClick)
             {
                 _ = CloseAsync(top);
@@ -161,7 +161,7 @@ namespace UnityFramework.UI
             if (visible)
             {
                 // ディムは常に最前面モーダルの直下に置く
-                var top = _stack[_stack.Count - 1];
+                ModalBase top = _stack[_stack.Count - 1];
                 int topIndex = top.transform.GetSiblingIndex();
                 _dim.transform.SetSiblingIndex(Mathf.Max(0, topIndex - 1));
             }

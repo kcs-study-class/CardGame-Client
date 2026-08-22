@@ -11,8 +11,8 @@ namespace KTC.Poker.Tests
         /// <summary>v1 レイアウトのペイロードを手組みする (旧バージョンのセーブを再現)。</summary>
         private static byte[] BuildVersion1Payload()
         {
-            using (var stream = new MemoryStream())
-            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+            using (MemoryStream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
             {
                 writer.Write(1);            // dataVersion
                 writer.Write("旧プレイヤー");
@@ -32,7 +32,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void v1セーブはv2フィールドがデフォルト0で読める()
         {
-            var data = PlayerDataSerializer.Deserialize(BuildVersion1Payload());
+            PlayerData data = PlayerDataSerializer.Deserialize(BuildVersion1Payload());
 
             Assert.AreEqual("旧プレイヤー", data.PlayerName);
             Assert.AreEqual(5000L, data.Chips);
@@ -46,14 +46,14 @@ namespace KTC.Poker.Tests
         [Test]
         public void v2ラウンドトリップで成長と戦績が保持される()
         {
-            var data = PlayerData.CreateDefault();
+            PlayerData data = PlayerData.CreateDefault();
             data.Xp = 12345;
             data.Level = PlayerData.LevelForXp(data.Xp);
             data.MatchesPlayed = 7;
             data.HandsPlayed = 210;
             data.HandsWon = 80;
 
-            var restored = PlayerDataSerializer.Deserialize(PlayerDataSerializer.Serialize(data));
+            PlayerData restored = PlayerDataSerializer.Deserialize(PlayerDataSerializer.Serialize(data));
 
             Assert.AreEqual(12345L, restored.Xp);
             Assert.AreEqual(PlayerData.LevelForXp(12345), restored.Level);
@@ -74,7 +74,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void AddXpはレベルアップ時のみtrueを返す()
         {
-            var data = PlayerData.CreateDefault(); // Xp=0, Level=1
+            PlayerData data = PlayerData.CreateDefault(); // Xp=0, Level=1
             Assert.IsFalse(data.AddXp(50));  // 50 → Lv.1のまま
             Assert.IsTrue(data.AddXp(60));   // 110 → Lv.2
             Assert.AreEqual(2, data.Level);

@@ -26,15 +26,15 @@ namespace KTC.Poker.Tests
             Assert.That(Card.Parse("Ah").Value, Is.EqualTo((byte)30), "Ah = (1<<4)|14");
 
             // マスク定数でも分解できる
-            var kc = Card.Parse("Kc");
+            Card kc = Card.Parse("Kc");
             Assert.That(kc.Value & Card.RANK_MASK, Is.EqualTo(13));
             Assert.That((kc.Value & Card.SUIT_MASK) >> Card.SUIT_SHIFT, Is.EqualTo((int)Suit.Club));
 
             // 52枚全てラウンドトリップ
-            var deck = new Deck();
+            Deck deck = new Deck();
             while (deck.Remaining > 0)
             {
-                var card = deck.Draw();
+                Card card = deck.Draw();
                 Assert.That(Card.FromValue(card.Value), Is.EqualTo(card));
             }
         }
@@ -42,7 +42,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 不正なbyte値は復元できない()
         {
-            Assert.That(Card.TryFromValue(0, out var none), Is.True, "0 は None として許容");
+            Assert.That(Card.TryFromValue(0, out Card none), Is.True, "0 は None として許容");
             Assert.That(none.IsNone, Is.True);
             Assert.That(none.ToString(), Is.EqualTo("??"));
             Assert.That(Card.TryFromValue(1, out _), Is.False, "rank 1 は不正 (ポーカーでは A=14)");
@@ -66,7 +66,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 未公開カードは役評価に渡せない()
         {
-            var cards = new[]
+            Card[] cards = new[]
             {
                 Card.None, Card.Parse("Kd"), Card.Parse("Qh"), Card.Parse("Js"), Card.Parse("9c"),
             };
@@ -85,9 +85,9 @@ namespace KTC.Poker.Tests
         [Test]
         public void デッキは52枚すべてユニーク()
         {
-            var deck = new Deck();
+            Deck deck = new Deck();
             deck.Shuffle(new Random(1));
-            var seen = new HashSet<Card>();
+            HashSet<Card> seen = new HashSet<Card>();
             while (deck.Remaining > 0)
             {
                 Assert.That(seen.Add(deck.Draw()), Is.True, "重複カードが出た");
@@ -98,8 +98,8 @@ namespace KTC.Poker.Tests
         [Test]
         public void 同じシードなら同じ並びになる()
         {
-            var a = new Deck();
-            var b = new Deck();
+            Deck a = new Deck();
+            Deck b = new Deck();
             a.Shuffle(new Random(42));
             b.Shuffle(new Random(42));
             for (int i = 0; i < 52; i++)
@@ -111,7 +111,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 空のデッキから引くと例外()
         {
-            var deck = new Deck();
+            Deck deck = new Deck();
             for (int i = 0; i < 52; i++) deck.Draw();
             Assert.That(() => deck.Draw(), Throws.InvalidOperationException);
         }

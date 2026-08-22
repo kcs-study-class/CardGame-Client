@@ -16,19 +16,19 @@ namespace KTC.Poker.Session
         /// <summary>自分の座席。それ以外は Bot が座る。</summary>
         public int MySeat = 0;
         /// <summary>null なら StartingStack で均一。テストや途中再開用に個別指定可。</summary>
-        public int[] InitialStacks;
+        public int[] InitialStacks = null;
         /// <summary>0 なら毎回ランダム。</summary>
-        public int RandomSeed;
+        public int RandomSeed = 0;
         /// <summary>Bot の思考ルーチン。null なら CallingBot。</summary>
-        public IBotPolicy BotPolicy;
+        public IBotPolicy BotPolicy = null;
 
         // ---- デバッグ用 (本番のリモート対戦には存在しない設定) ----
 
         /// <summary>デバッグ: 全席のホールカードを公開する (リダクション無効化)。</summary>
-        public bool RevealAllHoleCards;
+        public bool RevealAllHoleCards = false;
 
         /// <summary>デバッグ/テスト: ハンド開始時のデッキを差し替える (積み込み)。null なら通常シャッフル。</summary>
-        public Func<Deck> DeckFactory;
+        public Func<Deck> DeckFactory = null;
     }
 
     /// <summary>
@@ -48,16 +48,16 @@ namespace KTC.Poker.Session
 
         private readonly int[] _tableStacks;
         private int _tableButton = -1;
-        private int _handNumber;
-        private bool _gameOver;
-        private bool _disposed;
-        private bool _dispatching;
+        private int _handNumber = 0;
+        private bool _gameOver = false;
+        private bool _disposed = false;
+        private bool _dispatching = false;
 
-        private HandEngine _engine;
+        private HandEngine _engine = null;
         private readonly List<int> _engineToTable = new List<int>();
 
         /// <summary>テスト用: ハンド開始時のデッキを差し替える (null なら通常シャッフル)。</summary>
-        internal Func<Deck> DeckFactory;
+        internal Func<Deck> DeckFactory = null;
 
         public int MySeatIndex => _config.MySeat;
         public bool IsConnected { get; private set; }
@@ -72,7 +72,11 @@ namespace KTC.Poker.Session
 
         public LocalGameSession(LocalGameSessionConfig config)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+            _config = config;
             if (config.SeatCount < 2 || config.SeatCount > 9)
             {
                 throw new ArgumentException("座席数は 2〜9 にしてください。", nameof(config));
@@ -92,7 +96,7 @@ namespace KTC.Poker.Session
                 _tableStacks[i] = config.InitialStacks != null ? config.InitialStacks[i] : config.StartingStack;
             }
             int funded = 0;
-            foreach (var stack in _tableStacks)
+            foreach (int stack in _tableStacks)
             {
                 if (stack > 0) funded++;
             }
@@ -102,7 +106,7 @@ namespace KTC.Poker.Session
             }
 
             _random = config.RandomSeed == 0 ? new Random() : new Random(config.RandomSeed);
-            _botPolicy = config.BotPolicy ?? new CallingBot();
+            _botPolicy = config.BotPolicy != null ? config.BotPolicy : new CallingBot();
         }
 
         // ---- IGameSession ----
@@ -221,7 +225,7 @@ namespace KTC.Poker.Session
             // 参加者 (チップ保有席) の確定。
             // 注意: ゲームオーバー時は直前ハンドの表示に _engineToTable が必要なので、
             // 続行が確定するまで書き換えない。
-            var participants = new List<int>();
+            List<int> participants = new List<int>();
             for (int seat = 0; seat < _config.SeatCount; seat++)
             {
                 if (_tableStacks[seat] > 0)
@@ -241,15 +245,25 @@ namespace KTC.Poker.Session
             _tableButton = NextFundedSeat(_tableButton);
             _handNumber++;
 
-            var engineStacks = new int[_engineToTable.Count];
+            int[] engineStacks = new int[_engineToTable.Count];
             for (int i = 0; i < _engineToTable.Count; i++)
             {
                 engineStacks[i] = _tableStacks[_engineToTable[i]];
             }
 
-            var deck = DeckFactory != null ? DeckFactory()
-                : _config.DeckFactory != null ? _config.DeckFactory()
-                : CreateShuffledDeck();
+            Deck deck;
+            if (DeckFactory != null)
+            {
+                deck = DeckFactory();
+            }
+            else if (_config.DeckFactory != null)
+            {
+                deck = _config.DeckFactory();
+            }
+            else
+            {
+                deck = CreateShuffledDeck();
+            }
             _engine = new HandEngine(
                 _config.SmallBlind,
                 _config.BigBlind,
@@ -263,7 +277,7 @@ namespace KTC.Poker.Session
 
         private Deck CreateShuffledDeck()
         {
-            var deck = new Deck();
+            Deck deck = new Deck();
             deck.Shuffle(_random);
             return deck;
         }
@@ -273,7 +287,7 @@ namespace KTC.Poker.Session
         {
             if (_engine.IsComplete)
             {
-                var finals = _engine.Result.FinalStacks;
+                IReadOnlyList<int> finals = _engine.Result.FinalStacks;
                 for (int i = 0; i < _engineToTable.Count; i++)
                 {
                     _tableStacks[_engineToTable[i]] = finals[i];
@@ -289,11 +303,11 @@ namespace KTC.Poker.Session
                    && EngineSeatToTable(_engine.CurrentSeatIndex) != MySeatIndex)
             {
                 int botTableSeat = EngineSeatToTable(_engine.CurrentSeatIndex);
-                var legal = _engine.GetLegalActions();
+                LegalActions legal = _engine.GetLegalActions();
                 PlayerAction botAction;
                 try
                 {
-                    var decided = _botPolicy.Decide(BuildState(botTableSeat), BuildActionRequest(legal));
+                    PlayerActionMessage decided = _botPolicy.Decide(BuildState(botTableSeat), BuildActionRequest(legal));
                     botAction = ToDomainAction(decided);
                     _engine.Apply(botAction);
                 }
@@ -364,8 +378,7 @@ namespace KTC.Poker.Session
         /// <summary>viewer の視点でリダクションした全量スナップショットを作る。</summary>
         private TableStateMessage BuildState(int viewerSeat)
         {
-            var msg = new TableStateMessage
-            {
+            TableStateMessage msg = new TableStateMessage {
                 handNumber = _handNumber,
                 yourSeat = viewerSeat,
                 isGameOver = _gameOver,
@@ -403,7 +416,7 @@ namespace KTC.Poker.Session
             msg.bigBlindSeat = EngineSeatToTable(_engine.BigBlindIndex);
             msg.isComplete = _engine.IsComplete;
 
-            var community = _engine.CommunityCards;
+            IReadOnlyList<Card> community = _engine.CommunityCards;
             msg.communityCards = new byte[community.Count];
             for (int i = 0; i < community.Count; i++)
             {
@@ -412,9 +425,9 @@ namespace KTC.Poker.Session
 
             for (int engineSeat = 0; engineSeat < _engine.Seats.Count; engineSeat++)
             {
-                var seatState = _engine.Seats[engineSeat];
+                SeatState seatState = _engine.Seats[engineSeat];
                 int tableSeat = _engineToTable[engineSeat];
-                var seatMsg = msg.seats[tableSeat];
+                SeatStateMessage seatMsg = msg.seats[tableSeat];
                 seatMsg.sittingOut = false;
                 seatMsg.stack = seatState.Stack;
                 seatMsg.streetBet = seatState.StreetBet;
@@ -466,9 +479,8 @@ namespace KTC.Poker.Session
 
         private HandResultMessage BuildResult()
         {
-            var result = _engine.Result;
-            var msg = new HandResultMessage
-            {
+            HandResult result = _engine.Result;
+            HandResultMessage msg = new HandResultMessage {
                 wentToShowdown = result.WentToShowdown,
                 payouts = new int[_config.SeatCount],
                 pots = new PotResultMessage[result.Pots.Count],
@@ -482,7 +494,7 @@ namespace KTC.Poker.Session
 
             for (int i = 0; i < result.Pots.Count; i++)
             {
-                var pot = result.Pots[i];
+                PotResult pot = result.Pots[i];
                 msg.pots[i] = new PotResultMessage
                 {
                     amount = pot.Amount,
@@ -492,9 +504,9 @@ namespace KTC.Poker.Session
             }
 
             int handIndex = 0;
-            foreach (var pair in result.ShowdownHands)
+            foreach (KeyValuePair<int, HandValue> pair in result.ShowdownHands)
             {
-                var seatState = _engine.Seats[pair.Key];
+                SeatState seatState = _engine.Seats[pair.Key];
                 msg.showdownHands[handIndex++] = new ShowdownHandMessage
                 {
                     seat = _engineToTable[pair.Key],
@@ -511,7 +523,7 @@ namespace KTC.Poker.Session
 
         private int[] MapSeats(IReadOnlyList<int> engineSeats)
         {
-            var mapped = new int[engineSeats.Count];
+            int[] mapped = new int[engineSeats.Count];
             for (int i = 0; i < engineSeats.Count; i++)
             {
                 mapped[i] = _engineToTable[engineSeats[i]];

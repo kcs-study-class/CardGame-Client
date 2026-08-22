@@ -21,12 +21,12 @@ namespace KTC.Boot
     /// </summary>
     public sealed class BootContext
     {
-        public PlayerData PlayerData;
+        public PlayerData PlayerData = null;
 
-        public bool IsLoggedIn;
+        public bool IsLoggedIn = false;
         public string AuthToken = "";
 
-        public bool MaintenanceActive;
+        public bool MaintenanceActive = false;
         public string MaintenanceMessage = "";
 
         public IReadOnlyList<string> NoticeTitles = Array.Empty<string>();

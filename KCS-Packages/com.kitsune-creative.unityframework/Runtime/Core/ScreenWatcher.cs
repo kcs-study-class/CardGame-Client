@@ -31,7 +31,7 @@ namespace UnityFramework
         /// エディタやデスクトップでノッチ端末の SafeArea を模擬するのに使う。null で実機値に戻る。
         /// 例 (横持ち iPhone 相当): <c>new Rect(0.06f, 0.06f, 0.88f, 0.94f)</c>
         /// </summary>
-        public static Rect? SimulatedSafeAreaNormalized;
+        public static Rect? SimulatedSafeAreaNormalized = null;
 
         public Vector2Int Resolution { get; private set; }
         public Rect SafeArea { get; private set; }

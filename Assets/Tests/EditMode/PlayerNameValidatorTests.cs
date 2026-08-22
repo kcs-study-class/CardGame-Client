@@ -11,7 +11,7 @@ namespace KTC.Poker.Tests
         [TestCase("A", "A", TestName = "1文字はOK")]
         public void 有効な名前(string input, string expected)
         {
-            Assert.That(PlayerNameValidator.Validate(input, out var normalized, out var error), Is.True, error);
+            Assert.That(PlayerNameValidator.Validate(input, out string normalized, out string error), Is.True, error);
             Assert.That(normalized, Is.EqualTo(expected));
         }
 
@@ -23,7 +23,7 @@ namespace KTC.Poker.Tests
         [TestCase("a\tb", TestName = "タブ入り")]
         public void 無効な名前(string input)
         {
-            Assert.That(PlayerNameValidator.Validate(input, out _, out var error), Is.False);
+            Assert.That(PlayerNameValidator.Validate(input, out _, out string error), Is.False);
             Assert.That(error, Is.Not.Null.And.Not.Empty, "表示用エラーメッセージが入る");
         }
     }

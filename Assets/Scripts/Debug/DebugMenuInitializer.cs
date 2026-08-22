@@ -27,7 +27,7 @@ namespace KTC.Scene
         {
             RegisterItems(DebugMenuController.Instance);
 
-            var hotkeyGo = new GameObject("[DebugMenuHotkey]");
+            GameObject hotkeyGo = new GameObject("[DebugMenuHotkey]");
             UnityEngine.Object.DontDestroyOnLoad(hotkeyGo);
             hotkeyGo.AddComponent<DebugMenuHotkey>();
         }
@@ -37,15 +37,15 @@ namespace KTC.Scene
             // ---- データ ----
             menu.AddLabel("データ", "所持チップ", () =>
             {
-                var data = SaveDataService.CreateDefault().Load();
+                PlayerData data = SaveDataService.CreateDefault().Load();
                 return ZString.Format("{0:N0} ({1})", data.Chips, string.IsNullOrEmpty(data.PlayerName) ? "名前未設定" : data.PlayerName);
             });
             menu.AddButton("データ", "チップ +1000", () => ModifyChips(1000));
             menu.AddButton("データ", "チップ -1000", () => ModifyChips(-1000));
             menu.AddButton("データ", "チュートリアルフラグクリア", () =>
             {
-                var service = SaveDataService.CreateDefault();
-                var data = service.Load();
+                SaveDataService service = SaveDataService.CreateDefault();
+                PlayerData data = service.Load();
                 data.TutorialFlags = 0;
                 service.Save(data);
             });
@@ -59,7 +59,7 @@ namespace KTC.Scene
             foreach (SceneId sceneId in Enum.GetValues(typeof(SceneId)))
             {
                 if (sceneId == SceneId.TransitionLoading) continue;
-                var target = sceneId;
+                SceneId target = sceneId;
                 menu.AddButton("シーン", ZString.Format("{0} へ", target), () =>
                 {
                     DebugMenuController.Instance.Close();
@@ -81,7 +81,7 @@ namespace KTC.Scene
             // ---- カード ----
             menu.AddInput("カード", "乱数シード (0=無効)",
                 () => DebugGameSettings.FixedSeed.ToString(),
-                text => DebugGameSettings.FixedSeed = int.TryParse(text, out var seed) ? seed : 0);
+                text => DebugGameSettings.FixedSeed = int.TryParse(text, out int seed) ? seed : 0);
             menu.AddInput("カード", "積み込みデッキ",
                 () => DebugGameSettings.RiggedDeckText,
                 text => DebugGameSettings.RiggedDeckText = text);
@@ -145,8 +145,8 @@ namespace KTC.Scene
 
         private static void ModifyChips(long delta)
         {
-            var service = SaveDataService.CreateDefault();
-            var data = service.Load();
+            SaveDataService service = SaveDataService.CreateDefault();
+            PlayerData data = service.Load();
             data.Chips = Math.Max(0, data.Chips + delta);
             service.Save(data);
         }
@@ -165,10 +165,10 @@ namespace KTC.Scene
             }
             try
             {
-                var cards = text.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                Card[] cards = text.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(Card.Parse)
                     .ToArray();
-                var value = HandEvaluator.Evaluate(cards);
+                HandValue value = HandEvaluator.Evaluate(cards);
                 HandEvalResult = ZString.Format("{0} {1}", value.DisplayName, value);
             }
             catch (Exception e)
@@ -183,7 +183,7 @@ namespace KTC.Scene
     {
         private void Update()
         {
-            var keyboard = Keyboard.current;
+            Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.f3Key.wasPressedThisFrame)
             {
                 DebugMenuController.Instance.Toggle();

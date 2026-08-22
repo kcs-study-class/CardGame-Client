@@ -20,8 +20,8 @@ namespace KTC.Poker.Protocol
     [Serializable]
     public class GameMessageEnvelope
     {
-        public string type;
-        public string payload;
+        public string type = null;
+        public string payload = null;
     }
 
     /// <summary>メッセージ種別 (envelope.type の値)。</summary>
@@ -40,19 +40,19 @@ namespace KTC.Poker.Protocol
     [Serializable]
     public class JoinAckMessage
     {
-        public int yourSeat;
-        public int seatCount;
-        public int smallBlind;
-        public int bigBlind;
-        public int startingStack;
+        public int yourSeat = 0;
+        public int seatCount = 0;
+        public int smallBlind = 0;
+        public int bigBlind = 0;
+        public int startingStack = 0;
     }
 
     /// <summary>サーバー → クライアント: 不正アクション等の通知 (状態は変わらない)。</summary>
     [Serializable]
     public class ErrorMessage
     {
-        public string code;
-        public string message;
+        public string code = null;
+        public string message = null;
     }
 
     /// <summary>
@@ -63,62 +63,62 @@ namespace KTC.Poker.Protocol
     [Serializable]
     public class TableStateMessage
     {
-        public int handNumber;
+        public int handNumber = 0;
         /// <summary>KTC.Poker.Domain.Street の int 値 (0=Preflop .. 4=Showdown)。</summary>
-        public int street;
+        public int street = 0;
         /// <summary>公開済みコミュニティカードのみ (0〜5枚)。</summary>
-        public byte[] communityCards;
-        public int pot;
-        public int currentBet;
+        public byte[] communityCards = null;
+        public int pot = 0;
+        public int currentBet = 0;
         /// <summary>手番の卓上座席。なければ -1。</summary>
-        public int currentSeat;
-        public int buttonSeat;
-        public int smallBlindSeat;
-        public int bigBlindSeat;
+        public int currentSeat = 0;
+        public int buttonSeat = 0;
+        public int smallBlindSeat = 0;
+        public int bigBlindSeat = 0;
         /// <summary>このメッセージの受信者の座席。</summary>
-        public int yourSeat;
-        public SeatStateMessage[] seats;
+        public int yourSeat = 0;
+        public SeatStateMessage[] seats = null;
 
         /// <summary>true のとき actionRequest が有効 (あなたの手番)。</summary>
-        public bool isYourTurn;
+        public bool isYourTurn = false;
         public ActionRequestMessage actionRequest = new ActionRequestMessage();
 
         /// <summary>true のときハンド終了済みで result が有効。</summary>
-        public bool isComplete;
+        public bool isComplete = false;
         public HandResultMessage result = new HandResultMessage();
 
         /// <summary>チップを持つ席が1つ以下になり、卓が終了した。</summary>
-        public bool isGameOver;
+        public bool isGameOver = false;
     }
 
     [Serializable]
     public class SeatStateMessage
     {
-        public int seat;
-        public int stack;
-        public int streetBet;
-        public int totalCommitted;
-        public bool folded;
-        public bool allIn;
+        public int seat = 0;
+        public int stack = 0;
+        public int streetBet = 0;
+        public int totalCommitted = 0;
+        public bool folded = false;
+        public bool allIn = false;
         /// <summary>チップが尽きて参加していない席。</summary>
-        public bool sittingOut;
+        public bool sittingOut = false;
         /// <summary>ホールカード2枚。非公開は 0 (裏面)。未配布・観戦席は [0,0]。</summary>
-        public byte[] holeCards;
+        public byte[] holeCards = null;
     }
 
     /// <summary>あなたの手番で選択可能なアクション (TableStateMessage.isYourTurn=true のとき有効)。</summary>
     [Serializable]
     public class ActionRequestMessage
     {
-        public bool canCheck;
-        public bool canCall;
-        public bool canRaise;
+        public bool canCheck = false;
+        public bool canCall = false;
+        public bool canRaise = false;
         /// <summary>コールに必要な追加チップ。</summary>
-        public int callAmount;
+        public int callAmount = 0;
         /// <summary>最小レイズ後の合計ベット額。</summary>
-        public int minRaiseTo;
+        public int minRaiseTo = 0;
         /// <summary>最大レイズ後の合計ベット額 (=オールイン)。</summary>
-        public int maxRaiseTo;
+        public int maxRaiseTo = 0;
     }
 
     /// <summary>クライアント → サーバー: 自分のアクション。</summary>
@@ -126,38 +126,38 @@ namespace KTC.Poker.Protocol
     public class PlayerActionMessage
     {
         /// <summary>KTC.Poker.Domain.ActionType の int 値 (0=Fold, 1=Check, 2=Call, 3=RaiseTo)。</summary>
-        public int actionType;
+        public int actionType = 0;
         /// <summary>RaiseTo のみ使用: そのストリートの合計ベット額。</summary>
-        public int amount;
+        public int amount = 0;
     }
 
     /// <summary>ハンド終了時の結果 (TableStateMessage.isComplete=true のとき有効)。</summary>
     [Serializable]
     public class HandResultMessage
     {
-        public bool wentToShowdown;
-        public PotResultMessage[] pots;
+        public bool wentToShowdown = false;
+        public PotResultMessage[] pots = null;
         /// <summary>卓上座席ごとの獲得額 (座席数ぶんの配列)。</summary>
-        public int[] payouts;
+        public int[] payouts = null;
         /// <summary>ショーダウン参加者の公開情報 (フォールド決着時は空)。</summary>
-        public ShowdownHandMessage[] showdownHands;
+        public ShowdownHandMessage[] showdownHands = null;
     }
 
     [Serializable]
     public class PotResultMessage
     {
-        public int amount;
-        public int[] eligibleSeats;
-        public int[] winnerSeats;
+        public int amount = 0;
+        public int[] eligibleSeats = null;
+        public int[] winnerSeats = null;
     }
 
     [Serializable]
     public class ShowdownHandMessage
     {
-        public int seat;
+        public int seat = 0;
         /// <summary>KTC.Poker.Domain.HandCategory の int 値。</summary>
-        public int category;
+        public int category = 0;
         /// <summary>公開されたホールカード。</summary>
-        public byte[] holeCards;
+        public byte[] holeCards = null;
     }
 }

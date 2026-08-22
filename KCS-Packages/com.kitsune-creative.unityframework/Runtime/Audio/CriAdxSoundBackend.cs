@@ -32,13 +32,13 @@ namespace UnityFramework.Audio
         private readonly CriAtomSource[] _sePool;
 
         private bool _isPrimaryActive = true;
-        private bool _isCrossfading;
-        private int _seNextIndex;
+        private bool _isCrossfading = false;
+        private int _seNextIndex = 0;
 
         private float _masterVolume = 1f;
         private float _bgmVolume = 1f;
         private float _seVolume = 1f;
-        private bool _isMuted;
+        private bool _isMuted = false;
 
         public float MasterVolume { get => _masterVolume; set { _masterVolume = Mathf.Clamp01(value); ApplyBgmVolume(); } }
         public float BGMVolume { get => _bgmVolume; set { _bgmVolume = Mathf.Clamp01(value); ApplyBgmVolume(); } }
@@ -62,9 +62,9 @@ namespace UnityFramework.Audio
 
         private CriAtomSource CreateSource(string objectName, bool loop)
         {
-            var go = new GameObject(objectName);
+            GameObject go = new GameObject(objectName);
             go.transform.SetParent(_root, worldPositionStays: false);
-            var src = go.AddComponent<CriAtomSource>();
+            CriAtomSource src = go.AddComponent<CriAtomSource>();
             src.loop = loop;
             src.playOnStart = false;
             src.volume = 0f;
@@ -73,7 +73,7 @@ namespace UnityFramework.Audio
 
         public async Awaitable PlayBGMAsync(string id, float fadeTime, CancellationToken cancellationToken)
         {
-            if (!TrySplit(id, out var sheet, out var cue))
+            if (!TrySplit(id, out string sheet, out string cue))
             {
                 SafeLogger.LogError($"[CriAdxSoundBackend] id は 'Sheet/Cue' 形式で指定してください: {id}");
                 return;
@@ -87,7 +87,7 @@ namespace UnityFramework.Audio
 
             if (fadeTime <= 0f)
             {
-                var src = CurrentBgm();
+                CriAtomSource src = CurrentBgm();
                 src.Stop();
                 src.cueSheet = sheet;
                 src.cueName = cue;
@@ -99,8 +99,8 @@ namespace UnityFramework.Audio
             _isCrossfading = true;
             try
             {
-                var fadeOut = CurrentBgm();
-                var fadeIn = OtherBgm();
+                CriAtomSource fadeOut = CurrentBgm();
+                CriAtomSource fadeIn = OtherBgm();
 
                 fadeIn.cueSheet = sheet;
                 fadeIn.cueName = cue;
@@ -140,7 +140,7 @@ namespace UnityFramework.Audio
 
         public async Awaitable FadeOutBGMAsync(float fadeTime, CancellationToken cancellationToken)
         {
-            var src = CurrentBgm();
+            CriAtomSource src = CurrentBgm();
             if (src.status != CriAtomSource.Status.Playing) return;
 
             float start = src.volume;
@@ -176,13 +176,13 @@ namespace UnityFramework.Audio
 
         public void PlaySE(string id, float volumeScale, float pitch)
         {
-            if (!TrySplit(id, out var sheet, out var cue))
+            if (!TrySplit(id, out string sheet, out string cue))
             {
                 SafeLogger.LogError($"[CriAdxSoundBackend] id は 'Sheet/Cue' 形式で指定してください: {id}");
                 return;
             }
 
-            var source = _sePool[_seNextIndex];
+            CriAtomSource source = _sePool[_seNextIndex];
             _seNextIndex = (_seNextIndex + 1) % _sePool.Length;
 
             source.Stop();
@@ -196,14 +196,14 @@ namespace UnityFramework.Audio
 
         public void StopAllSE()
         {
-            foreach (var s in _sePool) s.Stop();
+            foreach (CriAtomSource s in _sePool) s.Stop();
         }
 
         public Awaitable PreloadAsync(string id, CancellationToken cancellationToken)
         {
             // CRI ADX は Cue Sheet (.acb) 単位でロードする設計のため、個別 Cue の preload は不要。
             // Cue Sheet 自体のロード/解放は利用側で `CriAtom.AddCueSheet` / `RemoveCueSheet` を呼び出す想定。
-            var source = new AwaitableCompletionSource();
+            AwaitableCompletionSource source = new AwaitableCompletionSource();
             source.SetResult();
             return source.Awaitable;
         }
@@ -224,7 +224,7 @@ namespace UnityFramework.Audio
             sheet = null;
             cue = null;
             if (string.IsNullOrEmpty(id)) return false;
-            var idx = id.IndexOf(SHEET_CUE_SEPARATOR);
+            int idx = id.IndexOf(SHEET_CUE_SEPARATOR);
             if (idx <= 0 || idx >= id.Length - 1) return false;
             sheet = id.Substring(0, idx);
             cue = id.Substring(idx + 1);
