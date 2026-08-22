@@ -794,7 +794,8 @@ namespace KTC.Scene
             {
                 foreach (int winner in pot.winnerSeats)
                 {
-                    var fly = QuickUi.MakeText("PotFly", canvas.transform, potOrigin,
+                    // 親は HUD と同じコンテナ (SafeArea) にする — 席パネルと同じ座標系で飛ばすため
+                    var fly = QuickUi.MakeText("PotFly", potText.rectTransform.parent, potOrigin,
                         new Vector2(300f, 44f), 34f,
                         ZString.Format("+{0}", pot.amount / pot.winnerSeats.Length), _font);
                     fly.color = QuickUi.Accent;
