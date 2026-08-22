@@ -18,7 +18,7 @@ namespace KTC.Scene
     /// リザルト画面。UI はシーン配置。順位行は _rowTemplate を複製して並べる
     /// (テンプレート自体をエディタで調整できる)。
     /// </summary>
-    public class Result : MonoBehaviour, IScenePreparer
+    public class Result : SceneBase
     {
         [SerializeField, FormerlySerializedAs("myRankText")] private TMP_Text _myRankText = null;
         [SerializeField, FormerlySerializedAs("profitText")] private TMP_Text _profitText = null;
@@ -27,21 +27,14 @@ namespace KTC.Scene
         [SerializeField, FormerlySerializedAs("rowTemplate")] private RectTransform _rowTemplate = null; // 非アクティブで配置しておく
         [SerializeField, FormerlySerializedAs("homeButton")] private Button _homeButton = null;
 
-        private bool _isTransitioning = false;
-        private bool _prepared = false;
 
         private void Awake()
         {
             _homeButton.onClick.AddListener(OnGoHome);
         }
 
-        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
+        protected override async Awaitable OnPrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
-            if (_prepared)
-            {
-                return;
-            }
-            _prepared = true;
             if (GameLaunch.LastFinalState != null)
             {
                 BuildRanking();
@@ -50,7 +43,7 @@ namespace KTC.Scene
             await Awaitables.Completed;
         }
 
-        private async void Start()
+        protected override async Awaitable OnStartAsync()
         {
             // 結果なしで直接開かれた場合はホームへ退避
             if (GameLaunch.LastFinalState == null)
@@ -58,11 +51,7 @@ namespace KTC.Scene
                 await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Home, SceneIdExtensions.ToSceneName);
                 return;
             }
-            await Awaitable.NextFrameAsync(destroyCancellationToken);
-            if (!_prepared)
-            {
-                await PrepareAsync(destroyCancellationToken);
-            }
+            await base.OnStartAsync();
         }
 
         private void BuildRanking()
@@ -159,11 +148,10 @@ namespace KTC.Scene
 
         private async void OnGoHome()
         {
-            if (_isTransitioning)
+            if (!TryBeginTransition())
             {
                 return;
             }
-            _isTransitioning = true;
             GameLaunch.ClearResult();
             await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Home, SceneIdExtensions.ToSceneName);
         }

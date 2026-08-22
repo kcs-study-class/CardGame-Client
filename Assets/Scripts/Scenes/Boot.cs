@@ -1,13 +1,14 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityFramework;
 using UnityFramework.Resource;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
 
 namespace KTC.Scene
 {
-    public class Boot : MonoBehaviour
+    public class Boot : MonoBehaviourBase
     {
         private void Awake()
         {

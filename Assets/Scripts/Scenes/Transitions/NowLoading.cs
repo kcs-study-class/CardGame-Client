@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using UnityFramework;
 using UnityFramework.SceneManagement;
 
 namespace KTC.Scene.Transitions
@@ -11,7 +12,7 @@ namespace KTC.Scene.Transitions
     /// TransitionLoading シーンのローディング演出。
     /// <see cref="SceneController.SceneLoadProgress"/> を購読してバーとテキストを更新する。
     /// </summary>
-    public class NowLoading : MonoBehaviour
+    public class NowLoading : MonoBehaviourBase
     {
         [SerializeField, FormerlySerializedAs("progressFill")] private Image _progressFill = null;
         [SerializeField, FormerlySerializedAs("loadingText")] private TMP_Text _loadingText = null;

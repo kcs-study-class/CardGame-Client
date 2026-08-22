@@ -1,5 +1,32 @@
 # コア機能
 
+## MonoBehaviourBase
+
+プロジェクト内の MonoBehaviour はすべてこれを継承する (`SingletonMonoBehaviour<T>` / `ModalBase` / `SafeAreaFitter` も継承済み)。
+Unity のライフサイクルメソッドは横取りしないので、派生側は通常どおり `Awake` / `Start` / `OnDestroy` を書ける。
+
+```csharp
+public class Enemy : MonoBehaviourBase
+{
+    private void Update()
+    {
+        CachedTransform.position += Vector3.forward * Time.deltaTime; // transform のキャッシュ
+    }
+
+    private void Awake()
+    {
+        Rigidbody body = GetOrAddComponent<Rigidbody>();
+        Log("spawned"); // "[Enemy] spawned" (SafeLogger 経由、リリースで除去)
+    }
+}
+```
+
+| メンバー | 説明 |
+|---|---|
+| `CachedTransform` / `CachedRectTransform` | `transform` のキャッシュ (RectTransform 版は UI 以外 null) |
+| `GetOrAddComponent<T>()` | あれば取得、無ければ追加 |
+| `Log` / `LogWarning` / `LogError` | クラス名プレフィックス付きログ |
+
 ## SingletonMonoBehaviour\<T\>
 
 名前空間: `UnityFramework`

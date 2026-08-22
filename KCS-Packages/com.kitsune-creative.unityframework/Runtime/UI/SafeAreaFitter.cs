@@ -13,7 +13,7 @@ namespace UnityFramework.UI
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
-    public sealed class SafeAreaFitter : MonoBehaviour
+    public sealed class SafeAreaFitter : MonoBehaviourBase
     {
         [SerializeField, Tooltip("左端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreLeft")] private bool _ignoreLeft = false;
         [SerializeField, Tooltip("右端の SafeArea を無視して画面端まで使う"), FormerlySerializedAs("ignoreRight")] private bool _ignoreRight = false;
@@ -31,9 +31,11 @@ namespace UnityFramework.UI
 
         private void OnDisable()
         {
-            if (ScreenWatcher.HasInstance)
+            // アプリ終了中は Instance が null を返すため、取得してから null チェックする
+            ScreenWatcher watcher = ScreenWatcher.HasInstance ? ScreenWatcher.Instance : null;
+            if (watcher != null)
             {
-                ScreenWatcher.Instance.SafeAreaChanged -= OnSafeAreaChanged;
+                watcher.SafeAreaChanged -= OnSafeAreaChanged;
             }
         }
 

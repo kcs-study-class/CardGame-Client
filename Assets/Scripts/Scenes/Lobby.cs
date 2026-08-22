@@ -17,7 +17,7 @@ namespace KTC.Scene
     /// ロビー (CPU対戦の卓設定)。UI はシーン配置 (エディタで調整する)。
     /// _seatButtons / _stackButtons は選択肢の値順 (2/4/6, 100/200/500) に並べてシーンで割り当てる。
     /// </summary>
-    public class Lobby : MonoBehaviour, IScenePreparer
+    public class Lobby : SceneBase
     {
         [Header("選択肢 (値順に割り当て)")]
         [SerializeField, FormerlySerializedAs("seatButtons")] private Button[] _seatButtons = null; // 2人 / 4人 / 6人
@@ -42,8 +42,6 @@ namespace KTC.Scene
         private int _selectedSmallBlind = 1;
         private int _selectedBigBlind = 2;
         private long _chips = 0;
-        private bool _isTransitioning = false;
-        private bool _prepared = false;
         private bool _blindsModalOpen = false;
 
         private void Awake()
@@ -63,13 +61,8 @@ namespace KTC.Scene
             _backButton.onClick.AddListener(OnBack);
         }
 
-        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
+        protected override async Awaitable OnPrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
-            if (_prepared)
-            {
-                return;
-            }
-            _prepared = true;
             _chips = SaveDataService.CreateDefault().Load().Chips;
 
             // 現在の選択がバイインできない場合は払える最大の選択肢へ落とす
@@ -87,15 +80,6 @@ namespace KTC.Scene
             RefreshSelection();
             GameAudio.PlayBgm(GameAudio.MENU_BGM);
             await Awaitables.Completed;
-        }
-
-        private async void Start()
-        {
-            await Awaitable.NextFrameAsync(destroyCancellationToken);
-            if (!_prepared)
-            {
-                await PrepareAsync(destroyCancellationToken);
-            }
         }
 
         private void RefreshSelection()
@@ -129,7 +113,7 @@ namespace KTC.Scene
         /// <summary>ブラインド選択モーダルを開き、閉じられたら選択を反映する。</summary>
         private async void OnOpenBlinds()
         {
-            if (_isTransitioning || _blindsModalOpen)
+            if (IsTransitioning || _blindsModalOpen)
             {
                 return;
             }
@@ -155,7 +139,7 @@ namespace KTC.Scene
 
         private async void OnStartBattle()
         {
-            if (_isTransitioning)
+            if (!TryBeginTransition())
             {
                 return;
             }
@@ -163,7 +147,6 @@ namespace KTC.Scene
             if (GameLaunch.UseRemoteSession)
             {
                 // サーバー対戦ではチップ管理 (バイイン/精算) はサーバーの責務。ローカルセーブは触らない
-                _isTransitioning = true;
             }
             else
             {
@@ -176,7 +159,6 @@ namespace KTC.Scene
                     RefreshSelection();
                     return;
                 }
-                _isTransitioning = true;
                 data.Chips -= _selectedStack;
                 saveService.Save(data);
                 GameLaunch.ChipsAtStake = true;
@@ -207,11 +189,10 @@ namespace KTC.Scene
 
         private async void OnBack()
         {
-            if (_isTransitioning)
+            if (!TryBeginTransition())
             {
                 return;
             }
-            _isTransitioning = true;
             await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Home, SceneIdExtensions.ToSceneName);
         }
     }

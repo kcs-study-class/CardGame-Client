@@ -9,7 +9,7 @@ namespace UnityFramework.UI
     /// <see cref="CloseAsync"/> で閉じる。開閉演出は OnOpenAsync / OnCloseAsync を
     /// オーバーライドして実装する (既定は演出なし)。
     /// </summary>
-    public abstract class ModalBase : MonoBehaviour
+    public abstract class ModalBase : MonoBehaviourBase
     {
         private ModalController _owner = null;
         private AwaitableCompletionSource _closedSource = null;

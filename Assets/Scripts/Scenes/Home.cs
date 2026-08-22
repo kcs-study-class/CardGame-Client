@@ -17,7 +17,7 @@ namespace KTC.Scene
     /// <summary>
     /// ホーム画面。UI はシーン配置 (エディタで調整する)。このクラスは参照とロジックのみ持つ。
     /// </summary>
-    public class Home : MonoBehaviour, IScenePreparer
+    public class Home : SceneBase
     {
         [Header("ヘッダー")]
         [SerializeField, FormerlySerializedAs("initialText")] private TMP_Text _initialText = null;
@@ -35,8 +35,6 @@ namespace KTC.Scene
         [Header("ルール表示")]
         [SerializeField, FormerlySerializedAs("rulesUrl")] private string _rulesUrl = "https://ja.wikipedia.org/wiki/テキサス・ホールデム";
 
-        private bool _prepared = false;
-        private bool _isTransitioning = false;
         private bool _rulesOpen = false;
 
         private void Awake()
@@ -48,27 +46,12 @@ namespace KTC.Scene
             _closeRulesButton.gameObject.SetActive(false);
         }
 
-        /// <summary>フェードインで見せる前の準備 (SceneController から呼ばれる)。</summary>
-        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
+        /// <summary>フェードインで見せる前の準備 (SceneBase 経由で SceneController から呼ばれる)。</summary>
+        protected override async Awaitable OnPrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
-            if (_prepared)
-            {
-                return;
-            }
-            _prepared = true;
             RefreshPlayerInfo();
             GameAudio.PlayBgm(GameAudio.MENU_BGM);
             await Awaitables.Completed;
-        }
-
-        private async void Start()
-        {
-            // SceneController を経由しない直接再生 (エディタ) 用フォールバック
-            await Awaitable.NextFrameAsync(destroyCancellationToken);
-            if (!_prepared)
-            {
-                await PrepareAsync(destroyCancellationToken);
-            }
         }
 
         private void Update()
@@ -95,11 +78,10 @@ namespace KTC.Scene
 
         private async void OnCpuBattle()
         {
-            if (_isTransitioning)
+            if (!TryBeginTransition())
             {
                 return;
             }
-            _isTransitioning = true;
             await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Lobby, SceneIdExtensions.ToSceneName);
         }
 

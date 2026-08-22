@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using KTC.Poker.Domain;
 using TMPro;
 using UnityEngine;
+using UnityFramework;
 using UnityEngine.Serialization;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -13,7 +14,7 @@ namespace KTC.Scene
     /// InGame シーンの1人デバッグ卓。全席を自分で操作して HandEngine を検証する。
     /// UI は実行時に自動生成する (デバッグ用途のため、シーンには Canvas とこのコンポーネントだけ)。
     /// </summary>
-    public class DebugTable : MonoBehaviour
+    public class DebugTable : MonoBehaviourBase
     {
         [SerializeField, FormerlySerializedAs("canvas")] private Canvas _canvas = null;
 

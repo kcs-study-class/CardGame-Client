@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
+using UnityFramework;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
 using UnityFramework.UI;
@@ -19,7 +20,7 @@ namespace KTC.Scene
     /// <summary>
     /// Title 画面 (仮実装)。任意ボタン入力で TransitionLoading を挟んで Home へ遷移する。
     /// </summary>
-    public class Title : MonoBehaviour
+    public class Title : SceneBase
     {
         [SerializeField, FormerlySerializedAs("pressPromptGroup")] private CanvasGroup _pressPromptGroup = null;
         [SerializeField, FormerlySerializedAs("versionText")] private TMP_Text _versionText = null;
@@ -36,13 +37,17 @@ namespace KTC.Scene
 
         private IDisposable _anyButtonListener = null;
         private MotionHandle _blinkMotion = default;
-        private bool _isTransitioning = false;
         private bool _bootCompleted = false;
         private BootPipeline _bootPipeline = null;
         private BootContext _bootContext = null;
         private TMP_Text _bootStatusText = null;
 
-        private async void Start()
+        protected override Awaitable OnPrepareAsync(System.Threading.CancellationToken cancellationToken)
+        {
+            return Awaitables.Completed; // タイトルの準備は OnStartAsync のブート処理で行う
+        }
+
+        protected override async Awaitable OnStartAsync()
         {
             if (_versionText != null)
             {
@@ -170,11 +175,10 @@ namespace KTC.Scene
 
         private async void OnAnyButtonPressed()
         {
-            if (_isTransitioning)
+            if (!TryBeginTransition())
             {
                 return;
             }
-            _isTransitioning = true;
             StartBlink(_confirmedBlinkSpeed); // 決定の高速点滅
 
             // ---- 初回フロー: 利用規約同意 → プレイヤー名入力 ----
@@ -186,7 +190,7 @@ namespace KTC.Scene
                 TermsModal terms = await ModalController.Instance.OpenAsync<TermsModal>("Modals/Terms");
                 if (terms == null)
                 {
-                    _isTransitioning = false; // ロード失敗時はタイトルに留まる (ログは ModalController 側)
+                    CancelTransition(); // ロード失敗時はタイトルに留まる (ログは ModalController 側)
                     return;
                 }
                 await terms.WaitUntilClosedAsync();
@@ -199,7 +203,7 @@ namespace KTC.Scene
                 NameInputModal nameModal = await ModalController.Instance.OpenAsync<NameInputModal>("Modals/NameInput");
                 if (nameModal == null)
                 {
-                    _isTransitioning = false;
+                    CancelTransition();
                     return;
                 }
                 await nameModal.WaitUntilClosedAsync();

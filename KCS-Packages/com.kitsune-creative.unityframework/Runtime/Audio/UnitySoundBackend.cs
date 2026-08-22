@@ -399,7 +399,12 @@ namespace UnityFramework.Audio
         {
             if (!string.IsNullOrEmpty(_currentBgmAddress) && _currentBgmAddress != newAddress)
             {
-                ResourceController.Instance.Release(_currentBgmAddress);
+                // アプリ終了中 (ResourceController 破棄後) は Instance が null を返すため null チェックする
+                ResourceController resources = ResourceController.HasInstance ? ResourceController.Instance : null;
+                if (resources != null)
+                {
+                    resources.Release(_currentBgmAddress);
+                }
                 _currentBgmAddress = null;
             }
             StopIntroIfActive();
