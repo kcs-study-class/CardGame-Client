@@ -3,6 +3,7 @@ using KTC.Poker.Session;
 using KTC.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework;
 using UnityFramework.SceneManagement;
@@ -13,27 +14,27 @@ namespace KTC.Scene
 {
     /// <summary>
     /// ロビー (CPU対戦の卓設定)。UI はシーン配置 (エディタで調整する)。
-    /// seatButtons / stackButtons は選択肢の値順 (2/4/6, 100/200/500) に並べてシーンで割り当てる。
+    /// _seatButtons / _stackButtons は選択肢の値順 (2/4/6, 100/200/500) に並べてシーンで割り当てる。
     /// </summary>
     public class Lobby : MonoBehaviour, IScenePreparer
     {
         [Header("選択肢 (値順に割り当て)")]
-        [SerializeField] private Button[] seatButtons;   // 2人 / 4人 / 6人
-        [SerializeField] private Button[] stackButtons;  // 100 / 200 / 500
+        [SerializeField, FormerlySerializedAs("seatButtons")] private Button[] _seatButtons;   // 2人 / 4人 / 6人
+        [SerializeField, FormerlySerializedAs("stackButtons")] private Button[] _stackButtons;  // 100 / 200 / 500
 
         [Header("ブラインド")]
-        [SerializeField] private Button blindsButton;
-        [SerializeField] private TextMeshProUGUI blindsLabel;
+        [SerializeField, FormerlySerializedAs("blindsButton")] private Button _blindsButton;
+        [SerializeField, FormerlySerializedAs("blindsLabel")] private TextMeshProUGUI _blindsLabel;
 
         [Header("操作")]
-        [SerializeField] private Button startButton;
-        [SerializeField] private Button backButton;
+        [SerializeField, FormerlySerializedAs("startButton")] private Button _startButton;
+        [SerializeField, FormerlySerializedAs("backButton")] private Button _backButton;
 
         [Header("所持チップ表示")]
-        [SerializeField] private TMP_Text chipsText;
+        [SerializeField, FormerlySerializedAs("chipsText")] private TMP_Text _chipsText;
 
-        private static readonly int[] SeatOptions = { 2, 4, 6 };
-        private static readonly int[] StackOptions = { 100, 200, 500 };
+        private static readonly int[] SEAT_OPTIONS = { 2, 4, 6 };
+        private static readonly int[] STACK_OPTIONS = { 100, 200, 500 };
 
         private int _selectedSeats = 4;
         private int _selectedStack = 200;
@@ -46,19 +47,19 @@ namespace KTC.Scene
 
         private void Awake()
         {
-            for (int i = 0; i < seatButtons.Length; i++)
+            for (int i = 0; i < _seatButtons.Length; i++)
             {
-                int seats = SeatOptions[i];
-                seatButtons[i].onClick.AddListener(() => { _selectedSeats = seats; RefreshSelection(); });
+                int seats = SEAT_OPTIONS[i];
+                _seatButtons[i].onClick.AddListener(() => { _selectedSeats = seats; RefreshSelection(); });
             }
-            for (int i = 0; i < stackButtons.Length; i++)
+            for (int i = 0; i < _stackButtons.Length; i++)
             {
-                int stack = StackOptions[i];
-                stackButtons[i].onClick.AddListener(() => { _selectedStack = stack; RefreshSelection(); });
+                int stack = STACK_OPTIONS[i];
+                _stackButtons[i].onClick.AddListener(() => { _selectedStack = stack; RefreshSelection(); });
             }
-            blindsButton.onClick.AddListener(OnOpenBlinds);
-            startButton.onClick.AddListener(OnStartBattle);
-            backButton.onClick.AddListener(OnBack);
+            _blindsButton.onClick.AddListener(OnOpenBlinds);
+            _startButton.onClick.AddListener(OnStartBattle);
+            _backButton.onClick.AddListener(OnBack);
         }
 
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
@@ -73,17 +74,17 @@ namespace KTC.Scene
             // 現在の選択がバイインできない場合は払える最大の選択肢へ落とす
             if (_selectedStack > _chips)
             {
-                for (int i = StackOptions.Length - 1; i >= 0; i--)
+                for (int i = STACK_OPTIONS.Length - 1; i >= 0; i--)
                 {
-                    if (StackOptions[i] <= _chips)
+                    if (STACK_OPTIONS[i] <= _chips)
                     {
-                        _selectedStack = StackOptions[i];
+                        _selectedStack = STACK_OPTIONS[i];
                         break;
                     }
                 }
             }
             RefreshSelection();
-            GameAudio.PlayBgm(GameAudio.MenuBgm);
+            GameAudio.PlayBgm(GameAudio.MENU_BGM);
             await Awaitables.Completed;
         }
 
@@ -98,25 +99,25 @@ namespace KTC.Scene
 
         private void RefreshSelection()
         {
-            for (int i = 0; i < seatButtons.Length; i++)
+            for (int i = 0; i < _seatButtons.Length; i++)
             {
-                ApplySelected(seatButtons[i], SeatOptions[i] == _selectedSeats);
+                ApplySelected(_seatButtons[i], SEAT_OPTIONS[i] == _selectedSeats);
             }
-            for (int i = 0; i < stackButtons.Length; i++)
+            for (int i = 0; i < _stackButtons.Length; i++)
             {
-                bool affordable = StackOptions[i] <= _chips;
-                stackButtons[i].interactable = affordable;
-                ApplySelected(stackButtons[i], affordable && StackOptions[i] == _selectedStack);
+                bool affordable = STACK_OPTIONS[i] <= _chips;
+                _stackButtons[i].interactable = affordable;
+                ApplySelected(_stackButtons[i], affordable && STACK_OPTIONS[i] == _selectedStack);
             }
-            blindsLabel.text = ZString.Format("SB {0} / BB {1}", _selectedSmallBlind, _selectedBigBlind);
+            _blindsLabel.text = ZString.Format("SB {0} / BB {1}", _selectedSmallBlind, _selectedBigBlind);
 
             // 初期スタック分をバイインとして所持チップから支払う
             bool canStart = _selectedStack <= _chips;
-            startButton.interactable = canStart;
-            chipsText.text = canStart
+            _startButton.interactable = canStart;
+            _chipsText.text = canStart
                 ? ZString.Format("所持チップ: {0:N0} (バイイン {1})", _chips, _selectedStack)
                 : ZString.Format("所持チップ: {0:N0} — チップが足りません", _chips);
-            chipsText.color = canStart ? QuickUi.Text : QuickUi.Warn;
+            _chipsText.color = canStart ? QuickUi.Text : QuickUi.Warn;
         }
 
         private static void ApplySelected(Button button, bool selected)

@@ -9,11 +9,11 @@ namespace KTC.Scene
     /// </summary>
     public static class GameAudio
     {
-        public const string MenuBgm = "BGM/Menu";
-        public const string TableBgm = "BGM/Table";
+        public const string MENU_BGM = "BGM/Menu";
+        public const string TABLE_BGM = "BGM/Table";
 
-        private static string _currentBgm;
-        private static bool _volumesApplied;
+        private static string CurrentBgm;
+        private static bool VolumesApplied;
 
         /// <summary>
         /// セーブ済み音量を SoundController に反映する (起動後、最初の再生前に1回)。
@@ -21,11 +21,11 @@ namespace KTC.Scene
         /// </summary>
         public static void ApplySavedVolumes()
         {
-            if (_volumesApplied)
+            if (VolumesApplied)
             {
                 return;
             }
-            _volumesApplied = true;
+            VolumesApplied = true;
             var data = SaveDataService.CreateDefault().Load();
             var sound = SoundController.Instance;
             sound.MasterVolume = data.MasterVolume;
@@ -37,11 +37,11 @@ namespace KTC.Scene
         public static void PlayBgm(string id, float fadeTime = 0.8f)
         {
             ApplySavedVolumes();
-            if (_currentBgm == id)
+            if (CurrentBgm == id)
             {
                 return;
             }
-            _currentBgm = id;
+            CurrentBgm = id;
             _ = SoundController.Instance.PlayBGMAsync(id, fadeTime);
         }
     }

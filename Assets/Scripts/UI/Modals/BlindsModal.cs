@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework.UI;
 
@@ -11,12 +12,12 @@ namespace KTC.UI
     /// </summary>
     public class BlindsModal : ModalBase
     {
-        /// <summary>選択肢 (SB, BB)。プレハブの optionButtons とこの順で対応させる。</summary>
-        public static readonly (int Small, int Big)[] Options = { (1, 2), (2, 4), (5, 10), (10, 20) };
+        /// <summary>選択肢 (SB, BB)。プレハブの _optionButtons とこの順で対応させる。</summary>
+        public static readonly (int Small, int Big)[] OPTIONS = { (1, 2), (2, 4), (5, 10), (10, 20) };
 
-        [Header("選択肢 (Options と同順に割り当て)")]
-        [SerializeField] private Button[] optionButtons;
-        [SerializeField] private Button closeButton;
+        [Header("選択肢 (OPTIONS と同順に割り当て)")]
+        [SerializeField, FormerlySerializedAs("optionButtons")] private Button[] _optionButtons;
+        [SerializeField, FormerlySerializedAs("closeButton")] private Button _closeButton;
 
         protected override bool CloseOnBackdropClick => true;
 
@@ -25,12 +26,12 @@ namespace KTC.UI
 
         private void Awake()
         {
-            for (int i = 0; i < optionButtons.Length; i++)
+            for (int i = 0; i < _optionButtons.Length; i++)
             {
-                var (small, big) = Options[i];
-                optionButtons[i].onClick.AddListener(() => OnSelect(small, big));
+                var (small, big) = OPTIONS[i];
+                _optionButtons[i].onClick.AddListener(() => OnSelect(small, big));
             }
-            closeButton.onClick.AddListener(() => _ = CloseAsync());
+            _closeButton.onClick.AddListener(() => _ = CloseAsync());
         }
 
         /// <summary>現在の選択を反映してハイライトする (開いた直後に呼ぶ)。</summary>
@@ -38,9 +39,9 @@ namespace KTC.UI
         {
             SelectedSmallBlind = smallBlind;
             SelectedBigBlind = bigBlind;
-            for (int i = 0; i < optionButtons.Length; i++)
+            for (int i = 0; i < _optionButtons.Length; i++)
             {
-                QuickUi.SetSelected(optionButtons[i], Options[i].Small == smallBlind);
+                QuickUi.SetSelected(_optionButtons[i], OPTIONS[i].Small == smallBlind);
             }
         }
 

@@ -18,17 +18,17 @@ using Toolbar = UnityEditor.Toolbar;
 [InitializeOnLoad]
 public static class StartScenePlayButton
 {
-    private const string DefaultBootScenePath = "Assets/Scenes/Boot.unity";
+    private const string DEFAULT_BOOT_SCENE_PATH = "Assets/Scenes/Boot.unity";
 
-    private const string BootStartText = "Boot Start";
-    private const string StopText = "Stop";
+    private const string BOOT_START_TEXT = "Boot Start";
+    private const string STOP_TEXT = "Stop";
 
-
-    private static readonly Texture
-        PlayTexture = EditorGUIUtility.IconContent("Animation.Play").image;
 
     private static readonly Texture
-        StopTexture = EditorGUIUtility.IconContent("PreMatQuad").image;
+        PLAY_TEXTURE = EditorGUIUtility.IconContent("Animation.Play").image;
+
+    private static readonly Texture
+        STOP_TEXTURE = EditorGUIUtility.IconContent("PreMatQuad").image;
 
 
 #if UNITY_6000_3_OR_NEWER
@@ -48,13 +48,13 @@ public static class StartScenePlayButton
 
         internal override VisualElement CreateElement()
         {
-            var element = new CustomEditorToolbarButton(BootStartText, PlayTexture as Texture2D, this._action);
+            var element = new CustomEditorToolbarButton(BOOT_START_TEXT, PLAY_TEXTURE as Texture2D, this._action);
             element.AddToClassList("unity-editor-toolbar-element");
-            element.tooltip = DevelopmentBootTooltip;
+            element.tooltip = DEVELOPMENT_BOOT_TOOLTIP;
 
             // 生成済み要素を保持し、再生状態の反映は ApplyVisualState で直接行う
             // (MainToolbar.Refresh による再生成は 6000.3 で反映されないため頼らない)
-            _liveButton = element;
+            LiveButton = element;
             ApplyVisualState(element, EditorApplication.isPlayingOrWillChangePlaymode);
 
             // 自己修復: ドメインリロードとイベントの順序に依存しないよう、
@@ -119,30 +119,30 @@ public static class StartScenePlayButton
 
 
 #if UNITY_6000_3_OR_NEWER
-    private const string DevelopmentBootTooltip = "DevelopmentBoot";
-    private const string MainToolbarElementPath = DevelopmentBootTooltip;
-    private static bool _isPlaying = false;
-    private static CustomEditorToolbarButton _liveButton;
-    private static bool? _lastAppliedState;
+    private const string DEVELOPMENT_BOOT_TOOLTIP = "DevelopmentBoot";
+    private const string MAIN_TOOLBAR_ELEMENT_PATH = DEVELOPMENT_BOOT_TOOLTIP;
+    private static bool IsPlaying = false;
+    private static CustomEditorToolbarButton LiveButton;
+    private static bool? LastAppliedState;
 
     /// <summary>再生状態をボタンの見た目に反映する (生成済み要素を直接書き換える)。</summary>
     private static void ApplyVisualState(CustomEditorToolbarButton element, bool isPlaying)
     {
-        if (element == null || _lastAppliedState == isPlaying)
+        if (element == null || LastAppliedState == isPlaying)
         {
             return;
         }
-        _lastAppliedState = isPlaying;
+        LastAppliedState = isPlaying;
         element.style.backgroundColor = isPlaying ? Color.red : Color.green;
         element.style.color = isPlaying ? Color.white : Color.black;
         if (element.IconElement != null)
         {
-            element.IconElement.image = (isPlaying ? StopTexture : PlayTexture) as Texture2D;
+            element.IconElement.image = (isPlaying ? STOP_TEXTURE : PLAY_TEXTURE) as Texture2D;
             element.IconElement.tintColor = isPlaying ? Color.white : Color.black;
         }
         // 文言の実体は EditorToolbarContent が生やした子の TextElement。
         // ルート (ToolbarButton 自身も TextElement) に文字を入れると二重描画になるため空にする
-        string label = isPlaying ? StopText : BootStartText;
+        string label = isPlaying ? STOP_TEXT : BOOT_START_TEXT;
         var labelColor = isPlaying ? Color.white : Color.black;
         element.Query<TextElement>().ForEach(t =>
         {
@@ -156,12 +156,12 @@ public static class StartScenePlayButton
         });
     }
 #else
-    private static Label _bootLabel = default;
-    private static ToolbarButton _playBootSceneButton = default;
-    private static Image _iconImage = default;
+    private static Label BootLabel = default;
+    private static ToolbarButton PlayBootSceneButton = default;
+    private static Image IconImage = default;
 #endif
 
-    private static string _previousScenePath = string.Empty;
+    private static string PreviousScenePath = string.Empty;
 
     static StartScenePlayButton()
     {
@@ -170,7 +170,7 @@ public static class StartScenePlayButton
     }
 
 #if UNITY_6000_3_OR_NEWER
-    [MainToolbarElement(MainToolbarElementPath, defaultDockPosition = MainToolbarDockPosition.Middle)]
+    [MainToolbarElement(MAIN_TOOLBAR_ELEMENT_PATH, defaultDockPosition = MainToolbarDockPosition.Middle)]
     public static MainToolbarElement Create()
     {
         return new MainDevelopmentBootToolButton(action: OnClickButton);
@@ -190,7 +190,7 @@ public static class StartScenePlayButton
             .FirstOrDefault(s => s.enabled && s.path.Contains("Boot"));
 
         // Defaultのパスを仮で入れておく.
-        string scenePath = DefaultBootScenePath;
+        string scenePath = DEFAULT_BOOT_SCENE_PATH;
 
         if (bootScene != null)
         {
@@ -212,7 +212,7 @@ public static class StartScenePlayButton
         }
 
         // 現在のシーンを保存.
-        _previousScenePath = SceneManager.GetActiveScene().path;
+        PreviousScenePath = SceneManager.GetActiveScene().path;
         if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
         {
             EditorSceneManager.OpenScene(scenePath);
@@ -243,17 +243,17 @@ public static class StartScenePlayButton
 
 #if UNITY_6000_3_OR_NEWER
 #else
-        _playBootSceneButton = new ToolbarButton();
-        _iconImage = new Image()
+        PlayBootSceneButton = new ToolbarButton();
+        IconImage = new Image()
         {
-            image = PlayTexture
+            image = PLAY_TEXTURE
         };
-        _playBootSceneButton.Add(_iconImage);
-        _bootLabel = new Label(BootStartText);
-        _playBootSceneButton.Add(_bootLabel);
-        _playBootSceneButton.style.flexDirection = FlexDirection.Row;
-        _playBootSceneButton.clicked += OnClickButton;
-        zone.Add(_playBootSceneButton);
+        PlayBootSceneButton.Add(IconImage);
+        BootLabel = new Label(BOOT_START_TEXT);
+        PlayBootSceneButton.Add(BootLabel);
+        PlayBootSceneButton.style.flexDirection = FlexDirection.Row;
+        PlayBootSceneButton.clicked += OnClickButton;
+        zone.Add(PlayBootSceneButton);
 #endif
         OnPlayModeStateChanged(PlayModeStateChange.EnteredEditMode);
     }
@@ -282,38 +282,38 @@ public static class StartScenePlayButton
         // 再生終了後に元のシーンを開く.
         if (state == PlayModeStateChange.EnteredEditMode)
         {
-            if (!string.IsNullOrEmpty(_previousScenePath))
+            if (!string.IsNullOrEmpty(PreviousScenePath))
             {
-                EditorSceneManager.OpenScene(_previousScenePath);
-                _previousScenePath = string.Empty;
+                EditorSceneManager.OpenScene(PreviousScenePath);
+                PreviousScenePath = string.Empty;
             }
 #if UNITY_6000_3_OR_NEWER
-            _isPlaying = false;
-            if (_liveButton != null)
+            IsPlaying = false;
+            if (LiveButton != null)
             {
-                ApplyVisualState(_liveButton, false);
+                ApplyVisualState(LiveButton, false);
             }
             else
             {
-                MainToolbar.Refresh(MainToolbarElementPath); // 要素未生成時のみ (CreateElement 側で反映される)
+                MainToolbar.Refresh(MAIN_TOOLBAR_ELEMENT_PATH); // 要素未生成時のみ (CreateElement 側で反映される)
             }
 #else
-            if (_playBootSceneButton != null
-                && _playBootSceneButton.style != null)
+            if (PlayBootSceneButton != null
+                && PlayBootSceneButton.style != null)
             {
-                _playBootSceneButton.style.backgroundColor = Color.green;
+                PlayBootSceneButton.style.backgroundColor = Color.green;
             }
 
-            if (_bootLabel != null)
+            if (BootLabel != null)
             {
-                _bootLabel.style.color = Color.black;
-                _bootLabel.text = BootStartText;
+                BootLabel.style.color = Color.black;
+                BootLabel.text = BOOT_START_TEXT;
             }
 
-            if (_iconImage != null)
+            if (IconImage != null)
             {
-                _iconImage.image = PlayTexture;
-                _iconImage.tintColor = Color.black;
+                IconImage.image = PLAY_TEXTURE;
+                IconImage.tintColor = Color.black;
             }
 #endif
         }
@@ -322,37 +322,37 @@ public static class StartScenePlayButton
                  || state == PlayModeStateChange.ExitingEditMode)
         {
 #if UNITY_6000_3_OR_NEWER
-            _isPlaying = true;
-            if (_liveButton != null)
+            IsPlaying = true;
+            if (LiveButton != null)
             {
-                ApplyVisualState(_liveButton, true);
+                ApplyVisualState(LiveButton, true);
             }
             else
             {
-                MainToolbar.Refresh(MainToolbarElementPath); // 要素未生成時のみ (CreateElement 側で反映される)
+                MainToolbar.Refresh(MAIN_TOOLBAR_ELEMENT_PATH); // 要素未生成時のみ (CreateElement 側で反映される)
             }
 #else
-            if (_bootLabel == null)
+            if (BootLabel == null)
             {
                 return;
             }
-            if (_playBootSceneButton != null
-                && _playBootSceneButton.style != null)
+            if (PlayBootSceneButton != null
+                && PlayBootSceneButton.style != null)
             {
-                _playBootSceneButton.style.backgroundColor = Color.red;
+                PlayBootSceneButton.style.backgroundColor = Color.red;
             }
 
-            if (_bootLabel != null)
+            if (BootLabel != null)
             {
-                _bootLabel.style.color = Color.white;
-                _bootLabel.text = StopText;
+                BootLabel.style.color = Color.white;
+                BootLabel.text = STOP_TEXT;
             }
 
 
-            if (_iconImage != null)
+            if (IconImage != null)
             {
-                _iconImage.image = StopTexture;
-                _iconImage.tintColor = Color.white;
+                IconImage.image = STOP_TEXTURE;
+                IconImage.tintColor = Color.white;
             }
 #endif
         }

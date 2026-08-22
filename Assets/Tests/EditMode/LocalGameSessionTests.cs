@@ -20,7 +20,7 @@ namespace KTC.Poker.Tests
         /// s1: 2c,2d / s2: 4c,4d / s3: 6c,6d / s0(自分): 8c,8d
         /// ボード: Ts Js Qs Ks 9h → 全員ボードのストレートで4分割。
         /// </summary>
-        private const string Deck4P = "2c 4c 6c 8c 2d 4d 6d 8d Ts Js Qs Ks 9h";
+        private const string DECK_4P = "2c 4c 6c 8c 2d 4d 6d 8d Ts Js Qs Ks 9h";
 
         private sealed class Recorder
         {
@@ -65,7 +65,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 接続で初期状態が届き自分の手番まで進む()
         {
-            var session = NewSession4P(out var recorder, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P);
             session.Connect();
 
             Assert.That(session.IsConnected, Is.True);
@@ -85,7 +85,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 他人のホールカードは伏せられ自分のは見える()
         {
-            var session = NewSession4P(out var recorder, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P);
             session.Connect();
 
             foreach (var state in recorder.States)
@@ -106,7 +106,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void チェックコールで完走しショーダウンで公開される()
         {
-            var session = NewSession4P(out var recorder, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P);
             session.Connect();
 
             session.SendAction(Msg(ActionType.Call));   // プリフロップ
@@ -134,7 +134,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void フォールドするとBotだけで決着する()
         {
-            var session = NewSession4P(out var recorder, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P);
             session.Connect();
             session.SendAction(Msg(ActionType.Fold));
 
@@ -152,7 +152,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void SendReadyで次ハンドへ進みボタンが回る()
         {
-            var session = NewSession4P(out var recorder, Deck4P, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P, DECK_4P);
             session.Connect();
             session.SendAction(Msg(ActionType.Call));
             session.SendAction(Msg(ActionType.Check));
@@ -176,7 +176,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 不正な操作はErrorOccurredで通知され続行できる()
         {
-            var session = NewSession4P(out var recorder, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P);
             session.Connect();
 
             session.SendAction(Msg(ActionType.RaiseTo, 3)); // 最小レイズ4未満
@@ -196,7 +196,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void ハンド終了後のアクションは拒否される()
         {
-            var session = NewSession4P(out var recorder, Deck4P);
+            var session = NewSession4P(out var recorder, DECK_4P);
             session.Connect();
             session.SendAction(Msg(ActionType.Fold));
             Assert.That(recorder.Last.isComplete, Is.True);
@@ -216,7 +216,7 @@ namespace KTC.Poker.Tests
                 SeatCount = 4,
                 MySeat = 0,
                 RevealAllHoleCards = true,
-                DeckFactory = () => Rigged(Deck4P),
+                DeckFactory = () => Rigged(DECK_4P),
             });
             var recorder = new Recorder();
             recorder.Attach(session);
@@ -236,7 +236,7 @@ namespace KTC.Poker.Tests
             {
                 SeatCount = 4,
                 MySeat = 0,
-                DeckFactory = () => Rigged(Deck4P),
+                DeckFactory = () => Rigged(DECK_4P),
             });
             var recorder = new Recorder();
             recorder.Attach(session);

@@ -3,6 +3,7 @@ using KTC.SaveData;
 using KTC.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UnityFramework;
@@ -19,20 +20,20 @@ namespace KTC.Scene
     public class Home : MonoBehaviour, IScenePreparer
     {
         [Header("ヘッダー")]
-        [SerializeField] private TMP_Text initialText;
-        [SerializeField] private TMP_Text nameText;
-        [SerializeField] private TMP_Text levelText;
-        [SerializeField] private TMP_Text chipsText;
-        [SerializeField] private TMP_Text statsText;
-        [SerializeField] private Button settingsButton;
+        [SerializeField, FormerlySerializedAs("initialText")] private TMP_Text _initialText;
+        [SerializeField, FormerlySerializedAs("nameText")] private TMP_Text _nameText;
+        [SerializeField, FormerlySerializedAs("levelText")] private TMP_Text _levelText;
+        [SerializeField, FormerlySerializedAs("chipsText")] private TMP_Text _chipsText;
+        [SerializeField, FormerlySerializedAs("statsText")] private TMP_Text _statsText;
+        [SerializeField, FormerlySerializedAs("settingsButton")] private Button _settingsButton;
 
         [Header("メニュー")]
-        [SerializeField] private Button cpuButton;
-        [SerializeField] private Button rulesButton;
-        [SerializeField] private Button closeRulesButton;
+        [SerializeField, FormerlySerializedAs("cpuButton")] private Button _cpuButton;
+        [SerializeField, FormerlySerializedAs("rulesButton")] private Button _rulesButton;
+        [SerializeField, FormerlySerializedAs("closeRulesButton")] private Button _closeRulesButton;
 
         [Header("ルール表示")]
-        [SerializeField] private string rulesUrl = "https://ja.wikipedia.org/wiki/テキサス・ホールデム";
+        [SerializeField, FormerlySerializedAs("rulesUrl")] private string _rulesUrl = "https://ja.wikipedia.org/wiki/テキサス・ホールデム";
 
         private bool _prepared;
         private bool _isTransitioning;
@@ -40,11 +41,11 @@ namespace KTC.Scene
 
         private void Awake()
         {
-            cpuButton.onClick.AddListener(OnCpuBattle);
-            settingsButton.onClick.AddListener(OnOpenSettings);
-            rulesButton.onClick.AddListener(OnOpenRules);
-            closeRulesButton.onClick.AddListener(CloseRules);
-            closeRulesButton.gameObject.SetActive(false);
+            _cpuButton.onClick.AddListener(OnCpuBattle);
+            _settingsButton.onClick.AddListener(OnOpenSettings);
+            _rulesButton.onClick.AddListener(OnOpenRules);
+            _closeRulesButton.onClick.AddListener(CloseRules);
+            _closeRulesButton.gameObject.SetActive(false);
         }
 
         /// <summary>フェードインで見せる前の準備 (SceneController から呼ばれる)。</summary>
@@ -56,7 +57,7 @@ namespace KTC.Scene
             }
             _prepared = true;
             RefreshPlayerInfo();
-            GameAudio.PlayBgm(GameAudio.MenuBgm);
+            GameAudio.PlayBgm(GameAudio.MENU_BGM);
             await Awaitables.Completed;
         }
 
@@ -82,11 +83,11 @@ namespace KTC.Scene
         {
             var data = SaveDataService.CreateDefault().Load();
             string displayName = string.IsNullOrEmpty(data.PlayerName) ? "プレイヤー" : data.PlayerName;
-            initialText.text = displayName.Substring(0, 1);
-            nameText.text = displayName;
-            levelText.text = ZString.Format("Lv.{0}", data.Level);
-            chipsText.text = ZString.Format("チップ: {0:N0}", data.Chips);
-            statsText.text = data.HandsPlayed > 0
+            _initialText.text = displayName.Substring(0, 1);
+            _nameText.text = displayName;
+            _levelText.text = ZString.Format("Lv.{0}", data.Level);
+            _chipsText.text = ZString.Format("チップ: {0:N0}", data.Chips);
+            _statsText.text = data.HandsPlayed > 0
                 ? ZString.Format("対戦 {0} / ハンド {1} / 勝率 {2}%",
                     data.MatchesPlayed, data.HandsPlayed, data.HandsWon * 100 / data.HandsPlayed)
                 : "戦績はまだありません";
@@ -119,10 +120,10 @@ namespace KTC.Scene
                 return;
             }
             _rulesOpen = true;
-            closeRulesButton.gameObject.SetActive(true);
+            _closeRulesButton.gameObject.SetActive(true);
             // 下部を空けて「閉じる」バーを見えるようにする (WebViewはuGUIより常に前面のため)
             bool opened = await WebViewController.Instance.OpenAsync(
-                rulesUrl, new RectOffset(80, 80, 60, 170));
+                _rulesUrl, new RectOffset(80, 80, 60, 170));
             if (!opened)
             {
                 CloseRules();
@@ -136,9 +137,9 @@ namespace KTC.Scene
             {
                 WebViewController.Instance.Close();
             }
-            if (closeRulesButton != null)
+            if (_closeRulesButton != null)
             {
-                closeRulesButton.gameObject.SetActive(false);
+                _closeRulesButton.gameObject.SetActive(false);
             }
         }
     }

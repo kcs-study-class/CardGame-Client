@@ -16,12 +16,12 @@ namespace UnityFramework.SaveData
     /// </summary>
     public static class SaveCrypto
     {
-        private static readonly byte[] Magic = { 0x4B, 0x54, 0x43, 0x53 }; // "KTCS"
-        public const byte FormatVersion = 1;
+        private static readonly byte[] MAGIC = { 0x4B, 0x54, 0x43, 0x53 }; // "KTCS"
+        public const byte FORMAT_VERSION = 1;
 
-        private const int IvSize = 16;
-        private const int HmacSize = 32;
-        private const int MinFileSize = 4 + 1 + IvSize + 16 + HmacSize; // 暗号文は最低1ブロック
+        private const int IV_SIZE = 16;
+        private const int HMAC_SIZE = 32;
+        private const int MIN_FILE_SIZE = 4 + 1 + IV_SIZE + 16 + HMAC_SIZE; // 暗号文は最低1ブロック
 
         public static byte[] Encrypt(byte[] payload, SaveKeys keys)
         {
@@ -44,9 +44,9 @@ namespace UnityFramework.SaveData
 
                 using (var stream = new MemoryStream())
                 {
-                    stream.Write(Magic, 0, Magic.Length);
-                    stream.WriteByte(FormatVersion);
-                    stream.Write(aes.IV, 0, IvSize);
+                    stream.Write(MAGIC, 0, MAGIC.Length);
+                    stream.WriteByte(FORMAT_VERSION);
+                    stream.Write(aes.IV, 0, IV_SIZE);
                     stream.Write(cipher, 0, cipher.Length);
 
                     byte[] mac = ComputeMac(keys, stream.ToArray());
@@ -65,27 +65,27 @@ namespace UnityFramework.SaveData
             payload = null;
             reason = null;
 
-            if (file == null || file.Length < MinFileSize)
+            if (file == null || file.Length < MIN_FILE_SIZE)
             {
                 reason = "ファイルサイズが不正";
                 return false;
             }
-            for (int i = 0; i < Magic.Length; i++)
+            for (int i = 0; i < MAGIC.Length; i++)
             {
-                if (file[i] != Magic[i])
+                if (file[i] != MAGIC[i])
                 {
                     reason = "マジックナンバー不一致";
                     return false;
                 }
             }
-            if (file[4] != FormatVersion)
+            if (file[4] != FORMAT_VERSION)
             {
                 reason = $"未対応のフォーマットバージョン: {file[4]}";
                 return false;
             }
 
             // HMAC 検証 (改ざん検知)。比較はタイミング攻撃対策で定数時間
-            int macOffset = file.Length - HmacSize;
+            int macOffset = file.Length - HMAC_SIZE;
             byte[] expectedMac = ComputeMac(keys, file, macOffset);
             if (!FixedTimeEquals(file, macOffset, expectedMac))
             {
@@ -102,11 +102,11 @@ namespace UnityFramework.SaveData
                     aes.Mode = CipherMode.CBC;
                     aes.Padding = PaddingMode.PKCS7;
 
-                    var iv = new byte[IvSize];
-                    Buffer.BlockCopy(file, 5, iv, 0, IvSize);
+                    var iv = new byte[IV_SIZE];
+                    Buffer.BlockCopy(file, 5, iv, 0, IV_SIZE);
                     aes.IV = iv;
 
-                    int cipherOffset = 5 + IvSize;
+                    int cipherOffset = 5 + IV_SIZE;
                     using (var decryptor = aes.CreateDecryptor())
                     {
                         payload = decryptor.TransformFinalBlock(file, cipherOffset, macOffset - cipherOffset);
@@ -133,7 +133,7 @@ namespace UnityFramework.SaveData
         private static bool FixedTimeEquals(byte[] file, int macOffset, byte[] expected)
         {
             int diff = 0;
-            for (int i = 0; i < HmacSize; i++)
+            for (int i = 0; i < HMAC_SIZE; i++)
             {
                 diff |= file[macOffset + i] ^ expected[i];
             }

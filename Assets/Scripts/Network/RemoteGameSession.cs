@@ -54,12 +54,12 @@ namespace KTC.Poker.Session
 
         public void SendAction(PlayerActionMessage action)
         {
-            SendEnvelope(MessageTypes.PlayerAction, JsonUtility.ToJson(action));
+            SendEnvelope(MessageTypes.PLAYER_ACTION, JsonUtility.ToJson(action));
         }
 
         public void SendReady()
         {
-            SendEnvelope(MessageTypes.Ready, "{}");
+            SendEnvelope(MessageTypes.READY, "{}");
         }
 
         public void Dispose()
@@ -96,18 +96,18 @@ namespace KTC.Poker.Session
 
             switch (envelope.type)
             {
-                case MessageTypes.JoinAck:
+                case MessageTypes.JOIN_ACK:
                     var ack = JsonUtility.FromJson<JoinAckMessage>(envelope.payload);
                     MySeatIndex = ack.yourSeat;
                     IsConnected = true;
                     _connected.OnNext(Unit.Default);
                     break;
 
-                case MessageTypes.TableState:
+                case MessageTypes.TABLE_STATE:
                     _stateUpdated.OnNext(JsonUtility.FromJson<TableStateMessage>(envelope.payload));
                     break;
 
-                case MessageTypes.Error:
+                case MessageTypes.ERROR:
                     var error = JsonUtility.FromJson<ErrorMessage>(envelope.payload);
                     _errorOccurred.OnNext(error.message);
                     break;

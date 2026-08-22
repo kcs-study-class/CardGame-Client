@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.Audio;
 
 namespace UnityFramework.Audio
@@ -17,18 +16,18 @@ namespace UnityFramework.Audio
     [DisallowMultipleComponent]
     public class SoundController : SingletonMonoBehaviour<SoundController>
     {
-        private const string PrefMaster = "UnityFramework.SoundController.MasterVolume";
-        private const string PrefBgm = "UnityFramework.SoundController.BGMVolume";
-        private const string PrefSe = "UnityFramework.SoundController.SEVolume";
-        private const string PrefMute = "UnityFramework.SoundController.IsMuted";
+        private const string PREF_MASTER = "UnityFramework.SoundController.MasterVolume";
+        private const string PREF_BGM = "UnityFramework.SoundController.BGMVolume";
+        private const string PREF_SE = "UnityFramework.SoundController.SEVolume";
+        private const string PREF_MUTE = "UnityFramework.SoundController.IsMuted";
 
         [Header("Backend")]
-        [SerializeField, FormerlySerializedAs("_backendType")] private SoundBackendType backendType = SoundBackendType.Unity;
+        [SerializeField] private SoundBackendType _backendType = SoundBackendType.Unity;
 
         [Header("Unity Backend Settings")]
-        [SerializeField, FormerlySerializedAs("_bgmMixerGroup")] private AudioMixerGroup bgmMixerGroup;
-        [SerializeField, FormerlySerializedAs("_seMixerGroup")] private AudioMixerGroup seMixerGroup;
-        [SerializeField, Min(1), FormerlySerializedAs("_sePoolSize")] private int sePoolSize = 8;
+        [SerializeField] private AudioMixerGroup _bgmMixerGroup;
+        [SerializeField] private AudioMixerGroup _seMixerGroup;
+        [SerializeField, Min(1)] private int _sePoolSize = 8;
 
         private ISoundBackend _backend;
 
@@ -42,7 +41,7 @@ namespace UnityFramework.Audio
             }
         }
 
-        public SoundBackendType BackendType => backendType;
+        public SoundBackendType BackendType => _backendType;
 
         public float MasterVolume { get => Backend.MasterVolume; set => Backend.MasterVolume = value; }
         public float BGMVolume { get => Backend.BGMVolume; set => Backend.BGMVolume = value; }
@@ -66,21 +65,21 @@ namespace UnityFramework.Audio
 
         private ISoundBackend CreateBackend()
         {
-            switch (backendType)
+            switch (_backendType)
             {
                 case SoundBackendType.Unity:
-                    return new UnitySoundBackend(transform, sePoolSize, bgmMixerGroup, seMixerGroup);
+                    return new UnitySoundBackend(transform, _sePoolSize, _bgmMixerGroup, _seMixerGroup);
 
                 case SoundBackendType.CriAdx:
 #if UNITY_FRAMEWORK_USE_CRI
-                    return new CriAdxSoundBackend(transform, sePoolSize);
+                    return new CriAdxSoundBackend(transform, _sePoolSize);
 #else
                     SafeLogger.LogError("[SoundController] CRI ADX backend が選択されていますが、UNITY_FRAMEWORK_USE_CRI シンボルが定義されていません。Unity backend にフォールバックします。");
-                    return new UnitySoundBackend(transform, sePoolSize, bgmMixerGroup, seMixerGroup);
+                    return new UnitySoundBackend(transform, _sePoolSize, _bgmMixerGroup, _seMixerGroup);
 #endif
 
                 default:
-                    return new UnitySoundBackend(transform, sePoolSize, bgmMixerGroup, seMixerGroup);
+                    return new UnitySoundBackend(transform, _sePoolSize, _bgmMixerGroup, _seMixerGroup);
             }
         }
 
@@ -240,19 +239,19 @@ namespace UnityFramework.Audio
 
         public void SavePreferences()
         {
-            PlayerPrefs.SetFloat(PrefMaster, Backend.MasterVolume);
-            PlayerPrefs.SetFloat(PrefBgm, Backend.BGMVolume);
-            PlayerPrefs.SetFloat(PrefSe, Backend.SEVolume);
-            PlayerPrefs.SetInt(PrefMute, Backend.IsMuted ? 1 : 0);
+            PlayerPrefs.SetFloat(PREF_MASTER, Backend.MasterVolume);
+            PlayerPrefs.SetFloat(PREF_BGM, Backend.BGMVolume);
+            PlayerPrefs.SetFloat(PREF_SE, Backend.SEVolume);
+            PlayerPrefs.SetInt(PREF_MUTE, Backend.IsMuted ? 1 : 0);
             PlayerPrefs.Save();
         }
 
         public void LoadPreferences()
         {
-            Backend.MasterVolume = PlayerPrefs.GetFloat(PrefMaster, 1f);
-            Backend.BGMVolume = PlayerPrefs.GetFloat(PrefBgm, 1f);
-            Backend.SEVolume = PlayerPrefs.GetFloat(PrefSe, 1f);
-            Backend.IsMuted = PlayerPrefs.GetInt(PrefMute, 0) == 1;
+            Backend.MasterVolume = PlayerPrefs.GetFloat(PREF_MASTER, 1f);
+            Backend.BGMVolume = PlayerPrefs.GetFloat(PREF_BGM, 1f);
+            Backend.SEVolume = PlayerPrefs.GetFloat(PREF_SE, 1f);
+            Backend.IsMuted = PlayerPrefs.GetInt(PREF_MUTE, 0) == 1;
         }
     }
 }

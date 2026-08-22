@@ -1,6 +1,7 @@
 using LitMotion;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework.SceneManagement;
 
@@ -12,46 +13,46 @@ namespace KTC.Scene.Transitions
     /// </summary>
     public class NowLoading : MonoBehaviour
     {
-        [SerializeField] private Image progressFill;
-        [SerializeField] private TMP_Text loadingText;
-        [SerializeField] private RectTransform loadingCard;
+        [SerializeField, FormerlySerializedAs("progressFill")] private Image _progressFill;
+        [SerializeField, FormerlySerializedAs("loadingText")] private TMP_Text _loadingText;
+        [SerializeField, FormerlySerializedAs("loadingCard")] private RectTransform _loadingCard;
 
         [Header("演出設定")]
-        [SerializeField, Tooltip("ドットが増える間隔 (秒)")]
-        private float dotInterval = 0.4f;
+        [SerializeField, Tooltip("ドットが増える間隔 (秒)"), FormerlySerializedAs("dotInterval")]
+        private float _dotInterval = 0.4f;
 
-        [SerializeField, Tooltip("カードの回転速度 (度/秒)")]
-        private float cardFlipSpeed = 240f;
+        [SerializeField, Tooltip("カードの回転速度 (度/秒)"), FormerlySerializedAs("cardFlipSpeed")]
+        private float _cardFlipSpeed = 240f;
 
-        [SerializeField, Tooltip("バーが実進捗へ追従する速度 (fillAmount/秒)")]
-        private float barFollowSpeed = 1.5f;
+        [SerializeField, Tooltip("バーが実進捗へ追従する速度 (fillAmount/秒)"), FormerlySerializedAs("barFollowSpeed")]
+        private float _barFollowSpeed = 1.5f;
 
-        private static readonly string[] DotPatterns = { "Now Loading", "Now Loading.", "Now Loading..", "Now Loading..." };
+        private static readonly string[] DOT_PATTERNS = { "Now Loading", "Now Loading.", "Now Loading..", "Now Loading..." };
 
         private float _targetProgress;
 
         private void Start()
         {
-            if (progressFill != null)
+            if (_progressFill != null)
             {
-                progressFill.fillAmount = 0f;
+                _progressFill.fillAmount = 0f;
             }
             SceneController.Instance.SceneLoadProgress += OnSceneLoadProgress;
 
             // ドット送りとカードフリップは LitMotion のループに任せる (GameObject 破棄で自動停止)
-            if (loadingText != null)
+            if (_loadingText != null)
             {
-                LMotion.Create(0f, DotPatterns.Length, dotInterval * DotPatterns.Length)
+                LMotion.Create(0f, DOT_PATTERNS.Length, _dotInterval * DOT_PATTERNS.Length)
                     .WithLoops(-1, LoopType.Restart)
-                    .Bind(loadingText, static (value, text) =>
-                        text.text = DotPatterns[Mathf.Min((int)value, DotPatterns.Length - 1)])
+                    .Bind(_loadingText, static (value, text) =>
+                        text.text = DOT_PATTERNS[Mathf.Min((int)value, DOT_PATTERNS.Length - 1)])
                     .AddTo(gameObject);
             }
-            if (loadingCard != null)
+            if (_loadingCard != null)
             {
-                LMotion.Create(0f, 360f, 360f / Mathf.Max(1f, cardFlipSpeed))
+                LMotion.Create(0f, 360f, 360f / Mathf.Max(1f, _cardFlipSpeed))
                     .WithLoops(-1, LoopType.Restart)
-                    .Bind(loadingCard, static (angle, card) =>
+                    .Bind(_loadingCard, static (angle, card) =>
                         card.localRotation = Quaternion.Euler(0f, angle, 0f))
                     .AddTo(gameObject);
             }
@@ -72,15 +73,15 @@ namespace KTC.Scene.Transitions
 
         private void Update()
         {
-            if (progressFill == null)
+            if (_progressFill == null)
             {
                 return;
             }
             // 実進捗へ一定速度で追従させる。瞬間ジャンプよりも滑らかに見え、
             // 最低表示時間 (minimumDuration) 中の 0.99 張り付きとも相性が良い。
             // (ターゲットが毎フレーム動く追従なのでトゥイーンではなく MoveTowards のまま)
-            progressFill.fillAmount = Mathf.MoveTowards(
-                progressFill.fillAmount, _targetProgress, barFollowSpeed * Time.unscaledDeltaTime);
+            _progressFill.fillAmount = Mathf.MoveTowards(
+                _progressFill.fillAmount, _targetProgress, _barFollowSpeed * Time.unscaledDeltaTime);
         }
     }
 }

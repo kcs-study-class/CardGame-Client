@@ -23,7 +23,7 @@ namespace UnityFramework.Audio
     /// </summary>
     public sealed class CriAdxSoundBackend : ISoundBackend
     {
-        private const char SheetCueSeparator = '/';
+        private const char SHEET_CUE_SEPARATOR = '/';
 
         private readonly Transform _root;
 
@@ -224,7 +224,7 @@ namespace UnityFramework.Audio
             sheet = null;
             cue = null;
             if (string.IsNullOrEmpty(id)) return false;
-            var idx = id.IndexOf(SheetCueSeparator);
+            var idx = id.IndexOf(SHEET_CUE_SEPARATOR);
             if (idx <= 0 || idx >= id.Length - 1) return false;
             sheet = id.Substring(0, idx);
             cue = id.Substring(idx + 1);

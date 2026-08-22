@@ -27,8 +27,8 @@ namespace KTC.Poker.Tests
 
             // マスク定数でも分解できる
             var kc = Card.Parse("Kc");
-            Assert.That(kc.Value & Card.RankMask, Is.EqualTo(13));
-            Assert.That((kc.Value & Card.SuitMask) >> Card.SuitShift, Is.EqualTo((int)Suit.Club));
+            Assert.That(kc.Value & Card.RANK_MASK, Is.EqualTo(13));
+            Assert.That((kc.Value & Card.SUIT_MASK) >> Card.SUIT_SHIFT, Is.EqualTo((int)Suit.Club));
 
             // 52枚全てラウンドトリップ
             var deck = new Deck();

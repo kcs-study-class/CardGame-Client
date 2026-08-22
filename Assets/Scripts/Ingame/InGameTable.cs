@@ -9,6 +9,7 @@ using LitMotion;
 using R3;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework.Audio;
 using UnityFramework.Resource;
@@ -29,38 +30,38 @@ namespace KTC.Scene
     /// </summary>
     public class InGameTable : MonoBehaviour, IScenePreparer
     {
-        [SerializeField] private Canvas canvas;
-        [SerializeField, Tooltip("シーン配置のカードデッキ。配布アニメの発射元")] private Transform deckAnchor;
+        [SerializeField, FormerlySerializedAs("canvas")] private Canvas _canvas;
+        [SerializeField, Tooltip("シーン配置のカードデッキ。配布アニメの発射元"), FormerlySerializedAs("deckAnchor")] private Transform _deckAnchor;
 
         [Header("演出設定")]
-        [SerializeField, Tooltip("Bot思考ディレイの最小秒")] private float botThinkMin = 0.4f;
-        [SerializeField, Tooltip("Bot思考ディレイの最大秒")] private float botThinkMax = 0.8f;
-        [SerializeField, Tooltip("配布1枚の飛行時間")] private float dealDuration = 0.18f;
-        [SerializeField, Tooltip("配布の1枚ごとの間隔")] private float dealInterval = 0.06f;
-        [SerializeField, Tooltip("カードフリップ時間 (片面)")] private float flipDuration = 0.09f;
-        [SerializeField, Tooltip("ポット移動演出の時間")] private float potFlyDuration = 0.55f;
+        [SerializeField, Tooltip("Bot思考ディレイの最小秒"), FormerlySerializedAs("botThinkMin")] private float _botThinkMin = 0.4f;
+        [SerializeField, Tooltip("Bot思考ディレイの最大秒"), FormerlySerializedAs("botThinkMax")] private float _botThinkMax = 0.8f;
+        [SerializeField, Tooltip("配布1枚の飛行時間"), FormerlySerializedAs("dealDuration")] private float _dealDuration = 0.18f;
+        [SerializeField, Tooltip("配布の1枚ごとの間隔"), FormerlySerializedAs("dealInterval")] private float _dealInterval = 0.06f;
+        [SerializeField, Tooltip("カードフリップ時間 (片面)"), FormerlySerializedAs("flipDuration")] private float _flipDuration = 0.09f;
+        [SerializeField, Tooltip("ポット移動演出の時間"), FormerlySerializedAs("potFlyDuration")] private float _potFlyDuration = 0.55f;
 
-        private const string FontAddress = "Fonts/NotoSansJP";
+        private const string FONT_ADDRESS = "Fonts/NotoSansJP";
 
         // SE (Addressables アドレス)
-        private const string SeClick = "SE/Click";
-        private const string SeDeal = "SE/CardDeal";
-        private const string SeFlip = "SE/CardFlip";
-        private const string SeChip = "SE/Chip";
-        private const string SeWin = "SE/Win";
-        private static readonly string[] StreetNames = { "プリフロップ", "フロップ", "ターン", "リバー", "ショーダウン" };
+        private const string SE_CLICK = "SE/Click";
+        private const string SE_DEAL = "SE/CardDeal";
+        private const string SE_FLIP = "SE/CardFlip";
+        private const string SE_CHIP = "SE/Chip";
+        private const string SE_WIN = "SE/Win";
+        private static readonly string[] STREET_NAMES = { "プリフロップ", "フロップ", "ターン", "リバー", "ショーダウン" };
 
         // 3D配置 (シーンの Table に合わせた座標)
-        private const float CardY = 0.235f;
-        private const float SeatRadiusX = 3.9f;
-        private const float SeatRadiusZ = 2.35f;
-        private const float HoleCardGap = 0.36f;
-        private static readonly Vector3 FallbackDeckPosition = new Vector3(0f, CardY + 0.06f, 1.55f);
+        private const float CARD_Y = 0.235f;
+        private const float SEAT_RADIUS_X = 3.9f;
+        private const float SEAT_RADIUS_Z = 2.35f;
+        private const float HOLE_CARD_GAP = 0.36f;
+        private static readonly Vector3 FALLBACK_DECK_POSITION = new Vector3(0f, CARD_Y + 0.06f, 1.55f);
 
         /// <summary>配布アニメの発射元 (シーンのデッキ位置。未設定なら中央奥)。</summary>
-        private Vector3 DeckPosition => deckAnchor != null
-            ? deckAnchor.position + new Vector3(0f, 0.06f, 0f)
-            : FallbackDeckPosition;
+        private Vector3 DeckPosition => _deckAnchor != null
+            ? _deckAnchor.position + new Vector3(0f, 0.06f, 0f)
+            : FALLBACK_DECK_POSITION;
 
         private IGameSession _session;
         private TMP_FontAsset _font;
@@ -88,36 +89,36 @@ namespace KTC.Scene
         private System.IDisposable _errorSubscription;
 
         [Header("HUD (シーン配置)")]
-        [SerializeField] private TMP_Text potText;
-        [SerializeField] private TMP_Text statusText;
-        [SerializeField] private TMP_Text errorText;
-        [SerializeField] private Button foldButton;
-        [SerializeField] private Button checkCallButton;
-        [SerializeField] private TextMeshProUGUI checkCallLabel;
-        [SerializeField] private Button raiseButton;
-        [SerializeField] private TextMeshProUGUI raiseLabel;
-        [SerializeField] private Button allInButton;
-        [SerializeField] private Button leaveButton;
-        [SerializeField] private GameObject resultPanel;
-        [SerializeField] private TMP_Text resultText;
-        [SerializeField] private Button nextHandButton;
-        [SerializeField] private Button toResultButton;
+        [SerializeField, FormerlySerializedAs("potText")] private TMP_Text _potText;
+        [SerializeField, FormerlySerializedAs("statusText")] private TMP_Text _statusText;
+        [SerializeField, FormerlySerializedAs("errorText")] private TMP_Text _errorText;
+        [SerializeField, FormerlySerializedAs("foldButton")] private Button _foldButton;
+        [SerializeField, FormerlySerializedAs("checkCallButton")] private Button _checkCallButton;
+        [SerializeField, FormerlySerializedAs("checkCallLabel")] private TextMeshProUGUI _checkCallLabel;
+        [SerializeField, FormerlySerializedAs("raiseButton")] private Button _raiseButton;
+        [SerializeField, FormerlySerializedAs("raiseLabel")] private TextMeshProUGUI _raiseLabel;
+        [SerializeField, FormerlySerializedAs("allInButton")] private Button _allInButton;
+        [SerializeField, FormerlySerializedAs("leaveButton")] private Button _leaveButton;
+        [SerializeField, FormerlySerializedAs("resultPanel")] private GameObject _resultPanel;
+        [SerializeField, FormerlySerializedAs("resultText")] private TMP_Text _resultText;
+        [SerializeField, FormerlySerializedAs("nextHandButton")] private Button _nextHandButton;
+        [SerializeField, FormerlySerializedAs("toResultButton")] private Button _toResultButton;
 
         [Header("レイズ額パネル (シーン配置)")]
-        [SerializeField] private GameObject raisePanel;
-        [SerializeField] private Slider raiseSlider;
-        [SerializeField] private TMP_Text raiseAmountText;
-        [SerializeField] private Button raiseMinButton;
-        [SerializeField] private Button raisePotButton;
-        [SerializeField] private Button raiseMaxButton;
-        [SerializeField] private Button raiseConfirmButton;
-        [SerializeField] private Button raiseCancelButton;
+        [SerializeField, FormerlySerializedAs("raisePanel")] private GameObject _raisePanel;
+        [SerializeField, FormerlySerializedAs("raiseSlider")] private Slider _raiseSlider;
+        [SerializeField, FormerlySerializedAs("raiseAmountText")] private TMP_Text _raiseAmountText;
+        [SerializeField, FormerlySerializedAs("raiseMinButton")] private Button _raiseMinButton;
+        [SerializeField, FormerlySerializedAs("raisePotButton")] private Button _raisePotButton;
+        [SerializeField, FormerlySerializedAs("raiseMaxButton")] private Button _raiseMaxButton;
+        [SerializeField, FormerlySerializedAs("raiseConfirmButton")] private Button _raiseConfirmButton;
+        [SerializeField, FormerlySerializedAs("raiseCancelButton")] private Button _raiseCancelButton;
 
         [Header("席パネル (テンプレート複製)")]
-        [SerializeField, Tooltip("非アクティブで配置した席パネルの雛形")] private RectTransform seatTemplate;
-        [SerializeField] private float seatUiRadiusX = 760f;
-        [SerializeField] private float seatUiRadiusY = 380f;
-        [SerializeField] private float seatUiYOffset = 40f;
+        [SerializeField, Tooltip("非アクティブで配置した席パネルの雛形"), FormerlySerializedAs("seatTemplate")] private RectTransform _seatTemplate;
+        [SerializeField, FormerlySerializedAs("seatUiRadiusX")] private float _seatUiRadiusX = 760f;
+        [SerializeField, FormerlySerializedAs("seatUiRadiusY")] private float _seatUiRadiusY = 380f;
+        [SerializeField, FormerlySerializedAs("seatUiYOffset")] private float _seatUiYOffset = 40f;
 
         private Transform _cardsRoot;
         private readonly List<SeatView> _seatViews = new List<SeatView>();
@@ -130,30 +131,30 @@ namespace KTC.Scene
 
         private void Awake()
         {
-            foldButton.onClick.AddListener(OnFold);
-            checkCallButton.onClick.AddListener(OnCheckCall);
-            raiseButton.onClick.AddListener(OnRaise);
-            allInButton.onClick.AddListener(OnAllIn);
-            leaveButton.onClick.AddListener(OnLeave);
-            nextHandButton.onClick.AddListener(OnNextHand);
-            toResultButton.onClick.AddListener(OnToResult);
-            resultPanel.SetActive(false);
+            _foldButton.onClick.AddListener(OnFold);
+            _checkCallButton.onClick.AddListener(OnCheckCall);
+            _raiseButton.onClick.AddListener(OnRaise);
+            _allInButton.onClick.AddListener(OnAllIn);
+            _leaveButton.onClick.AddListener(OnLeave);
+            _nextHandButton.onClick.AddListener(OnNextHand);
+            _toResultButton.onClick.AddListener(OnToResult);
+            _resultPanel.SetActive(false);
 
-            raiseSlider.wholeNumbers = true;
-            raiseSlider.onValueChanged.AddListener(value =>
-                raiseAmountText.text = ZString.Format("レイズ額 {0}", (int)value));
-            raiseMinButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.actionRequest.minRaiseTo : 0));
-            raisePotButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.currentBet + _lastState.pot : 0));
-            raiseMaxButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.actionRequest.maxRaiseTo : 0));
-            raiseConfirmButton.onClick.AddListener(OnRaiseConfirm);
-            raiseCancelButton.onClick.AddListener(CloseRaisePanel);
-            raisePanel.SetActive(false);
+            _raiseSlider.wholeNumbers = true;
+            _raiseSlider.onValueChanged.AddListener(value =>
+                _raiseAmountText.text = ZString.Format("レイズ額 {0}", (int)value));
+            _raiseMinButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.actionRequest.minRaiseTo : 0));
+            _raisePotButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.currentBet + _lastState.pot : 0));
+            _raiseMaxButton.onClick.AddListener(() => SetRaiseSlider(_lastState != null ? _lastState.actionRequest.maxRaiseTo : 0));
+            _raiseConfirmButton.onClick.AddListener(OnRaiseConfirm);
+            _raiseCancelButton.onClick.AddListener(CloseRaisePanel);
+            _raisePanel.SetActive(false);
 
             // 最初のスナップショットが届くまでアクションは出さない (以降は RenderTable が制御)
-            foldButton.gameObject.SetActive(false);
-            checkCallButton.gameObject.SetActive(false);
-            raiseButton.gameObject.SetActive(false);
-            allInButton.gameObject.SetActive(false);
+            _foldButton.gameObject.SetActive(false);
+            _checkCallButton.gameObject.SetActive(false);
+            _raiseButton.gameObject.SetActive(false);
+            _allInButton.gameObject.SetActive(false);
         }
 
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
@@ -163,12 +164,12 @@ namespace KTC.Scene
                 return;
             }
             _prepared = true;
-            _font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FontAddress, cancellationToken);
+            _font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FONT_ADDRESS, cancellationToken);
 
             await LoadCardTexturesAsync(cancellationToken);
             await SoundController.Instance.PreloadAsync(
-                new[] { SeClick, SeDeal, SeFlip, SeChip, SeWin }, cancellationToken);
-            GameAudio.PlayBgm(GameAudio.TableBgm);
+                new[] { SE_CLICK, SE_DEAL, SE_FLIP, SE_CHIP, SE_WIN }, cancellationToken);
+            GameAudio.PlayBgm(GameAudio.TABLE_BGM);
 
             var data = SaveDataService.CreateDefault().Load();
             if (!string.IsNullOrEmpty(data.PlayerName))
@@ -208,7 +209,7 @@ namespace KTC.Scene
             }
             if (ResourceController.HasInstance)
             {
-                ResourceController.Instance.Release(FontAddress);
+                ResourceController.Instance.Release(FONT_ADDRESS);
                 foreach (var address in _loadedCardAddresses)
                 {
                     ResourceController.Instance.Release(address);
@@ -218,9 +219,9 @@ namespace KTC.Scene
 
         private void Update()
         {
-            if (errorText != null && errorText.text.Length > 0 && Time.unscaledTime >= _errorClearAt)
+            if (_errorText != null && _errorText.text.Length > 0 && Time.unscaledTime >= _errorClearAt)
             {
-                errorText.text = "";
+                _errorText.text = "";
             }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -244,7 +245,7 @@ namespace KTC.Scene
 
         // ---- カードテクスチャ ----
 
-        private const string CardBackAddress = "Cards/cardBack_red2.png";
+        private const string CARD_BACK_ADDRESS = "Cards/cardBack_red2.png";
         private readonly List<string> _loadedCardAddresses = new List<string>();
 
         private static string CardTextureAddress(Card card)
@@ -272,7 +273,7 @@ namespace KTC.Scene
             {
                 _loadedCardAddresses.Add(CardTextureAddress(card));
             }
-            _loadedCardAddresses.Add(CardBackAddress);
+            _loadedCardAddresses.Add(CARD_BACK_ADDRESS);
 
             await ResourceController.Instance.PreloadAllAsync<Texture2D>(_loadedCardAddresses, cancellationToken);
 
@@ -280,7 +281,7 @@ namespace KTC.Scene
             {
                 textures[card.Value] = ResourceController.Instance.Get<Texture2D>(CardTextureAddress(card));
             }
-            Card3D.SetSharedTextures(textures, ResourceController.Instance.Get<Texture2D>(CardBackAddress));
+            Card3D.SetSharedTextures(textures, ResourceController.Instance.Get<Texture2D>(CARD_BACK_ADDRESS));
         }
 
         // ---- セッションイベント → プレゼンテーションキュー ----
@@ -311,7 +312,7 @@ namespace KTC.Scene
 
         private void OnSessionError(string message)
         {
-            errorText.text = message;
+            _errorText.text = message;
             _errorClearAt = Time.unscaledTime + 3f;
         }
 
@@ -343,7 +344,7 @@ namespace KTC.Scene
             if (effects && prev != null && !prev.isComplete
                 && prev.currentSeat >= 0 && prev.currentSeat != next.yourSeat)
             {
-                await Awaitable.WaitForSecondsAsync(Random.Range(botThinkMin, botThinkMax), ct);
+                await Awaitable.WaitForSecondsAsync(Random.Range(_botThinkMin, _botThinkMax), ct);
             }
 
             // 新ハンド → 配布演出
@@ -396,7 +397,7 @@ namespace KTC.Scene
 
         private void SendAction(int actionType, int amount = 0)
         {
-            SoundController.Instance.PlaySE(SeClick, 1f, 1f);
+            SoundController.Instance.PlaySE(SE_CLICK, 1f, 1f);
             _session.SendAction(new PlayerActionMessage { actionType = actionType, amount = amount });
         }
 
@@ -413,17 +414,17 @@ namespace KTC.Scene
         {
             if (_lastState == null || !_lastState.isYourTurn || !_lastState.actionRequest.canRaise) return;
             var request = _lastState.actionRequest;
-            raiseSlider.minValue = request.minRaiseTo;
-            raiseSlider.maxValue = request.maxRaiseTo;
-            raiseSlider.SetValueWithoutNotify(request.minRaiseTo);
-            raiseAmountText.text = ZString.Format("レイズ額 {0}", request.minRaiseTo);
-            raisePanel.SetActive(true);
+            _raiseSlider.minValue = request.minRaiseTo;
+            _raiseSlider.maxValue = request.maxRaiseTo;
+            _raiseSlider.SetValueWithoutNotify(request.minRaiseTo);
+            _raiseAmountText.text = ZString.Format("レイズ額 {0}", request.minRaiseTo);
+            _raisePanel.SetActive(true);
         }
 
         private void SetRaiseSlider(int raiseTo)
         {
-            raiseSlider.value = Mathf.Clamp(raiseTo, raiseSlider.minValue, raiseSlider.maxValue);
-            raiseAmountText.text = ZString.Format("レイズ額 {0}", (int)raiseSlider.value);
+            _raiseSlider.value = Mathf.Clamp(raiseTo, _raiseSlider.minValue, _raiseSlider.maxValue);
+            _raiseAmountText.text = ZString.Format("レイズ額 {0}", (int)_raiseSlider.value);
         }
 
         private void OnRaiseConfirm()
@@ -433,13 +434,13 @@ namespace KTC.Scene
                 CloseRaisePanel();
                 return;
             }
-            SendAction((int)ActionType.RaiseTo, (int)raiseSlider.value);
+            SendAction((int)ActionType.RaiseTo, (int)_raiseSlider.value);
             CloseRaisePanel();
         }
 
         private void CloseRaisePanel()
         {
-            raisePanel.SetActive(false);
+            _raisePanel.SetActive(false);
         }
 
         private void OnAllIn()
@@ -534,21 +535,21 @@ namespace KTC.Scene
 
             ApplyCommunity(state, communityCount >= 0 ? communityCount : (showCards ? state.communityCards.Length : 0));
 
-            potText.text = ZString.Format("POT {0}", state.pot);
-            statusText.text = ZString.Format("Hand #{0}  {1}", state.handNumber,
-                state.isComplete ? "終了" : StreetNames[Mathf.Clamp(state.street, 0, StreetNames.Length - 1)]);
+            _potText.text = ZString.Format("POT {0}", state.pot);
+            _statusText.text = ZString.Format("Hand #{0}  {1}", state.handNumber,
+                state.isComplete ? "終了" : STREET_NAMES[Mathf.Clamp(state.street, 0, STREET_NAMES.Length - 1)]);
 
             bool showActions = state.isYourTurn && !state.isComplete;
-            foldButton.gameObject.SetActive(showActions);
-            checkCallButton.gameObject.SetActive(showActions);
-            raiseButton.gameObject.SetActive(showActions);
-            allInButton.gameObject.SetActive(showActions);
+            _foldButton.gameObject.SetActive(showActions);
+            _checkCallButton.gameObject.SetActive(showActions);
+            _raiseButton.gameObject.SetActive(showActions);
+            _allInButton.gameObject.SetActive(showActions);
             if (showActions)
             {
                 var request = state.actionRequest;
-                checkCallLabel.text = request.canCheck ? "チェック" : ZString.Format("コール {0}", request.callAmount);
-                raiseButton.interactable = request.canRaise;
-                raiseLabel.text = request.canRaise ? ZString.Format("レイズ {0}〜", request.minRaiseTo) : "レイズ不可";
+                _checkCallLabel.text = request.canCheck ? "チェック" : ZString.Format("コール {0}", request.callAmount);
+                _raiseButton.interactable = request.canRaise;
+                _raiseLabel.text = request.canRaise ? ZString.Format("レイズ {0}〜", request.minRaiseTo) : "レイズ不可";
             }
             else
             {
@@ -561,7 +562,7 @@ namespace KTC.Scene
             }
             else
             {
-                resultPanel.SetActive(false);
+                _resultPanel.SetActive(false);
             }
         }
 
@@ -665,10 +666,10 @@ namespace KTC.Scene
 
         private void RenderResultOverlay(TableStateMessage state)
         {
-            resultPanel.SetActive(true);
-            resultText.text = BuildResultText(state);
-            nextHandButton.gameObject.SetActive(!state.isGameOver);
-            toResultButton.gameObject.SetActive(state.isGameOver);
+            _resultPanel.SetActive(true);
+            _resultText.text = BuildResultText(state);
+            _nextHandButton.gameObject.SetActive(!state.isGameOver);
+            _toResultButton.gameObject.SetActive(state.isGameOver);
         }
 
         private string BuildResultText(TableStateMessage state)
@@ -728,13 +729,13 @@ namespace KTC.Scene
             }
 
             float delay = 0f;
-            _ = PlayScheduledSeAsync(SeDeal, order.Count, dealInterval, 0f, ct);
+            _ = PlayScheduledSeAsync(SE_DEAL, order.Count, _dealInterval, 0f, ct);
             foreach (var (view, cardIndex, _) in order)
             {
-                view.Cards[cardIndex].PlayDealFrom(DeckPosition, delay, dealDuration);
-                delay += dealInterval;
+                view.Cards[cardIndex].PlayDealFrom(DeckPosition, delay, _dealDuration);
+                delay += _dealInterval;
             }
-            await Awaitable.WaitForSecondsAsync(delay + dealDuration, ct);
+            await Awaitable.WaitForSecondsAsync(delay + _dealDuration, ct);
 
             // 公開されている手札 (自分 / CPU手札公開デバッグ) をフリップ
             float flipDelay = 0f;
@@ -744,15 +745,15 @@ namespace KTC.Scene
                 byte value = cardIndex < seat.holeCards.Length ? seat.holeCards[cardIndex] : (byte)0;
                 if (value != 0)
                 {
-                    view.Cards[cardIndex].PlayFlipToFace(value, flipDelay, flipDuration);
+                    view.Cards[cardIndex].PlayFlipToFace(value, flipDelay, _flipDuration);
                     flipDelay += 0.05f;
                     flipCount++;
                 }
             }
             if (flipDelay > 0f)
             {
-                _ = PlayScheduledSeAsync(SeFlip, flipCount, 0.05f, 0f, ct);
-                await Awaitable.WaitForSecondsAsync(flipDelay + flipDuration * 2f, ct);
+                _ = PlayScheduledSeAsync(SE_FLIP, flipCount, 0.05f, 0f, ct);
+                await Awaitable.WaitForSecondsAsync(flipDelay + _flipDuration * 2f, ct);
             }
         }
 
@@ -774,43 +775,43 @@ namespace KTC.Scene
         private async Awaitable PlayCommunityRevealAsync(TableStateMessage state, int fromCount, System.Threading.CancellationToken ct)
         {
             float delay = 0f;
-            _ = PlayScheduledSeAsync(SeFlip, state.communityCards.Length - fromCount, dealInterval * 2f, dealDuration, ct);
+            _ = PlayScheduledSeAsync(SE_FLIP, state.communityCards.Length - fromCount, _dealInterval * 2f, _dealDuration, ct);
             for (int i = fromCount; i < state.communityCards.Length; i++)
             {
-                _communityViews[i].PlayDealFrom(DeckPosition, delay, dealDuration);
-                _communityViews[i].PlayFlipToFace(state.communityCards[i], delay + dealDuration, flipDuration);
-                delay += dealInterval * 2f;
+                _communityViews[i].PlayDealFrom(DeckPosition, delay, _dealDuration);
+                _communityViews[i].PlayFlipToFace(state.communityCards[i], delay + _dealDuration, _flipDuration);
+                delay += _dealInterval * 2f;
             }
-            await Awaitable.WaitForSecondsAsync(delay + dealDuration + flipDuration * 2f, ct);
+            await Awaitable.WaitForSecondsAsync(delay + _dealDuration + _flipDuration * 2f, ct);
         }
 
         /// <summary>ハンド終了時: ポットの獲得額が勝者パネルへ飛ぶ。</summary>
         private async Awaitable PlayPotAnimationAsync(TableStateMessage state, System.Threading.CancellationToken ct)
         {
-            SoundController.Instance.PlaySE(SeChip, 1f, 1f);
-            var potOrigin = potText.rectTransform.anchoredPosition;
+            SoundController.Instance.PlaySE(SE_CHIP, 1f, 1f);
+            var potOrigin = _potText.rectTransform.anchoredPosition;
             float wait = 0f;
             foreach (var pot in state.result.pots)
             {
                 foreach (int winner in pot.winnerSeats)
                 {
                     // 親は HUD と同じコンテナ (SafeArea) にする — 席パネルと同じ座標系で飛ばすため
-                    var fly = QuickUi.MakeText("PotFly", potText.rectTransform.parent, potOrigin,
+                    var fly = QuickUi.MakeText("PotFly", _potText.rectTransform.parent, potOrigin,
                         new Vector2(300f, 44f), 34f,
                         ZString.Format("+{0}", pot.amount / pot.winnerSeats.Length), _font);
                     fly.color = QuickUi.Accent;
                     var target = _seatUiPositions[winner];
-                    LMotion.Create(potOrigin, target, potFlyDuration)
+                    LMotion.Create(potOrigin, target, _potFlyDuration)
                         .WithEase(Ease.InOutQuad)
                         .Bind(fly, static (pos, text) => text.rectTransform.anchoredPosition = pos)
                         .AddTo(fly.gameObject);
-                    LMotion.Create(1f, 0f, potFlyDuration)
+                    LMotion.Create(1f, 0f, _potFlyDuration)
                         .WithEase(Ease.InQuad)
                         .Bind(fly, static (alpha, text) => text.alpha = alpha)
                         .AddTo(fly.gameObject);
-                    Destroy(fly.gameObject, potFlyDuration + 0.1f);
+                    Destroy(fly.gameObject, _potFlyDuration + 0.1f);
                 }
-                wait = potFlyDuration;
+                wait = _potFlyDuration;
             }
             if (wait > 0f)
             {
@@ -822,7 +823,7 @@ namespace KTC.Scene
             {
                 if (System.Array.IndexOf(pot.winnerSeats, state.yourSeat) >= 0)
                 {
-                    SoundController.Instance.PlaySE(SeWin, 1f, 1f);
+                    SoundController.Instance.PlaySE(SE_WIN, 1f, 1f);
                     break;
                 }
             }
@@ -864,7 +865,7 @@ namespace KTC.Scene
             for (int i = 0; i < 5; i++)
             {
                 _communityViews[i] = new Card3D(_cardsRoot,
-                    new Vector3((i - 2) * 0.72f, CardY, 0.35f), 1f);
+                    new Vector3((i - 2) * 0.72f, CARD_Y, 0.35f), 1f);
             }
 
             for (int seat = 0; seat < seatCount; seat++)
@@ -872,14 +873,14 @@ namespace KTC.Scene
                 int displayIndex = (seat - mySeat + seatCount) % seatCount;
                 float angle = displayIndex * Mathf.PI * 2f / seatCount;
                 var anchor = new Vector3(
-                    Mathf.Sin(angle) * SeatRadiusX,
-                    CardY,
-                    -Mathf.Cos(angle) * SeatRadiusZ);
+                    Mathf.Sin(angle) * SEAT_RADIUS_X,
+                    CARD_Y,
+                    -Mathf.Cos(angle) * SEAT_RADIUS_Z);
                 float scale = displayIndex == 0 ? 1.15f : 0.95f;
                 _seatViews[seat].Cards = new[]
                 {
-                    new Card3D(_cardsRoot, anchor + new Vector3(-HoleCardGap * scale, 0f, 0f), scale),
-                    new Card3D(_cardsRoot, anchor + new Vector3(HoleCardGap * scale, 0f, 0f), scale),
+                    new Card3D(_cardsRoot, anchor + new Vector3(-HOLE_CARD_GAP * scale, 0f, 0f), scale),
+                    new Card3D(_cardsRoot, anchor + new Vector3(HOLE_CARD_GAP * scale, 0f, 0f), scale),
                 };
             }
         }
@@ -888,7 +889,7 @@ namespace KTC.Scene
 
         /// <summary>
         /// 席パネルをテンプレートから複製して楕円配置する。
-        /// パネルのデザインはシーン上の seatTemplate で調整でき、位置だけ席数依存で計算する。
+        /// パネルのデザインはシーン上の _seatTemplate で調整でき、位置だけ席数依存で計算する。
         /// </summary>
         private void CreateSeatViews(int seatCount, int mySeat)
         {
@@ -897,15 +898,15 @@ namespace KTC.Scene
                 int displayIndex = (seat - mySeat + seatCount) % seatCount;
                 float angle = displayIndex * Mathf.PI * 2f / seatCount;
                 var pos = new Vector2(
-                    Mathf.Sin(angle) * seatUiRadiusX,
-                    -Mathf.Cos(angle) * seatUiRadiusY + seatUiYOffset);
+                    Mathf.Sin(angle) * _seatUiRadiusX,
+                    -Mathf.Cos(angle) * _seatUiRadiusY + _seatUiYOffset);
                 _seatUiPositions.Add(pos);
 
-                var frame = Instantiate(seatTemplate, seatTemplate.parent);
+                var frame = Instantiate(_seatTemplate, _seatTemplate.parent);
                 frame.name = ZString.Format("Seat{0}", seat);
                 frame.anchoredPosition = pos;
                 // 描画順はテンプレート位置に合わせる (末尾追加のままだと後続HUD (レイズパネル等) より前面に来てしまう)
-                frame.SetSiblingIndex(seatTemplate.GetSiblingIndex() + 1 + seat);
+                frame.SetSiblingIndex(_seatTemplate.GetSiblingIndex() + 1 + seat);
                 frame.gameObject.SetActive(true);
                 _seatViews.Add(new SeatView(frame));
             }
@@ -937,10 +938,10 @@ namespace KTC.Scene
         /// </summary>
         private sealed class Card3D
         {
-            private static Material _sharedMaterial;
-            private static Dictionary<byte, Texture2D> _faceTextures;
-            private static Texture2D _backTexture;
-            private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+            private static Material SharedMaterial;
+            private static Dictionary<byte, Texture2D> FaceTextures;
+            private static Texture2D BackTexture;
+            private static readonly int BASE_MAP_ID = Shader.PropertyToID("_BaseMap");
 
             private readonly GameObject _root;
             private readonly MeshRenderer _renderer;
@@ -949,8 +950,8 @@ namespace KTC.Scene
 
             public static void SetSharedTextures(Dictionary<byte, Texture2D> faces, Texture2D back)
             {
-                _faceTextures = faces;
-                _backTexture = back;
+                FaceTextures = faces;
+                BackTexture = back;
             }
 
             public Card3D(Transform parent, Vector3 position, float scale)
@@ -970,7 +971,7 @@ namespace KTC.Scene
                 quad.transform.localRotation = Quaternion.Euler(90f, 180f, 0f);
                 quad.transform.localScale = new Vector3(0.66f, 0.9f, 1f);
                 _renderer = quad.GetComponent<MeshRenderer>();
-                _renderer.sharedMaterial = _sharedMaterial;
+                _renderer.sharedMaterial = SharedMaterial;
 
                 _root.SetActive(false);
             }
@@ -978,7 +979,7 @@ namespace KTC.Scene
             public void ShowFace(byte value)
             {
                 ResetPose();
-                if (_faceTextures == null || !_faceTextures.TryGetValue(value, out var texture))
+                if (FaceTextures == null || !FaceTextures.TryGetValue(value, out var texture))
                 {
                     ShowBack();
                     return;
@@ -989,7 +990,7 @@ namespace KTC.Scene
             public void ShowBack()
             {
                 ResetPose();
-                Apply(_backTexture);
+                Apply(BackTexture);
             }
 
             public void Hide()
@@ -1001,7 +1002,7 @@ namespace KTC.Scene
             public void PlayDealFrom(Vector3 from, float delay, float duration)
             {
                 ResetPose();
-                Apply(_backTexture);
+                Apply(BackTexture);
                 _root.transform.localPosition = from;
                 LMotion.Create(from, _homePosition, duration)
                     .WithDelay(delay)
@@ -1013,7 +1014,7 @@ namespace KTC.Scene
             /// <summary>フリップ演出: 半回転で表面テクスチャへ差し替える。</summary>
             public void PlayFlipToFace(byte value, float delay, float halfDuration)
             {
-                if (_faceTextures == null || !_faceTextures.TryGetValue(value, out var texture))
+                if (FaceTextures == null || !FaceTextures.TryGetValue(value, out var texture))
                 {
                     return;
                 }
@@ -1045,21 +1046,21 @@ namespace KTC.Scene
             private void Apply(Texture2D texture)
             {
                 _root.SetActive(true);
-                _propertyBlock.SetTexture(BaseMapId, texture);
+                _propertyBlock.SetTexture(BASE_MAP_ID, texture);
                 _renderer.SetPropertyBlock(_propertyBlock);
             }
 
             private static void EnsureMaterial()
             {
-                if (_sharedMaterial != null)
+                if (SharedMaterial != null)
                 {
                     return;
                 }
-                _sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"))
+                SharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"))
                 {
                     color = Color.white,
                 };
-                _sharedMaterial.SetFloat("_Smoothness", 0.1f);
+                SharedMaterial.SetFloat("_Smoothness", 0.1f);
             }
         }
     }

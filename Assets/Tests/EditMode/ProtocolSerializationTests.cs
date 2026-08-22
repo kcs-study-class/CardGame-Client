@@ -59,7 +59,7 @@ namespace KTC.Poker.Tests
             var action = new PlayerActionMessage { actionType = 3, amount = 40 };
             var envelope = new GameMessageEnvelope
             {
-                type = MessageTypes.PlayerAction,
+                type = MessageTypes.PLAYER_ACTION,
                 payload = JsonUtility.ToJson(action),
             };
 

@@ -20,16 +20,16 @@ using UnityEditor.Toolbars;
 [InitializeOnLoad]
 public static class WindowsBuildButton
 {
-    private const string ButtonText = "Win Build";
-    private const string OutputDir = "Builds/Windows";
-    private const string ExeName = "CardGame.exe";
+    private const string BUTTON_TEXT = "Win Build";
+    private const string OUTPUT_DIR = "Builds/Windows";
+    private const string EXE_NAME = "CardGame.exe";
 
-    private static readonly Texture BuildTexture =
+    private static readonly Texture BUILD_TEXTURE =
         EditorGUIUtility.IconContent("BuildSettings.Standalone.Small").image;
 
 #if UNITY_6000_3_OR_NEWER
-    private const string ToolbarTooltip = "WindowsBuild";
-    private const string MainToolbarElementPath = ToolbarTooltip;
+    private const string TOOLBAR_TOOLTIP = "WindowsBuild";
+    private const string MAIN_TOOLBAR_ELEMENT_PATH = TOOLBAR_TOOLTIP;
 
     private class WindowsBuildToolButton : MainToolbarElement
     {
@@ -43,9 +43,9 @@ public static class WindowsBuildButton
 
         internal override VisualElement CreateElement()
         {
-            var element = new CustomToolbarButton(ButtonText, BuildTexture as Texture2D, _action);
+            var element = new CustomToolbarButton(BUTTON_TEXT, BUILD_TEXTURE as Texture2D, _action);
             element.AddToClassList("unity-editor-toolbar-element");
-            element.tooltip = ToolbarTooltip;
+            element.tooltip = TOOLBAR_TOOLTIP;
             return element;
         }
     }
@@ -60,7 +60,7 @@ public static class WindowsBuildButton
         }
     }
 
-    [MainToolbarElement(MainToolbarElementPath, defaultDockPosition = MainToolbarDockPosition.Middle)]
+    [MainToolbarElement(MAIN_TOOLBAR_ELEMENT_PATH, defaultDockPosition = MainToolbarDockPosition.Middle)]
     public static MainToolbarElement Create()
     {
         return new WindowsBuildToolButton(BuildRelease);
@@ -100,7 +100,7 @@ public static class WindowsBuildButton
         AddressableAssetSettings.CleanPlayerContent();
         AddressableAssetSettings.BuildPlayerContent();
 
-        string exePath = Path.Combine(OutputDir, ExeName);
+        string exePath = Path.Combine(OUTPUT_DIR, EXE_NAME);
         Debug.Log($"[WindowsBuild] プレイヤーをビルド中... → {exePath}");
         BuildReport report = BuildPipeline.BuildPlayer(
             scenes, exePath, BuildTarget.StandaloneWindows64, options);

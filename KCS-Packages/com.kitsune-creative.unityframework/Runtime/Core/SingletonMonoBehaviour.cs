@@ -9,14 +9,14 @@ namespace UnityFramework
     /// <typeparam name="T">継承する具体型 (CRTP)</typeparam>
     public abstract class SingletonMonoBehaviour<T> : MonoBehaviour where T : SingletonMonoBehaviour<T>
     {
-        private static T _instance;
-        private static readonly object _lock = new object();
-        private static bool _isQuitting;
+        private static T CachedInstance;
+        private static readonly object Lock = new object();
+        private static bool IsQuitting;
 
         /// <summary>
         /// インスタンスが生成済みかどうか。Instance アクセスによる自動生成を避けたい場合に利用。
         /// </summary>
-        public static bool HasInstance => _instance != null;
+        public static bool HasInstance => CachedInstance != null;
 
         /// <summary>
         /// シングルトンインスタンス。アクセス時に存在しなければ FindAnyObjectByType / 自動生成を行う。
@@ -26,37 +26,37 @@ namespace UnityFramework
         {
             get
             {
-                if (_isQuitting) return null;
-                if (_instance != null) return _instance;
+                if (IsQuitting) return null;
+                if (CachedInstance != null) return CachedInstance;
 
-                lock (_lock)
+                lock (Lock)
                 {
-                    if (_instance != null) return _instance;
+                    if (CachedInstance != null) return CachedInstance;
 
-                    _instance = FindAnyObjectByType<T>(FindObjectsInactive.Include);
-                    if (_instance != null) return _instance;
+                    CachedInstance = FindAnyObjectByType<T>(FindObjectsInactive.Include);
+                    if (CachedInstance != null) return CachedInstance;
 
                     if (!Application.isPlaying) return null;
 
                     var go = new GameObject($"[{typeof(T).Name}]");
-                    _instance = go.AddComponent<T>();
+                    CachedInstance = go.AddComponent<T>();
                     DontDestroyOnLoad(go);
-                    return _instance;
+                    return CachedInstance;
                 }
             }
         }
 
         protected virtual void Awake()
         {
-            if (_instance == null)
+            if (CachedInstance == null)
             {
-                _instance = (T)this;
+                CachedInstance = (T)this;
                 if (transform.parent == null)
                 {
                     DontDestroyOnLoad(gameObject);
                 }
             }
-            else if (_instance != this)
+            else if (CachedInstance != this)
             {
                 Destroy(gameObject);
             }
@@ -64,14 +64,14 @@ namespace UnityFramework
 
         protected virtual void OnApplicationQuit()
         {
-            _isQuitting = true;
+            IsQuitting = true;
         }
 
         protected virtual void OnDestroy()
         {
-            if (_instance == this)
+            if (CachedInstance == this)
             {
-                _instance = null;
+                CachedInstance = null;
             }
         }
     }
