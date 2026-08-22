@@ -38,10 +38,10 @@ namespace UnityFramework.SceneManagement
         /// </summary>
         private static async Awaitable RunScenePreparersAsync(CancellationToken cancellationToken)
         {
-            var scene = UnitySceneManager.GetActiveScene();
-            foreach (var root in scene.GetRootGameObjects())
+            Scene scene = UnitySceneManager.GetActiveScene();
+            foreach (GameObject root in scene.GetRootGameObjects())
             {
-                foreach (var preparer in root.GetComponentsInChildren<IScenePreparer>(true))
+                foreach (IScenePreparer preparer in root.GetComponentsInChildren<IScenePreparer>(true))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     try
@@ -78,7 +78,7 @@ namespace UnityFramework.SceneManagement
 
             try
             {
-                var operation = UnitySceneManager.LoadSceneAsync(sceneName, mode);
+                AsyncOperation operation = UnitySceneManager.LoadSceneAsync(sceneName, mode);
                 if (operation == null)
                 {
                     SafeLogger.LogError($"[SceneController] シーン '{sceneName}' のロードを開始できません。Build Settings に含まれているか確認してください。");
@@ -120,7 +120,7 @@ namespace UnityFramework.SceneManagement
 
             try
             {
-                var operation = UnitySceneManager.LoadSceneAsync(sceneName, mode);
+                AsyncOperation operation = UnitySceneManager.LoadSceneAsync(sceneName, mode);
                 if (operation == null)
                 {
                     SafeLogger.LogError($"[SceneController] シーン '{sceneName}' のロードを開始できません。Build Settings に含まれているか確認してください。");
@@ -169,7 +169,7 @@ namespace UnityFramework.SceneManagement
         /// </summary>
         public async Awaitable UnloadSceneAsync(string sceneName, CancellationToken cancellationToken = default)
         {
-            var operation = UnitySceneManager.UnloadSceneAsync(sceneName);
+            AsyncOperation operation = UnitySceneManager.UnloadSceneAsync(sceneName);
             if (operation == null)
             {
                 SafeLogger.LogWarning($"[SceneController] シーン '{sceneName}' はアンロードできません。ロード済みか確認してください。");
@@ -190,7 +190,7 @@ namespace UnityFramework.SceneManagement
         /// </summary>
         public bool SetActiveScene(string sceneName)
         {
-            var scene = UnitySceneManager.GetSceneByName(sceneName);
+            Scene scene = UnitySceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid())
             {
                 SafeLogger.LogWarning($"[SceneController] シーン '{sceneName}' は有効ではありません。ロード済みか確認してください。");
@@ -223,10 +223,10 @@ namespace UnityFramework.SceneManagement
 
             try
             {
-                var transition = TransitionController.Instance;
+                TransitionController transition = TransitionController.Instance;
                 await transition.PlayOutAsync(fadeOutDuration, cancellationToken);
 
-                var operation = UnitySceneManager.LoadSceneAsync(sceneName, mode);
+                AsyncOperation operation = UnitySceneManager.LoadSceneAsync(sceneName, mode);
                 if (operation == null)
                 {
                     SafeLogger.LogError($"[SceneController] シーン '{sceneName}' のロードを開始できません。Build Settings を確認してください。");
@@ -287,13 +287,13 @@ namespace UnityFramework.SceneManagement
 
             try
             {
-                var transition = TransitionController.Instance;
+                TransitionController transition = TransitionController.Instance;
 
                 // 1. フェードアウト (現在のシーンを覆う)
                 await transition.PlayOutAsync(fadeDuration, cancellationToken);
 
                 // 2. Transition シーンへ切替
-                var transitionOp = UnitySceneManager.LoadSceneAsync(transitionSceneName, LoadSceneMode.Single);
+                AsyncOperation transitionOp = UnitySceneManager.LoadSceneAsync(transitionSceneName, LoadSceneMode.Single);
                 if (transitionOp == null)
                 {
                     SafeLogger.LogError($"[SceneController] Transition シーン '{transitionSceneName}' のロードを開始できません。");
@@ -312,7 +312,7 @@ namespace UnityFramework.SceneManagement
                 await transition.PlayInAsync(fadeDuration, cancellationToken);
 
                 // 4. ターゲットを背後ロード (活性化はまだ)
-                var targetOp = UnitySceneManager.LoadSceneAsync(targetSceneName, LoadSceneMode.Single);
+                AsyncOperation targetOp = UnitySceneManager.LoadSceneAsync(targetSceneName, LoadSceneMode.Single);
                 if (targetOp == null)
                 {
                     SafeLogger.LogError($"[SceneController] ターゲットシーン '{targetSceneName}' のロードを開始できません。");
@@ -377,15 +377,15 @@ namespace UnityFramework.SceneManagement
                 return;
             }
 
-            var path = SceneUtility.GetScenePathByBuildIndex(buildIndex);
-            var sceneName = string.IsNullOrEmpty(path) ? $"#{buildIndex}" : System.IO.Path.GetFileNameWithoutExtension(path);
+            string path = SceneUtility.GetScenePathByBuildIndex(buildIndex);
+            string sceneName = string.IsNullOrEmpty(path) ? $"#{buildIndex}" : System.IO.Path.GetFileNameWithoutExtension(path);
 
             IsLoading = true;
             SceneLoadStarted?.Invoke(sceneName);
 
             try
             {
-                var operation = UnitySceneManager.LoadSceneAsync(buildIndex, mode);
+                AsyncOperation operation = UnitySceneManager.LoadSceneAsync(buildIndex, mode);
                 if (operation == null)
                 {
                     SafeLogger.LogError($"[SceneController] buildIndex={buildIndex} のロードを開始できません。Build Settings の範囲を確認してください。");

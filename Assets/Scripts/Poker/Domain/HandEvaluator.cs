@@ -44,14 +44,14 @@ namespace KTC.Poker.Domain
             }
 
             // 6枚: 1枚除外 (6通り) / 7枚: 2枚除外 (21通り) の全組合せで最大を探す
-            var buffer = new Card[5];
+            Card[] buffer = new Card[5];
             HandValue best = default; // score 0 = どの実役よりも弱い番兵
             for (int skipA = 0; skipA < count; skipA++)
             {
                 if (count == 6)
                 {
                     FillExcluding(cards, buffer, skipA, -1);
-                    var value = EvaluateFive(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
+                    HandValue value = EvaluateFive(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
                     if (value > best) best = value;
                 }
                 else
@@ -59,7 +59,7 @@ namespace KTC.Poker.Domain
                     for (int skipB = skipA + 1; skipB < count; skipB++)
                     {
                         FillExcluding(cards, buffer, skipA, skipB);
-                        var value = EvaluateFive(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
+                        HandValue value = EvaluateFive(buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
                         if (value > best) best = value;
                     }
                 }
@@ -80,7 +80,7 @@ namespace KTC.Poker.Domain
         private static HandValue EvaluateFive(Card c1, Card c2, Card c3, Card c4, Card c5)
         {
             // ランク出現数 (index 2..14)
-            var rankCount = new int[15];
+            int[] rankCount = new int[15];
             rankCount[(int)c1.Rank]++;
             rankCount[(int)c2.Rank]++;
             rankCount[(int)c3.Rank]++;
@@ -91,7 +91,7 @@ namespace KTC.Poker.Domain
 
             // 出現数ごとのランクを強い順に収集
             int quad = 0, trips = 0, pairHigh = 0, pairLow = 0;
-            var singles = new List<int>(5); // キッカー (強い順)
+            List<int> singles = new List<int>(5); // キッカー (強い順)
             for (int r = 14; r >= 2; r--)
             {
                 switch (rankCount[r])

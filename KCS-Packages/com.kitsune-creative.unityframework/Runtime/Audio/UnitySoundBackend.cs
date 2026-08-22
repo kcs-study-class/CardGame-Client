@@ -25,15 +25,15 @@ namespace UnityFramework.Audio
         private readonly AudioSource[] _sePool;
 
         private bool _isPrimaryActive = true;
-        private bool _isCrossfading;
-        private string _currentBgmAddress;
-        private string _currentBgmIntroAddress;
-        private int _seNextIndex;
+        private bool _isCrossfading = false;
+        private string _currentBgmAddress = null;
+        private string _currentBgmIntroAddress = null;
+        private int _seNextIndex = 0;
 
         private float _masterVolume = 1f;
         private float _bgmVolume = 1f;
         private float _seVolume = 1f;
-        private bool _isMuted;
+        private bool _isMuted = false;
 
         public float MasterVolume { get => _masterVolume; set { _masterVolume = Mathf.Clamp01(value); ApplyBgmVolume(); } }
         public float BGMVolume { get => _bgmVolume; set { _bgmVolume = Mathf.Clamp01(value); ApplyBgmVolume(); } }
@@ -58,9 +58,9 @@ namespace UnityFramework.Audio
 
         private AudioSource CreateAudioSource(string objectName, AudioMixerGroup group, bool loop)
         {
-            var go = new GameObject(objectName);
+            GameObject go = new GameObject(objectName);
             go.transform.SetParent(_root, worldPositionStays: false);
-            var source = go.AddComponent<AudioSource>();
+            AudioSource source = go.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.loop = loop;
             source.outputAudioMixerGroup = group;
@@ -101,7 +101,7 @@ namespace UnityFramework.Audio
 
             if (fadeTime <= 0f)
             {
-                var src = CurrentBgm();
+                AudioSource src = CurrentBgm();
                 src.clip = clip;
                 src.volume = EffectiveBgmVolume();
                 src.Play();
@@ -113,8 +113,8 @@ namespace UnityFramework.Audio
             _isCrossfading = true;
             try
             {
-                var fadeOut = CurrentBgm();
-                var fadeIn = OtherBgm();
+                AudioSource fadeOut = CurrentBgm();
+                AudioSource fadeIn = OtherBgm();
 
                 fadeIn.clip = clip;
                 fadeIn.volume = 0f;
@@ -206,8 +206,8 @@ namespace UnityFramework.Audio
                 // 旧 intro を停止 (新 intro を貼り直すため)
                 StopIntroIfActive();
 
-                var oldSource = CurrentBgm();
-                var loopSource = OtherBgm();
+                AudioSource oldSource = CurrentBgm();
+                AudioSource loopSource = OtherBgm();
 
                 bool needFade = fadeTime > 0f && oldSource.isPlaying;
                 float targetVolume = EffectiveBgmVolume();
@@ -267,7 +267,7 @@ namespace UnityFramework.Audio
 
         public async Awaitable FadeOutBGMAsync(float fadeTime, CancellationToken cancellationToken)
         {
-            var src = CurrentBgm();
+            AudioSource src = CurrentBgm();
             if (!src.isPlaying && !_bgmIntro.isPlaying) return;
 
             float t = 0f;
@@ -311,7 +311,7 @@ namespace UnityFramework.Audio
         {
             if (string.IsNullOrEmpty(id)) return;
 
-            var cached = ResourceController.Instance.Get<AudioClip>(id);
+            AudioClip cached = ResourceController.Instance.Get<AudioClip>(id);
             if (cached.IsNotNull())
             {
                 PlaySEInternal(cached, volumeScale, pitch);
@@ -324,7 +324,7 @@ namespace UnityFramework.Audio
         {
             try
             {
-                var clip = await ResourceController.Instance.LoadAsync<AudioClip>(id);
+                AudioClip clip = await ResourceController.Instance.LoadAsync<AudioClip>(id);
                 if (clip.IsNotNull())
                 {
                     PlaySEInternal(clip, volumeScale, pitch);
@@ -338,7 +338,7 @@ namespace UnityFramework.Audio
 
         private void PlaySEInternal(AudioClip clip, float volumeScale, float pitch)
         {
-            var source = _sePool[_seNextIndex];
+            AudioSource source = _sePool[_seNextIndex];
             _seNextIndex = (_seNextIndex + 1) % _sePool.Length;
 
             source.clip = clip;
@@ -349,7 +349,7 @@ namespace UnityFramework.Audio
 
         public void StopAllSE()
         {
-            foreach (var s in _sePool) s.Stop();
+            foreach (AudioSource s in _sePool) s.Stop();
         }
 
         public async Awaitable PreloadAsync(string id, CancellationToken cancellationToken)

@@ -11,10 +11,10 @@ namespace KTC.Scene
     public static class GameLaunch
     {
         /// <summary>次の対戦の卓設定 (Lobby が設定し InGame が消費する)。null なら既定値。</summary>
-        public static LocalGameSessionConfig NextConfig;
+        public static LocalGameSessionConfig NextConfig = null;
 
         /// <summary>接続先をサーバーにするか (デバッグメニューで切替。RemoteGameSession は生徒課題)。</summary>
-        public static bool UseRemoteSession;
+        public static bool UseRemoteSession = false;
 
         /// <summary>ゲームサーバーの WebSocket URL。</summary>
         public static string ServerUrl = "ws://localhost:8080/ws";
@@ -31,19 +31,19 @@ namespace KTC.Scene
         }
 
         /// <summary>直近の対戦の最終スナップショット (Result 表示用)。</summary>
-        public static TableStateMessage LastFinalState;
+        public static TableStateMessage LastFinalState = null;
 
         /// <summary>直近の対戦で自分が座っていた席。</summary>
-        public static int LastMySeat;
+        public static int LastMySeat = 0;
 
         /// <summary>直近の対戦のバイイン額 (収支表示用)。バイインなしの対戦 (デバッグ起動) は 0。</summary>
-        public static int LastBuyIn;
+        public static int LastBuyIn = 0;
 
         /// <summary>直近の対戦で獲得したXP (Result 表示用)。</summary>
-        public static long LastXpGained;
+        public static long LastXpGained = 0;
 
         /// <summary>直近の対戦でレベルアップしたか (Result 表示用)。</summary>
-        public static bool LastLeveledUp;
+        public static bool LastLeveledUp = false;
 
         /// <summary>
         /// バイインを所持チップから差し引いて開始した対戦か。
@@ -51,7 +51,7 @@ namespace KTC.Scene
         /// デバッグ起動などバイインなしの対戦では精算しない (無からチップが湧くのを防ぐ)。
         /// サーバー対戦ではバイイン/精算ともサーバー側の責務になる。
         /// </summary>
-        public static bool ChipsAtStake;
+        public static bool ChipsAtStake = false;
 
         /// <summary>Result 表示後のクリア。</summary>
         public static void ClearResult()

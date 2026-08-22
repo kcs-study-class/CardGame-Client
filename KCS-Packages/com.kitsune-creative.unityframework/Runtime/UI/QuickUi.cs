@@ -26,10 +26,10 @@ namespace UnityFramework.UI
 
         public static RectTransform MakeRect(string name, Transform parent, Vector2 pos, Vector2 size)
         {
-            var go = new GameObject(name, typeof(RectTransform));
+            GameObject go = new GameObject(name, typeof(RectTransform));
             go.layer = 5;
             go.transform.SetParent(parent, false);
-            var rt = (RectTransform)go.transform;
+            RectTransform rt = (RectTransform)go.transform;
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
             return rt;
@@ -37,8 +37,8 @@ namespace UnityFramework.UI
 
         public static Image MakePanel(string name, Transform parent, Vector2 pos, Vector2 size, Color color)
         {
-            var rt = MakeRect(name, parent, pos, size);
-            var image = rt.gameObject.AddComponent<Image>();
+            RectTransform rt = MakeRect(name, parent, pos, size);
+            Image image = rt.gameObject.AddComponent<Image>();
             image.color = color;
             image.raycastTarget = false;
             return image;
@@ -47,8 +47,8 @@ namespace UnityFramework.UI
         /// <summary>全面ストレッチの背景パネル。</summary>
         public static Image MakeBackground(Transform parent)
         {
-            var image = MakePanel("Background", parent, Vector2.zero, Vector2.zero, Bg);
-            var rt = (RectTransform)image.transform;
+            Image image = MakePanel("Background", parent, Vector2.zero, Vector2.zero, Bg);
+            RectTransform rt = (RectTransform)image.transform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.zero;
@@ -61,8 +61,8 @@ namespace UnityFramework.UI
             float fontSize, string content, TMP_FontAsset font,
             TextAlignmentOptions alignment = TextAlignmentOptions.Center)
         {
-            var rt = MakeRect(name, parent, pos, size);
-            var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
+            RectTransform rt = MakeRect(name, parent, pos, size);
+            TextMeshProUGUI tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
             if (font != null)
             {
                 tmp.font = font;
@@ -80,11 +80,11 @@ namespace UnityFramework.UI
             string label, TMP_FontAsset font, UnityEngine.Events.UnityAction onClick,
             out TextMeshProUGUI labelText)
         {
-            var image = MakePanel(name, parent, pos, size, Accent);
+            Image image = MakePanel(name, parent, pos, size, Accent);
             image.raycastTarget = true;
-            var button = image.gameObject.AddComponent<Button>();
+            Button button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
-            var colors = button.colors;
+            ColorBlock colors = button.colors;
             colors.disabledColor = Disabled;
             button.colors = colors;
             if (onClick != null)
@@ -100,7 +100,7 @@ namespace UnityFramework.UI
         public static void SetSelected(Button button, bool selected)
         {
             ((Image)button.targetGraphic).color = selected ? Accent : Panel;
-            var label = button.GetComponentInChildren<TextMeshProUGUI>();
+            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null)
             {
                 label.color = selected ? TextDark : Text;

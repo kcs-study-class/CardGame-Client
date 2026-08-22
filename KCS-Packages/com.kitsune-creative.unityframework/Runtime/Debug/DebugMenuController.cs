@@ -29,22 +29,22 @@ namespace UnityFramework.Debugging
         private const int LOG_CAPACITY = 100;
         private const int LOG_TAIL_LINES = 18;
 
-        private Canvas _canvas;
-        private GameObject _root;
-        private Transform _categoryBar;
-        private Transform _contentParent;
-        private Font _font;
+        private Canvas _canvas = null;
+        private GameObject _root = null;
+        private Transform _categoryBar = null;
+        private Transform _contentParent = null;
+        private Font _font = null;
 
         private readonly Dictionary<string, Transform> _categories = new Dictionary<string, Transform>();
         private readonly List<(Text text, string label, Func<string> getter)> _labels = new List<(Text, string, Func<string>)>();
         private readonly Queue<string> _logBuffer = new Queue<string>();
-        private string _activeCategory;
-        private float _nextLabelRefresh;
+        private string _activeCategory = null;
+        private float _nextLabelRefresh = 0f;
 
         // FPS 計測
-        private float _fpsAccum;
-        private int _fpsFrames;
-        private float _fpsValue;
+        private float _fpsAccum = 0f;
+        private int _fpsFrames = 0;
+        private float _fpsValue = 0f;
 
         public bool IsOpen => _root != null && _root.activeSelf;
 
@@ -80,7 +80,7 @@ namespace UnityFramework.Debugging
                 return;
             }
             _nextLabelRefresh = Time.unscaledTime + LABEL_REFRESH_INTERVAL;
-            foreach (var entry in _labels)
+            foreach ((Text text, string label, Func<string> getter) entry in _labels)
             {
                 if (!entry.text) continue;
                 string value;
@@ -113,8 +113,8 @@ namespace UnityFramework.Debugging
         /// <summary>ボタン項目を追加する。</summary>
         public void AddButton(string category, string label, Action onClick)
         {
-            var row = MakeRow(category);
-            var button = MakeButton(row, label, () =>
+            Transform row = MakeRow(category);
+            Button button = MakeButton(row, label, () =>
             {
                 try { onClick?.Invoke(); }
                 catch (Exception e) { SafeLogger.LogError($"[DebugMenu] '{label}' 実行時エラー: {e.Message}"); }
@@ -125,7 +125,7 @@ namespace UnityFramework.Debugging
         /// <summary>ON/OFFトグル項目を追加する。</summary>
         public void AddToggle(string category, string label, Func<bool> getter, Action<bool> setter)
         {
-            var row = MakeRow(category);
+            Transform row = MakeRow(category);
             Button button = null;
             Text buttonLabel = null;
             button = MakeButton(row, "", () =>
@@ -144,9 +144,9 @@ namespace UnityFramework.Debugging
         /// <summary>値表示ラベルを追加する (開いている間、定期更新される)。</summary>
         public void AddLabel(string category, string label, Func<string> getter)
         {
-            var row = MakeRow(category);
-            var text = MakeText(row, "", 26, TextAnchor.MiddleLeft);
-            var layout = text.gameObject.AddComponent<LayoutElement>();
+            Transform row = MakeRow(category);
+            Text text = MakeText(row, "", 26, TextAnchor.MiddleLeft);
+            LayoutElement layout = text.gameObject.AddComponent<LayoutElement>();
             layout.flexibleWidth = 1f;
             _labels.Add((text, label, getter));
         }
@@ -154,22 +154,22 @@ namespace UnityFramework.Debugging
         /// <summary>テキスト入力項目を追加する。Enter/フォーカスアウトで onSubmit が呼ばれる。</summary>
         public void AddInput(string category, string label, Func<string> getter, Action<string> onSubmit)
         {
-            var row = MakeRow(category);
-            var caption = MakeText(row, label, 26, TextAnchor.MiddleLeft);
-            var captionLayout = caption.gameObject.AddComponent<LayoutElement>();
+            Transform row = MakeRow(category);
+            Text caption = MakeText(row, label, 26, TextAnchor.MiddleLeft);
+            LayoutElement captionLayout = caption.gameObject.AddComponent<LayoutElement>();
             captionLayout.preferredWidth = 320f;
 
-            var fieldGo = new GameObject("Input", typeof(RectTransform), typeof(Image), typeof(InputField));
+            GameObject fieldGo = new GameObject("Input", typeof(RectTransform), typeof(Image), typeof(InputField));
             fieldGo.transform.SetParent(row, false);
             fieldGo.GetComponent<Image>().color = new Color(0.9f, 0.9f, 0.92f, 1f);
-            var fieldLayout = fieldGo.AddComponent<LayoutElement>();
+            LayoutElement fieldLayout = fieldGo.AddComponent<LayoutElement>();
             fieldLayout.flexibleWidth = 1f;
             fieldLayout.preferredHeight = 48f;
 
-            var input = fieldGo.GetComponent<InputField>();
-            var inputText = MakeText(fieldGo.transform, "", 26, TextAnchor.MiddleLeft);
+            InputField input = fieldGo.GetComponent<InputField>();
+            Text inputText = MakeText(fieldGo.transform, "", 26, TextAnchor.MiddleLeft);
             inputText.color = Color.black;
-            var textRt = (RectTransform)inputText.transform;
+            RectTransform textRt = (RectTransform)inputText.transform;
             textRt.anchorMin = Vector2.zero;
             textRt.anchorMax = Vector2.one;
             textRt.offsetMin = new Vector2(10f, 4f);
@@ -198,7 +198,15 @@ namespace UnityFramework.Debugging
 
         private void OnLogMessage(string condition, string stackTrace, LogType type)
         {
-            string prefix = type == LogType.Warning ? "[W] " : type == LogType.Error || type == LogType.Exception ? "[E] " : "";
+            string prefix = "";
+            if (type == LogType.Warning)
+            {
+                prefix = "[W] ";
+            }
+            else if (type == LogType.Error || type == LogType.Exception)
+            {
+                prefix = "[E] ";
+            }
             _logBuffer.Enqueue(prefix + condition);
             while (_logBuffer.Count > LOG_CAPACITY)
             {
@@ -208,11 +216,11 @@ namespace UnityFramework.Debugging
 
         private string BuildLogTail()
         {
-            var sb = new System.Text.StringBuilder();
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
             sb.AppendLine("---- 直近ログ ----");
             int skip = Mathf.Max(0, _logBuffer.Count - LOG_TAIL_LINES);
             int index = 0;
-            foreach (var line in _logBuffer)
+            foreach (string line in _logBuffer)
             {
                 if (index++ < skip) continue;
                 sb.AppendLine(line);
@@ -228,39 +236,39 @@ namespace UnityFramework.Debugging
 
             _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-            var canvasGo = new GameObject("[DebugMenuCanvas]");
+            GameObject canvasGo = new GameObject("[DebugMenuCanvas]");
             canvasGo.transform.SetParent(transform, false);
             canvasGo.layer = 5;
             _canvas = canvasGo.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             _canvas.sortingOrder = _sortingOrder;
-            var scaler = canvasGo.AddComponent<CanvasScaler>();
+            CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
             canvasGo.AddComponent<GraphicRaycaster>();
 
             // ルートパネル
-            var rootGo = new GameObject("Root", typeof(RectTransform), typeof(Image));
+            GameObject rootGo = new GameObject("Root", typeof(RectTransform), typeof(Image));
             rootGo.transform.SetParent(canvasGo.transform, false);
             rootGo.layer = 5;
-            var rootRt = (RectTransform)rootGo.transform;
+            RectTransform rootRt = (RectTransform)rootGo.transform;
             rootRt.anchorMin = new Vector2(0.5f, 0.5f);
             rootRt.anchorMax = new Vector2(0.5f, 0.5f);
             rootRt.sizeDelta = new Vector2(1400f, 950f);
             rootGo.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.08f, 0.96f);
             _root = rootGo;
 
-            var title = MakeText(rootGo.transform, "DEBUG MENU", 30, TextAnchor.MiddleCenter);
-            var titleRt = (RectTransform)title.transform;
+            Text title = MakeText(rootGo.transform, "DEBUG MENU", 30, TextAnchor.MiddleCenter);
+            RectTransform titleRt = (RectTransform)title.transform;
             titleRt.anchorMin = new Vector2(0.5f, 1f);
             titleRt.anchorMax = new Vector2(0.5f, 1f);
             titleRt.anchoredPosition = new Vector2(0f, -34f);
             titleRt.sizeDelta = new Vector2(600f, 50f);
             title.color = new Color(1f, 0.8f, 0.4f, 1f);
 
-            var closeButton = MakeButton(rootGo.transform, "閉じる", Close);
-            var closeRt = (RectTransform)closeButton.transform;
+            Button closeButton = MakeButton(rootGo.transform, "閉じる", Close);
+            RectTransform closeRt = (RectTransform)closeButton.transform;
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
@@ -268,15 +276,15 @@ namespace UnityFramework.Debugging
             closeRt.sizeDelta = new Vector2(140f, 48f);
 
             // カテゴリバー
-            var barGo = new GameObject("Categories", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            GameObject barGo = new GameObject("Categories", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             barGo.transform.SetParent(rootGo.transform, false);
-            var barRt = (RectTransform)barGo.transform;
+            RectTransform barRt = (RectTransform)barGo.transform;
             barRt.anchorMin = new Vector2(0f, 1f);
             barRt.anchorMax = new Vector2(1f, 1f);
             barRt.pivot = new Vector2(0.5f, 1f);
             barRt.anchoredPosition = new Vector2(0f, -70f);
             barRt.sizeDelta = new Vector2(-40f, 54f);
-            var bar = barGo.GetComponent<HorizontalLayoutGroup>();
+            HorizontalLayoutGroup bar = barGo.GetComponent<HorizontalLayoutGroup>();
             bar.spacing = 8f;
             bar.childControlWidth = true;
             bar.childControlHeight = true;
@@ -286,26 +294,26 @@ namespace UnityFramework.Debugging
             _categoryBar = barGo.transform;
 
             // コンテンツ (スクロール)
-            var scrollGo = new GameObject("Scroll", typeof(RectTransform), typeof(Image), typeof(ScrollRect), typeof(RectMask2D));
+            GameObject scrollGo = new GameObject("Scroll", typeof(RectTransform), typeof(Image), typeof(ScrollRect), typeof(RectMask2D));
             scrollGo.transform.SetParent(rootGo.transform, false);
-            var scrollRt = (RectTransform)scrollGo.transform;
+            RectTransform scrollRt = (RectTransform)scrollGo.transform;
             scrollRt.anchorMin = new Vector2(0f, 0f);
             scrollRt.anchorMax = new Vector2(1f, 1f);
             scrollRt.offsetMin = new Vector2(20f, 20f);
             scrollRt.offsetMax = new Vector2(-20f, -134f);
             scrollGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.35f);
-            var scroll = scrollGo.GetComponent<ScrollRect>();
+            ScrollRect scroll = scrollGo.GetComponent<ScrollRect>();
             scroll.horizontal = false;
             scroll.scrollSensitivity = 40f;
 
-            var contentGo = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            GameObject contentGo = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             contentGo.transform.SetParent(scrollGo.transform, false);
-            var contentRt = (RectTransform)contentGo.transform;
+            RectTransform contentRt = (RectTransform)contentGo.transform;
             contentRt.anchorMin = new Vector2(0f, 1f);
             contentRt.anchorMax = new Vector2(1f, 1f);
             contentRt.pivot = new Vector2(0.5f, 1f);
             contentRt.sizeDelta = Vector2.zero; // 新規RectTransformの既定(100,100)を消す (幅はアンカー追従)
-            var contentLayout = contentGo.GetComponent<VerticalLayoutGroup>();
+            VerticalLayoutGroup contentLayout = contentGo.GetComponent<VerticalLayoutGroup>();
             contentLayout.padding = new RectOffset(14, 14, 10, 10);
             contentLayout.spacing = 6f;
             contentLayout.childControlWidth = true;
@@ -322,20 +330,20 @@ namespace UnityFramework.Debugging
         private Transform EnsureCategory(string category)
         {
             EnsureSetup();
-            if (_categories.TryGetValue(category, out var existing))
+            if (_categories.TryGetValue(category, out Transform existing))
             {
                 return existing;
             }
 
             // タブボタン
-            var tab = MakeButton(_categoryBar, category, () => SwitchCategory(category));
-            var tabLayout = tab.gameObject.AddComponent<LayoutElement>();
+            Button tab = MakeButton(_categoryBar, category, () => SwitchCategory(category));
+            LayoutElement tabLayout = tab.gameObject.AddComponent<LayoutElement>();
             tabLayout.preferredWidth = 190f;
 
             // 項目コンテナ
-            var containerGo = new GameObject("Cat_" + category, typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            GameObject containerGo = new GameObject("Cat_" + category, typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             containerGo.transform.SetParent(_contentParent, false);
-            var layout = containerGo.GetComponent<VerticalLayoutGroup>();
+            VerticalLayoutGroup layout = containerGo.GetComponent<VerticalLayoutGroup>();
             layout.spacing = 6f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -358,7 +366,7 @@ namespace UnityFramework.Debugging
         private void SwitchCategory(string category)
         {
             _activeCategory = category;
-            foreach (var pair in _categories)
+            foreach (KeyValuePair<string, Transform> pair in _categories)
             {
                 pair.Value.gameObject.SetActive(pair.Key == category);
             }
@@ -367,10 +375,10 @@ namespace UnityFramework.Debugging
 
         private Transform MakeRow(string category)
         {
-            var parent = EnsureCategory(category);
-            var rowGo = new GameObject("Row", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            Transform parent = EnsureCategory(category);
+            GameObject rowGo = new GameObject("Row", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             rowGo.transform.SetParent(parent, false);
-            var layout = rowGo.GetComponent<HorizontalLayoutGroup>();
+            HorizontalLayoutGroup layout = rowGo.GetComponent<HorizontalLayoutGroup>();
             layout.spacing = 10f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -383,17 +391,17 @@ namespace UnityFramework.Debugging
 
         private Button MakeButton(Transform parent, string label, Action onClick)
         {
-            var go = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
+            GameObject go = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
             go.layer = 5;
             go.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.32f, 1f);
-            var button = go.GetComponent<Button>();
+            Button button = go.GetComponent<Button>();
             if (onClick != null)
             {
                 button.onClick.AddListener(() => onClick());
             }
-            var text = MakeText(go.transform, label, 26, TextAnchor.MiddleCenter);
-            var textRt = (RectTransform)text.transform;
+            Text text = MakeText(go.transform, label, 26, TextAnchor.MiddleCenter);
+            RectTransform textRt = (RectTransform)text.transform;
             textRt.anchorMin = Vector2.zero;
             textRt.anchorMax = Vector2.one;
             textRt.offsetMin = new Vector2(8f, 2f);
@@ -403,10 +411,10 @@ namespace UnityFramework.Debugging
 
         private Text MakeText(Transform parent, string content, int size, TextAnchor anchor)
         {
-            var go = new GameObject("Text", typeof(RectTransform));
+            GameObject go = new GameObject("Text", typeof(RectTransform));
             go.transform.SetParent(parent, false);
             go.layer = 5;
-            var text = go.AddComponent<Text>();
+            Text text = go.AddComponent<Text>();
             text.font = _font;
             text.fontSize = size;
             text.color = new Color(0.92f, 0.92f, 0.95f, 1f);
@@ -419,7 +427,7 @@ namespace UnityFramework.Debugging
 
         private static void Stretch(Button button)
         {
-            var layout = button.gameObject.AddComponent<LayoutElement>();
+            LayoutElement layout = button.gameObject.AddComponent<LayoutElement>();
             layout.flexibleWidth = 1f;
             layout.preferredHeight = 48f;
         }

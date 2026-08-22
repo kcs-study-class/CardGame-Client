@@ -69,7 +69,7 @@ namespace UnityFramework.Extensions
         public static void ForEach<T>(this IEnumerable<T> self, Action<T> action)
         {
             if (self == null || action == null) return;
-            foreach (var item in self)
+            foreach (T item in self)
             {
                 action(item);
             }
@@ -82,7 +82,7 @@ namespace UnityFramework.Extensions
         {
             if (self == null || action == null) return;
             int index = 0;
-            foreach (var item in self)
+            foreach (T item in self)
             {
                 action(item, index++);
             }

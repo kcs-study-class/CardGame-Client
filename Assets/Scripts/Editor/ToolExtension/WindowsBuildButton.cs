@@ -43,7 +43,7 @@ public static class WindowsBuildButton
 
         internal override VisualElement CreateElement()
         {
-            var element = new CustomToolbarButton(BUTTON_TEXT, BUILD_TEXTURE as Texture2D, _action);
+            CustomToolbarButton element = new CustomToolbarButton(BUTTON_TEXT, BUILD_TEXTURE as Texture2D, _action);
             element.AddToClassList("unity-editor-toolbar-element");
             element.tooltip = TOOLBAR_TOOLTIP;
             return element;

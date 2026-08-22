@@ -17,8 +17,8 @@ namespace UnityFramework.Resource
     {
         private sealed class Entry
         {
-            public AsyncOperationHandle Handle;
-            public int RefCount;
+            public AsyncOperationHandle Handle = default;
+            public int RefCount = 0;
         }
 
         private readonly Dictionary<string, Entry> _cache = new Dictionary<string, Entry>();
@@ -28,7 +28,7 @@ namespace UnityFramework.Resource
         /// </summary>
         public bool IsLoaded(string address)
         {
-            return _cache.TryGetValue(address, out var entry)
+            return _cache.TryGetValue(address, out Entry entry)
                 && entry.Handle.IsValid()
                 && entry.Handle.IsDone
                 && entry.Handle.Status == AsyncOperationStatus.Succeeded;
@@ -39,7 +39,7 @@ namespace UnityFramework.Resource
         /// </summary>
         public T Get<T>(string address) where T : UObject
         {
-            if (!_cache.TryGetValue(address, out var entry)) return null;
+            if (!_cache.TryGetValue(address, out Entry entry)) return null;
             if (!entry.Handle.IsValid() || !entry.Handle.IsDone) return null;
             return entry.Handle.Result as T;
         }
@@ -55,7 +55,7 @@ namespace UnityFramework.Resource
                 return null;
             }
 
-            if (_cache.TryGetValue(address, out var entry))
+            if (_cache.TryGetValue(address, out Entry entry))
             {
                 entry.RefCount++;
                 if (!entry.Handle.IsDone)
@@ -72,7 +72,7 @@ namespace UnityFramework.Resource
                 return entry.Handle.Result as T;
             }
 
-            var handle = Addressables.LoadAssetAsync<T>(address);
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             entry = new Entry { Handle = handle, RefCount = 1 };
             _cache[address] = entry;
 
@@ -113,12 +113,12 @@ namespace UnityFramework.Resource
         public async Awaitable PreloadAllAsync<T>(IEnumerable<string> addresses, CancellationToken cancellationToken = default) where T : UObject
         {
             if (addresses == null) return;
-            var pending = new List<Awaitable<T>>();
-            foreach (var address in addresses)
+            List<Awaitable<T>> pending = new List<Awaitable<T>>();
+            foreach (string address in addresses)
             {
                 pending.Add(LoadAsync<T>(address, cancellationToken));
             }
-            foreach (var task in pending)
+            foreach (Awaitable<T> task in pending)
             {
                 await task;
             }
@@ -129,7 +129,7 @@ namespace UnityFramework.Resource
         /// </summary>
         public void Release(string address)
         {
-            if (!_cache.TryGetValue(address, out var entry)) return;
+            if (!_cache.TryGetValue(address, out Entry entry)) return;
             entry.RefCount--;
             if (entry.RefCount <= 0)
             {
@@ -143,7 +143,7 @@ namespace UnityFramework.Resource
         /// </summary>
         public void ReleaseAll()
         {
-            foreach (var entry in _cache.Values)
+            foreach (Entry entry in _cache.Values)
             {
                 if (entry.Handle.IsValid()) Addressables.Release(entry.Handle);
             }

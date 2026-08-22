@@ -15,7 +15,7 @@ public static class GameHttpClient
     // FIXME : 接続先はサーバー実装時に確定 (docker-compose の api ポートに合わせる)
     public const string BASE_ADDRESS = "http://localhost:8081";
 
-    private static HttpClient SharedInstance;
+    private static HttpClient SharedInstance = null;
 
     public static HttpClient Shared
     {

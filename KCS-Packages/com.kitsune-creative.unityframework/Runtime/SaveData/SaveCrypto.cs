@@ -28,7 +28,7 @@ namespace UnityFramework.SaveData
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (keys == null) throw new ArgumentNullException(nameof(keys));
 
-            using (var aes = Aes.Create())
+            using (Aes aes = Aes.Create())
             {
                 aes.KeySize = 256;
                 aes.Key = keys.AesKey;
@@ -37,12 +37,12 @@ namespace UnityFramework.SaveData
                 aes.GenerateIV();
 
                 byte[] cipher;
-                using (var encryptor = aes.CreateEncryptor())
+                using (ICryptoTransform encryptor = aes.CreateEncryptor())
                 {
                     cipher = encryptor.TransformFinalBlock(payload, 0, payload.Length);
                 }
 
-                using (var stream = new MemoryStream())
+                using (MemoryStream stream = new MemoryStream())
                 {
                     stream.Write(MAGIC, 0, MAGIC.Length);
                     stream.WriteByte(FORMAT_VERSION);
@@ -95,19 +95,19 @@ namespace UnityFramework.SaveData
 
             try
             {
-                using (var aes = Aes.Create())
+                using (Aes aes = Aes.Create())
                 {
                     aes.KeySize = 256;
                     aes.Key = keys.AesKey;
                     aes.Mode = CipherMode.CBC;
                     aes.Padding = PaddingMode.PKCS7;
 
-                    var iv = new byte[IV_SIZE];
+                    byte[] iv = new byte[IV_SIZE];
                     Buffer.BlockCopy(file, 5, iv, 0, IV_SIZE);
                     aes.IV = iv;
 
                     int cipherOffset = 5 + IV_SIZE;
-                    using (var decryptor = aes.CreateDecryptor())
+                    using (ICryptoTransform decryptor = aes.CreateDecryptor())
                     {
                         payload = decryptor.TransformFinalBlock(file, cipherOffset, macOffset - cipherOffset);
                     }
@@ -124,7 +124,7 @@ namespace UnityFramework.SaveData
 
         private static byte[] ComputeMac(SaveKeys keys, byte[] data, int count = -1)
         {
-            using (var hmac = new HMACSHA256(keys.HmacKey))
+            using (HMACSHA256 hmac = new HMACSHA256(keys.HmacKey))
             {
                 return hmac.ComputeHash(data, 0, count < 0 ? data.Length : count);
             }

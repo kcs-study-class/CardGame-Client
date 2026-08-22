@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Text;
 using KTC.SaveData;
+using KTC.Poker.Protocol;
 using UnityFramework.UI;
 using TMPro;
 using UnityEngine;
@@ -18,15 +20,15 @@ namespace KTC.Scene
     /// </summary>
     public class Result : MonoBehaviour, IScenePreparer
     {
-        [SerializeField, FormerlySerializedAs("myRankText")] private TMP_Text _myRankText;
-        [SerializeField, FormerlySerializedAs("profitText")] private TMP_Text _profitText;
-        [SerializeField, FormerlySerializedAs("xpText")] private TMP_Text _xpText;
-        [SerializeField, FormerlySerializedAs("rowsContainer")] private Transform _rowsContainer;
-        [SerializeField, FormerlySerializedAs("rowTemplate")] private RectTransform _rowTemplate; // 非アクティブで配置しておく
-        [SerializeField, FormerlySerializedAs("homeButton")] private Button _homeButton;
+        [SerializeField, FormerlySerializedAs("myRankText")] private TMP_Text _myRankText = null;
+        [SerializeField, FormerlySerializedAs("profitText")] private TMP_Text _profitText = null;
+        [SerializeField, FormerlySerializedAs("xpText")] private TMP_Text _xpText = null;
+        [SerializeField, FormerlySerializedAs("rowsContainer")] private Transform _rowsContainer = null;
+        [SerializeField, FormerlySerializedAs("rowTemplate")] private RectTransform _rowTemplate = null; // 非アクティブで配置しておく
+        [SerializeField, FormerlySerializedAs("homeButton")] private Button _homeButton = null;
 
-        private bool _isTransitioning;
-        private bool _prepared;
+        private bool _isTransitioning = false;
+        private bool _prepared = false;
 
         private void Awake()
         {
@@ -65,12 +67,12 @@ namespace KTC.Scene
 
         private void BuildRanking()
         {
-            var state = GameLaunch.LastFinalState;
+            TableStateMessage state = GameLaunch.LastFinalState;
             int mySeat = GameLaunch.LastMySeat;
-            var playerData = SaveDataService.CreateDefault().Load();
+            PlayerData playerData = SaveDataService.CreateDefault().Load();
             string myName = string.IsNullOrEmpty(playerData.PlayerName) ? "あなた" : playerData.PlayerName;
 
-            var ranking = state.seats
+            List<SeatStateMessage> ranking = state.seats
                 .Where(s => !s.sittingOut || s.stack > 0)
                 .OrderByDescending(s => s.stack)
                 .ToList();
@@ -82,7 +84,7 @@ namespace KTC.Scene
             if (GameLaunch.LastBuyIn > 0)
             {
                 int myStack = 0;
-                foreach (var seat in state.seats)
+                foreach (SeatStateMessage seat in state.seats)
                 {
                     if (seat.seat == mySeat)
                     {
@@ -95,9 +97,18 @@ namespace KTC.Scene
                 _profitText.text = profit >= 0
                     ? ZString.Format("収支 +{0:N0}", profit)
                     : ZString.Format("収支 {0:N0}", profit);
-                _profitText.color = profit > 0 ? QuickUi.Accent
-                    : profit < 0 ? QuickUi.Warn
-                    : QuickUi.Text;
+                if (profit > 0)
+                {
+                    _profitText.color = QuickUi.Accent;
+                }
+                else if (profit < 0)
+                {
+                    _profitText.color = QuickUi.Warn;
+                }
+                else
+                {
+                    _profitText.color = QuickUi.Text;
+                }
             }
             else
             {
@@ -118,17 +129,17 @@ namespace KTC.Scene
 
             for (int i = 0; i < ranking.Count; i++)
             {
-                var seat = ranking[i];
-                var row = Instantiate(_rowTemplate, _rowsContainer);
+                SeatStateMessage seat = ranking[i];
+                RectTransform row = Instantiate(_rowTemplate, _rowsContainer);
                 row.gameObject.SetActive(true);
                 bool isMe = seat.seat == mySeat;
 
-                var background = row.GetComponent<Image>();
+                Image background = row.GetComponent<Image>();
                 if (background != null)
                 {
                     background.color = isMe ? QuickUi.Panel : QuickUi.PanelDark;
                 }
-                var label = row.Find("Label")?.GetComponent<TMP_Text>();
+                TMP_Text label = row.Find("Label")?.GetComponent<TMP_Text>();
                 if (label != null)
                 {
                     label.text = ZString.Format("{0}位  {1}", i + 1,
@@ -138,7 +149,7 @@ namespace KTC.Scene
                         label.color = QuickUi.Accent;
                     }
                 }
-                var stack = row.Find("Stack")?.GetComponent<TMP_Text>();
+                TMP_Text stack = row.Find("Stack")?.GetComponent<TMP_Text>();
                 if (stack != null)
                 {
                     stack.text = ZString.Format("{0}", seat.stack);

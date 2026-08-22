@@ -37,7 +37,7 @@ namespace KTC.Poker.Tests
 
         private static LocalGameSession NewSession4P(out Recorder recorder, params string[] decks)
         {
-            var session = new LocalGameSession(new LocalGameSessionConfig
+            LocalGameSession session = new LocalGameSession(new LocalGameSessionConfig
             {
                 SeatCount = 4,
                 StartingStack = 200,
@@ -45,7 +45,7 @@ namespace KTC.Poker.Tests
                 BigBlind = 2,
                 MySeat = 0,
             });
-            var queue = new Queue<Deck>(decks.Select(Rigged));
+            Queue<Deck> queue = new Queue<Deck>(decks.Select(Rigged));
             if (queue.Count > 0)
             {
                 session.DeckFactory = () => queue.Dequeue();
@@ -65,12 +65,12 @@ namespace KTC.Poker.Tests
         [Test]
         public void 接続で初期状態が届き自分の手番まで進む()
         {
-            var session = NewSession4P(out var recorder, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P);
             session.Connect();
 
             Assert.That(session.IsConnected, Is.True);
             Assert.That(recorder.States, Is.Not.Empty);
-            var last = recorder.Last;
+            TableStateMessage last = recorder.Last;
             Assert.That(last.handNumber, Is.EqualTo(1));
             Assert.That(last.isYourTurn, Is.True, "UTGのBot(s3)が行動後、自分(s0)の手番で止まる");
             Assert.That(last.currentSeat, Is.EqualTo(0));
@@ -85,12 +85,12 @@ namespace KTC.Poker.Tests
         [Test]
         public void 他人のホールカードは伏せられ自分のは見える()
         {
-            var session = NewSession4P(out var recorder, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P);
             session.Connect();
 
-            foreach (var state in recorder.States)
+            foreach (TableStateMessage state in recorder.States)
             {
-                var mySeat = state.seats[0];
+                SeatStateMessage mySeat = state.seats[0];
                 Assert.That(mySeat.holeCards, Is.EqualTo(new[]
                 {
                     Card.Parse("8c").Value, Card.Parse("8d").Value,
@@ -106,7 +106,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void チェックコールで完走しショーダウンで公開される()
         {
-            var session = NewSession4P(out var recorder, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P);
             session.Connect();
 
             session.SendAction(Msg(ActionType.Call));   // プリフロップ
@@ -114,14 +114,14 @@ namespace KTC.Poker.Tests
             session.SendAction(Msg(ActionType.Check));  // ターン
             session.SendAction(Msg(ActionType.Check));  // リバー
 
-            var last = recorder.Last;
+            TableStateMessage last = recorder.Last;
             Assert.That(recorder.Errors, Is.Empty);
             Assert.That(last.isComplete, Is.True);
             Assert.That(last.result.wentToShowdown, Is.True);
             Assert.That(last.result.payouts.Sum(), Is.EqualTo(8), "ポット総額が分配される");
             Assert.That(last.result.showdownHands.Length, Is.EqualTo(4));
             Assert.That(last.seats.Sum(s => s.stack), Is.EqualTo(800), "チップ保存則");
-            foreach (var seat in last.seats)
+            foreach (SeatStateMessage seat in last.seats)
             {
                 Assert.That(seat.holeCards, Is.All.Not.EqualTo((byte)0),
                     "ショーダウン参加者の手札は公開される");
@@ -134,11 +134,11 @@ namespace KTC.Poker.Tests
         [Test]
         public void フォールドするとBotだけで決着する()
         {
-            var session = NewSession4P(out var recorder, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P);
             session.Connect();
             session.SendAction(Msg(ActionType.Fold));
 
-            var last = recorder.Last;
+            TableStateMessage last = recorder.Last;
             Assert.That(last.isComplete, Is.True);
             Assert.That(last.result.payouts[0], Is.EqualTo(0), "降りた自分の獲得は0");
             Assert.That(last.result.payouts.Sum(), Is.GreaterThan(0));
@@ -152,7 +152,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void SendReadyで次ハンドへ進みボタンが回る()
         {
-            var session = NewSession4P(out var recorder, DECK_4P, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P, DECK_4P);
             session.Connect();
             session.SendAction(Msg(ActionType.Call));
             session.SendAction(Msg(ActionType.Check));
@@ -162,7 +162,7 @@ namespace KTC.Poker.Tests
 
             session.SendReady();
 
-            var last = recorder.Last;
+            TableStateMessage last = recorder.Last;
             Assert.That(recorder.Errors, Is.Empty);
             Assert.That(last.handNumber, Is.EqualTo(2));
             Assert.That(last.isComplete, Is.False);
@@ -176,7 +176,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 不正な操作はErrorOccurredで通知され続行できる()
         {
-            var session = NewSession4P(out var recorder, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P);
             session.Connect();
 
             session.SendAction(Msg(ActionType.RaiseTo, 3)); // 最小レイズ4未満
@@ -196,7 +196,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void ハンド終了後のアクションは拒否される()
         {
-            var session = NewSession4P(out var recorder, DECK_4P);
+            LocalGameSession session = NewSession4P(out Recorder recorder, DECK_4P);
             session.Connect();
             session.SendAction(Msg(ActionType.Fold));
             Assert.That(recorder.Last.isComplete, Is.True);
@@ -211,18 +211,18 @@ namespace KTC.Poker.Tests
         [Test]
         public void RevealAllHoleCardsで全手札が公開される()
         {
-            var session = new LocalGameSession(new LocalGameSessionConfig
+            LocalGameSession session = new LocalGameSession(new LocalGameSessionConfig
             {
                 SeatCount = 4,
                 MySeat = 0,
                 RevealAllHoleCards = true,
                 DeckFactory = () => Rigged(DECK_4P),
             });
-            var recorder = new Recorder();
+            Recorder recorder = new Recorder();
             recorder.Attach(session);
             session.Connect();
 
-            foreach (var seat in recorder.Last.seats)
+            foreach (SeatStateMessage seat in recorder.Last.seats)
             {
                 Assert.That(seat.holeCards, Is.All.Not.EqualTo((byte)0),
                     $"seat{seat.seat} の手札が公開されている");
@@ -232,13 +232,13 @@ namespace KTC.Poker.Tests
         [Test]
         public void ConfigのDeckFactoryで積み込みできる()
         {
-            var session = new LocalGameSession(new LocalGameSessionConfig
+            LocalGameSession session = new LocalGameSession(new LocalGameSessionConfig
             {
                 SeatCount = 4,
                 MySeat = 0,
                 DeckFactory = () => Rigged(DECK_4P),
             });
-            var recorder = new Recorder();
+            Recorder recorder = new Recorder();
             recorder.Attach(session);
             session.Connect();
 
@@ -255,7 +255,7 @@ namespace KTC.Poker.Tests
         {
             // HU: 自分(s0)=AA, Bot(s1)=KK。全額入れて自分が勝つ。
             // HU配布順: s1,s0,s1,s0 / ボードにフラッシュ・ストレートなし
-            var session = new LocalGameSession(new LocalGameSessionConfig
+            LocalGameSession session = new LocalGameSession(new LocalGameSessionConfig
             {
                 SeatCount = 2,
                 SmallBlind = 1,
@@ -264,20 +264,20 @@ namespace KTC.Poker.Tests
                 InitialStacks = new[] { 6, 6 },
             });
             session.DeckFactory = () => Rigged("Kh Ah Kd Ad 2c 7d 8s 9s 2h");
-            var recorder = new Recorder();
+            Recorder recorder = new Recorder();
             recorder.Attach(session);
 
             session.Connect();
             Assert.That(recorder.Last.isYourTurn, Is.True, "HUプリフロップはボタン(自分)が先");
 
             session.SendAction(Msg(ActionType.RaiseTo, 6)); // 全額 → Botがコール → ランアウト
-            var afterHand = recorder.Last;
+            TableStateMessage afterHand = recorder.Last;
             Assert.That(afterHand.isComplete, Is.True);
             Assert.That(afterHand.result.payouts[0], Is.EqualTo(12), "AAが総取り");
             Assert.That(afterHand.seats[1].stack, Is.EqualTo(0));
 
             session.SendReady();
-            var final = recorder.Last;
+            TableStateMessage final = recorder.Last;
             Assert.That(final.isGameOver, Is.True, "参加可能な席が1つ → 卓終了");
             Assert.That(final.seats[0].stack, Is.EqualTo(12));
             Assert.That(final.seats[1].stack, Is.EqualTo(0));

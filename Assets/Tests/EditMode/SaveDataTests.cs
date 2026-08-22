@@ -8,10 +8,10 @@ namespace KTC.Poker.Tests
 {
     public class SaveDataTests
     {
-        private string _directory;
-        private string _filePath;
-        private SaveKeys _keys;
-        private SaveDataService _service;
+        private string _directory = null;
+        private string _filePath = null;
+        private SaveKeys _keys = null;
+        private SaveDataService _service = null;
 
         [SetUp]
         public void SetUp()
@@ -33,8 +33,7 @@ namespace KTC.Poker.Tests
 
         private static PlayerData MakeSample()
         {
-            var data = new PlayerData
-            {
+            PlayerData data = new PlayerData {
                 PlayerName = "たむら🦊",
                 Chips = 123456789012345,
                 Level = 42,
@@ -53,7 +52,7 @@ namespace KTC.Poker.Tests
         public void ファイルが無ければ初期データ()
         {
             Assert.That(_service.HasSave, Is.False);
-            var data = _service.Load();
+            PlayerData data = _service.Load();
             Assert.That(data.Chips, Is.EqualTo(1000), "初期チップはDB初期付与額と同じ1000");
             Assert.That(data.IsTermsAccepted, Is.False);
         }
@@ -64,7 +63,7 @@ namespace KTC.Poker.Tests
             _service.Save(MakeSample());
             Assert.That(_service.HasSave, Is.True);
 
-            var restored = _service.Load();
+            PlayerData restored = _service.Load();
             Assert.That(restored.PlayerName, Is.EqualTo("たむら🦊"), "日本語・絵文字も往復する");
             Assert.That(restored.Chips, Is.EqualTo(123456789012345));
             Assert.That(restored.Level, Is.EqualTo(42));
@@ -95,7 +94,7 @@ namespace KTC.Poker.Tests
             _service.Save(MakeSample());
             TamperByteAt(file => file.Length / 2); // 暗号文の中央を書き換え
 
-            var data = _service.Load();
+            PlayerData data = _service.Load();
             Assert.That(data.Chips, Is.EqualTo(1000), "改ざんセーブは信用しない");
             Assert.That(File.Exists(_filePath + ".corrupt"), Is.True, "調査用に退避される");
         }
@@ -123,7 +122,7 @@ namespace KTC.Poker.Tests
         public void 別端末の鍵では復号できない()
         {
             _service.Save(MakeSample());
-            var otherDevice = new SaveDataService(_filePath, SaveKeys.Derive("test-secret", "test-device-B"));
+            SaveDataService otherDevice = new SaveDataService(_filePath, SaveKeys.Derive("test-secret", "test-device-B"));
 
             Assert.That(otherDevice.Load().Chips, Is.EqualTo(1000), "端末間コピーは無効");
         }
@@ -141,7 +140,7 @@ namespace KTC.Poker.Tests
         public void 未来のデータバージョンはフォールバック()
         {
             // 正しい鍵で「バージョン999」のペイロードを作って書き込む
-            var payload = PlayerDataSerializer.Serialize(MakeSample());
+            byte[] payload = PlayerDataSerializer.Serialize(MakeSample());
             BitConverter.GetBytes(999).CopyTo(payload, 0); // 先頭int = dataVersion
             Directory.CreateDirectory(_directory);
             File.WriteAllBytes(_filePath, SaveCrypto.Encrypt(payload, _keys));

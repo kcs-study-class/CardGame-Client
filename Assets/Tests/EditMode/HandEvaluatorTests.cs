@@ -37,10 +37,10 @@ namespace KTC.Poker.Tests
         [Test]
         public void ロイヤルフラッシュの表示名は特別扱い()
         {
-            var royal = Eval("As Ks Qs Js Ts");
+            HandValue royal = Eval("As Ks Qs Js Ts");
             Assert.That(royal.IsRoyalFlush, Is.True);
             Assert.That(royal.DisplayName, Is.EqualTo("ロイヤルフラッシュ"));
-            var straightFlush = Eval("9h 8h 7h 6h 5h");
+            HandValue straightFlush = Eval("9h 8h 7h 6h 5h");
             Assert.That(straightFlush.IsRoyalFlush, Is.False);
         }
 
@@ -49,17 +49,17 @@ namespace KTC.Poker.Tests
         [Test]
         public void ホイールは5ハイのストレート()
         {
-            var wheel = Eval("Ah 2c 3d 4s 5h");
+            HandValue wheel = Eval("Ah 2c 3d 4s 5h");
             Assert.That(wheel.Category, Is.EqualTo(HandCategory.Straight));
-            var sixHigh = Eval("2h 3c 4d 5s 6h");
+            HandValue sixHigh = Eval("2h 3c 4d 5s 6h");
             Assert.That(sixHigh, Is.GreaterThan(wheel), "6ハイストレートはホイールに勝つ");
         }
 
         [Test]
         public void エースハイストレートが最強のストレート()
         {
-            var broadway = Eval("Ac Kd Qh Js Tc");
-            var kingHigh = Eval("Kc Qd Jh Ts 9c");
+            HandValue broadway = Eval("Ac Kd Qh Js Tc");
+            HandValue kingHigh = Eval("Kc Qd Jh Ts 9c");
             Assert.That(broadway.Category, Is.EqualTo(HandCategory.Straight));
             Assert.That(broadway, Is.GreaterThan(kingHigh));
         }
@@ -75,24 +75,24 @@ namespace KTC.Poker.Tests
         [Test]
         public void 同じペアはキッカーで決まる()
         {
-            var kickerAce = Eval("Tc Td Ah 7s 2c");
-            var kickerKing = Eval("Th Ts Kh 7d 2d");
+            HandValue kickerAce = Eval("Tc Td Ah 7s 2c");
+            HandValue kickerKing = Eval("Th Ts Kh 7d 2d");
             Assert.That(kickerAce, Is.GreaterThan(kickerKing));
         }
 
         [Test]
         public void 同ランク構成のペアは引き分け()
         {
-            var a = Eval("Tc Td Ah 7s 2c");
-            var b = Eval("Th Ts Ad 7c 2d");
+            HandValue a = Eval("Tc Td Ah 7s 2c");
+            HandValue b = Eval("Th Ts Ad 7c 2d");
             Assert.That(a, Is.EqualTo(b));
         }
 
         [Test]
         public void フラッシュは5枚全てで比較する()
         {
-            var better = Eval("Ah Jh 9h 6h 4h");
-            var worse = Eval("As Js 9s 6s 3s");
+            HandValue better = Eval("Ah Jh 9h 6h 4h");
+            HandValue worse = Eval("As Js 9s 6s 3s");
             Assert.That(better, Is.GreaterThan(worse));
         }
 
@@ -100,8 +100,8 @@ namespace KTC.Poker.Tests
         public void フォーカードのキッカー勝負()
         {
             // コミュニティに quad がある状況を想定した 7 枚評価
-            var kickerAce = HandEvaluator.Evaluate(Cards("8c 8d 8h 8s 2c Ac 3d"));
-            var kickerKing = HandEvaluator.Evaluate(Cards("8c 8d 8h 8s 2c Kc 3d"));
+            HandValue kickerAce = HandEvaluator.Evaluate(Cards("8c 8d 8h 8s 2c Ac 3d"));
+            HandValue kickerKing = HandEvaluator.Evaluate(Cards("8c 8d 8h 8s 2c Kc 3d"));
             Assert.That(kickerAce, Is.GreaterThan(kickerKing));
         }
 
@@ -110,7 +110,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void カテゴリの強さの順序が正しい()
         {
-            var ordered = new[]
+            HandValue[] ordered = new[]
             {
                 Eval("Ac Jd 9h 6s 3c"),  // ハイカード
                 Eval("Tc Td Ah 7s 2c"),  // ワンペア
@@ -134,7 +134,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 七枚からフラッシュを見つける()
         {
-            var value = HandEvaluator.Evaluate(Cards("Ah Kh 9h 7h 3h Qs 2d"));
+            HandValue value = HandEvaluator.Evaluate(Cards("Ah Kh 9h 7h 3h Qs 2d"));
             Assert.That(value.Category, Is.EqualTo(HandCategory.Flush));
             Assert.That(value.Tiebreaks[0], Is.EqualTo((int)Rank.Ace));
         }
@@ -142,7 +142,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 二つのスリーカードは強い方のフルハウスになる()
         {
-            var value = HandEvaluator.Evaluate(Cards("Ah Ac As Kh Kc Ks 2d"));
+            HandValue value = HandEvaluator.Evaluate(Cards("Ah Ac As Kh Kc Ks 2d"));
             Assert.That(value.Category, Is.EqualTo(HandCategory.FullHouse));
             Assert.That(value.Tiebreaks[0], Is.EqualTo((int)Rank.Ace), "トリップスは A");
             Assert.That(value.Tiebreaks[1], Is.EqualTo((int)Rank.King), "ペアは K");
@@ -151,7 +151,7 @@ namespace KTC.Poker.Tests
         [Test]
         public void 六枚評価も動作する()
         {
-            var value = HandEvaluator.Evaluate(Cards("9c 8d 7h 6s 5c 5d"));
+            HandValue value = HandEvaluator.Evaluate(Cards("9c 8d 7h 6s 5c 5d"));
             Assert.That(value.Category, Is.EqualTo(HandCategory.Straight));
         }
 

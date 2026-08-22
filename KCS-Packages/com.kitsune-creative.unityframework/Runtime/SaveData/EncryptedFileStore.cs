@@ -21,10 +21,16 @@ namespace UnityFramework.SaveData
 
         public EncryptedFileStore(string filePath, SaveKeys keys)
         {
-            _filePath = !string.IsNullOrEmpty(filePath)
-                ? filePath
-                : throw new ArgumentException("filePath が空です。", nameof(filePath));
-            _keys = keys ?? throw new ArgumentNullException(nameof(keys));
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new ArgumentException("filePath が空です。", nameof(filePath));
+            }
+            _filePath = filePath;
+            if (keys == null)
+            {
+                throw new ArgumentNullException(nameof(keys));
+            }
+            _keys = keys;
         }
 
         public bool HasFile => File.Exists(_filePath);

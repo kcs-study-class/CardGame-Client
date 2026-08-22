@@ -25,11 +25,11 @@ namespace UnityFramework.Audio
         [SerializeField] private SoundBackendType _backendType = SoundBackendType.Unity;
 
         [Header("Unity Backend Settings")]
-        [SerializeField] private AudioMixerGroup _bgmMixerGroup;
-        [SerializeField] private AudioMixerGroup _seMixerGroup;
+        [SerializeField] private AudioMixerGroup _bgmMixerGroup = null;
+        [SerializeField] private AudioMixerGroup _seMixerGroup = null;
         [SerializeField, Min(1)] private int _sePoolSize = 8;
 
-        private ISoundBackend _backend;
+        private ISoundBackend _backend = null;
 
         /// <summary>現在のバックエンド実装。生成は遅延される。</summary>
         public ISoundBackend Backend
@@ -128,12 +128,12 @@ namespace UnityFramework.Audio
         public async Awaitable PreloadAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
         {
             if (ids == null) return;
-            var pending = new List<Awaitable>();
-            foreach (var id in ids)
+            List<Awaitable> pending = new List<Awaitable>();
+            foreach (string id in ids)
             {
                 pending.Add(Backend.PreloadAsync(id, cancellationToken));
             }
-            foreach (var task in pending)
+            foreach (Awaitable task in pending)
             {
                 await task;
             }
@@ -161,8 +161,8 @@ namespace UnityFramework.Audio
                 SafeLogger.LogError("[SoundController] addressResolver が null です。Preload をスキップしました。");
                 return;
             }
-            var addresses = new List<string>();
-            foreach (var id in ids) addresses.Add(addressResolver(id));
+            List<string> addresses = new List<string>();
+            foreach (TEnum id in ids) addresses.Add(addressResolver(id));
             await PreloadAsync(addresses, cancellationToken);
         }
 

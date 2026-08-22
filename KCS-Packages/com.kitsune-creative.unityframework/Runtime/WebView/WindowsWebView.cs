@@ -24,13 +24,13 @@ namespace UnityFramework.WebViews
         private const uint SWP_NOMOVE = 0x2;
         private const uint SWP_NOACTIVATE = 0x10;
 
-        private ICoreWebView2Environment _environment;
-        private ICoreWebView2Controller _controller;
-        private ICoreWebView2 _webView;
-        private IntPtr _hostWindow;
+        private ICoreWebView2Environment _environment = null;
+        private ICoreWebView2Controller _controller = null;
+        private ICoreWebView2 _webView = null;
+        private IntPtr _hostWindow = default;
         private RectOffset _margins = new RectOffset();
-        private string _pendingUrl;
-        private Win32Rect _lastClient;
+        private string _pendingUrl = null;
+        private Win32Rect _lastClient = default;
 
         /// <summary>コントローラ生成中 (コールバック待ち)。</summary>
         public bool IsCreating { get; private set; }
@@ -47,7 +47,7 @@ namespace UnityFramework.WebViews
         {
             LastError = null;
             _pendingUrl = url;
-            _margins = margins ?? new RectOffset();
+            _margins = margins != null ? margins : new RectOffset();
 
             if (IsOpen)
             {
@@ -105,7 +105,7 @@ namespace UnityFramework.WebViews
             {
                 return;
             }
-            if (!GetClientRect(_hostWindow, out var client))
+            if (!GetClientRect(_hostWindow, out Win32Rect client))
             {
                 return;
             }
@@ -114,7 +114,7 @@ namespace UnityFramework.WebViews
                 return;
             }
             _lastClient = client;
-            var bounds = new Win32Rect
+            Win32Rect bounds = new Win32Rect
             {
                 Left = _margins.left,
                 Top = _margins.top,
@@ -132,7 +132,7 @@ namespace UnityFramework.WebViews
         /// </summary>
         private void BringToTop()
         {
-            var webViewHwnd = FindWebViewChildWindow();
+            IntPtr webViewHwnd = FindWebViewChildWindow();
             if (webViewHwnd != IntPtr.Zero)
             {
                 SetWindowPos(webViewHwnd, IntPtr.Zero /* HWND_TOP */, 0, 0, 0, 0,
@@ -142,8 +142,8 @@ namespace UnityFramework.WebViews
 
         private IntPtr FindWebViewChildWindow()
         {
-            var child = GetWindow(_hostWindow, GW_CHILD);
-            var className = new System.Text.StringBuilder(256);
+            IntPtr child = GetWindow(_hostWindow, GW_CHILD);
+            System.Text.StringBuilder className = new System.Text.StringBuilder(256);
             int guard = 0;
             while (child != IntPtr.Zero && guard++ < 128)
             {

@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Threading;
 using KTC.SaveData;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityFramework;
 using UnityFramework.Boot;
 
@@ -84,13 +86,13 @@ namespace KTC.Boot
 
         public async Awaitable<BootTaskResult> RunAsync(BootContext context, CancellationToken cancellationToken)
         {
-            var handle = Addressables.CheckForCatalogUpdates(autoReleaseHandle: false);
+            AsyncOperationHandle<List<string>> handle = Addressables.CheckForCatalogUpdates(autoReleaseHandle: false);
             while (!handle.IsDone)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 await Awaitable.NextFrameAsync(cancellationToken);
             }
-            var catalogs = handle.Result;
+            List<string> catalogs = handle.Result;
             int count = catalogs != null ? catalogs.Count : 0;
             Addressables.Release(handle);
             if (count > 0)

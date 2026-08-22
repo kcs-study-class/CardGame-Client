@@ -10,7 +10,7 @@ namespace KTC.Poker.Domain
     public sealed class Deck
     {
         private readonly List<Card> _cards = new List<Card>(52);
-        private int _next;
+        private int _next = 0;
 
         /// <summary>スート順・ランク順に整列した状態で生成する。</summary>
         public Deck()
@@ -34,8 +34,8 @@ namespace KTC.Poker.Domain
             {
                 throw new ArgumentNullException(nameof(orderedCards));
             }
-            var seen = new HashSet<Card>();
-            foreach (var card in orderedCards)
+            HashSet<Card> seen = new HashSet<Card>();
+            foreach (Card card in orderedCards)
             {
                 if (card.IsNone)
                 {

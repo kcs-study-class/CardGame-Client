@@ -11,8 +11,8 @@ namespace UnityFramework.UI
     /// </summary>
     public abstract class ModalBase : MonoBehaviour
     {
-        private ModalController _owner;
-        private AwaitableCompletionSource _closedSource;
+        private ModalController _owner = null;
+        private AwaitableCompletionSource _closedSource = null;
 
         /// <summary>ロード元の Addressables アドレス (解放時に使用)。</summary>
         internal string Address { get; private set; }

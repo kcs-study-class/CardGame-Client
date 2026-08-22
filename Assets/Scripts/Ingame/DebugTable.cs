@@ -15,7 +15,7 @@ namespace KTC.Scene
     /// </summary>
     public class DebugTable : MonoBehaviour
     {
-        [SerializeField, FormerlySerializedAs("canvas")] private Canvas _canvas;
+        [SerializeField, FormerlySerializedAs("canvas")] private Canvas _canvas = null;
 
         [Header("卓設定")]
         [SerializeField, Range(2, 9), FormerlySerializedAs("seatCount")] private int _seatCount = 4;
@@ -33,24 +33,24 @@ namespace KTC.Scene
         private static readonly Color RED_SUIT_COLOR = new Color(0.78f, 0.16f, 0.16f, 1f);
         private static readonly Color BLACK_SUIT_COLOR = new Color(0.12f, 0.12f, 0.14f, 1f);
 
-        private HandEngine _engine;
-        private int[] _stacks;
+        private HandEngine _engine = null;
+        private int[] _stacks = null;
         private int _buttonIndex = -1;
-        private System.Random _random;
-        private int _handNumber;
+        private System.Random _random = null;
+        private int _handNumber = 0;
 
         private readonly List<SeatView> _seatViews = new List<SeatView>();
-        private CardView[] _communityViews;
-        private TMP_Text _potText;
-        private TMP_Text _statusText;
-        private TMP_Text _resultText;
-        private Button _foldButton;
-        private Button _checkCallButton;
-        private Button _minRaiseButton;
-        private Button _allInButton;
-        private Button _nextHandButton;
-        private TMP_Text _checkCallLabel;
-        private TMP_Text _minRaiseLabel;
+        private CardView[] _communityViews = null;
+        private TMP_Text _potText = null;
+        private TMP_Text _statusText = null;
+        private TMP_Text _resultText = null;
+        private Button _foldButton = null;
+        private Button _checkCallButton = null;
+        private Button _minRaiseButton = null;
+        private Button _allInButton = null;
+        private Button _nextHandButton = null;
+        private TMP_Text _checkCallLabel = null;
+        private TMP_Text _minRaiseLabel = null;
 
         private void Start()
         {
@@ -79,7 +79,7 @@ namespace KTC.Scene
             }
             _handNumber++;
             _buttonIndex = (_buttonIndex + 1) % _seatCount;
-            var deck = new Deck();
+            Deck deck = new Deck();
             deck.Shuffle(_random);
             _engine = new HandEngine(_smallBlind, _bigBlind, _stacks, _buttonIndex, deck);
             Render();
@@ -90,7 +90,7 @@ namespace KTC.Scene
             _engine.Apply(action);
             if (_engine.IsComplete)
             {
-                var finals = _engine.Result.FinalStacks;
+                IReadOnlyList<int> finals = _engine.Result.FinalStacks;
                 for (int i = 0; i < _seatCount; i++)
                 {
                     _stacks[i] = finals[i];
@@ -103,13 +103,13 @@ namespace KTC.Scene
 
         private void OnCheckCall()
         {
-            var legal = _engine.GetLegalActions();
+            LegalActions legal = _engine.GetLegalActions();
             ApplyAction(legal.CanCheck ? PlayerAction.Check() : PlayerAction.Call());
         }
 
         private void OnMinRaise()
         {
-            var legal = _engine.GetLegalActions();
+            LegalActions legal = _engine.GetLegalActions();
             if (legal.CanRaise)
             {
                 ApplyAction(PlayerAction.RaiseTo(legal.MinRaiseTo));
@@ -118,7 +118,7 @@ namespace KTC.Scene
 
         private void OnAllIn()
         {
-            var legal = _engine.GetLegalActions();
+            LegalActions legal = _engine.GetLegalActions();
             if (legal.CanRaise)
             {
                 ApplyAction(PlayerAction.RaiseTo(legal.MaxRaiseTo));
@@ -162,7 +162,7 @@ namespace KTC.Scene
             }
             else
             {
-                var legal = _engine.GetLegalActions();
+                LegalActions legal = _engine.GetLegalActions();
                 _statusText.text = $"Hand #{_handNumber}  -  {_engine.CurrentStreet}  -  Seat {legal.SeatIndex} to act";
                 _resultText.text = "";
                 SetActionButtonsVisible(true);
@@ -179,15 +179,33 @@ namespace KTC.Scene
         private void RenderSeat(SeatView view, SeatState seat)
         {
             bool isTurn = !_engine.IsComplete && _engine.CurrentSeatIndex == seat.SeatIndex;
-            string badge = seat.SeatIndex == _engine.ButtonIndex ? " [D]"
-                : seat.SeatIndex == _engine.SmallBlindIndex ? " [SB]"
-                : seat.SeatIndex == _engine.BigBlindIndex ? " [BB]" : "";
+            string badge = "";
+            if (seat.SeatIndex == _engine.ButtonIndex)
+            {
+                badge = " [D]";
+            }
+            else if (seat.SeatIndex == _engine.SmallBlindIndex)
+            {
+                badge = " [SB]";
+            }
+            else if (seat.SeatIndex == _engine.BigBlindIndex)
+            {
+                badge = " [BB]";
+            }
             view.NameText.text = $"Seat {seat.SeatIndex}{badge}";
             view.StackText.text = $"Stack {seat.Stack}";
             view.BetText.text = seat.StreetBet > 0 ? $"Bet {seat.StreetBet}" : "";
             view.Frame.color = isTurn ? ACCENT_COLOR : PANEL_COLOR;
 
-            string state = seat.HasFolded ? "FOLD" : seat.IsAllIn ? "ALL-IN" : "";
+            string state = "";
+            if (seat.HasFolded)
+            {
+                state = "FOLD";
+            }
+            else if (seat.IsAllIn)
+            {
+                state = "ALL-IN";
+            }
             view.StateText.text = state;
 
             for (int i = 0; i < 2; i++)
@@ -205,14 +223,14 @@ namespace KTC.Scene
 
         private string BuildResultText()
         {
-            var result = _engine.Result;
-            var lines = new List<string>();
-            foreach (var pot in result.Pots)
+            HandResult result = _engine.Result;
+            List<string> lines = new List<string>();
+            foreach (PotResult pot in result.Pots)
             {
                 string winners = string.Join(", ", pot.WinnerSeats);
                 lines.Add($"Pot {pot.Amount} → Seat {winners}");
             }
-            foreach (var pair in result.ShowdownHands)
+            foreach (KeyValuePair<int, HandValue> pair in result.ShowdownHands)
             {
                 // DisplayName (日本語) はCJKフォント導入後に切り替える
                 string handName = pair.Value.IsRoyalFlush ? "RoyalFlush" : pair.Value.Category.ToString();
@@ -237,13 +255,13 @@ namespace KTC.Scene
             {
                 return;
             }
-            var go = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            GameObject go = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             go.transform.SetParent(transform, false);
         }
 
         private void BuildUi()
         {
-            var root = _canvas.transform;
+            Transform root = _canvas.transform;
             MakePanel("Background", root, Vector2.zero, Vector2.zero, FELT_COLOR, stretch: true);
 
             // コミュニティカード + ポット
@@ -259,7 +277,7 @@ namespace KTC.Scene
             for (int i = 0; i < _seatCount; i++)
             {
                 float angle = i * Mathf.PI * 2f / _seatCount;
-                var pos = new Vector2(Mathf.Sin(angle) * 720f, -Mathf.Cos(angle) * 330f + 20f);
+                Vector2 pos = new Vector2(Mathf.Sin(angle) * 720f, -Mathf.Cos(angle) * 330f + 20f);
                 _seatViews.Add(MakeSeatView(root, i, pos));
             }
 
@@ -278,9 +296,9 @@ namespace KTC.Scene
 
         private SeatView MakeSeatView(Transform parent, int index, Vector2 pos)
         {
-            var frame = MakePanel($"Seat{index}", parent, pos, new Vector2(250f, 150f), PANEL_COLOR);
-            var inner = MakePanel("Inner", frame.transform, Vector2.zero, new Vector2(242f, 142f), FELT_COLOR);
-            var view = new SeatView { Frame = frame };
+            Image frame = MakePanel($"Seat{index}", parent, pos, new Vector2(250f, 150f), PANEL_COLOR);
+            Image inner = MakePanel("Inner", frame.transform, Vector2.zero, new Vector2(242f, 142f), FELT_COLOR);
+            SeatView view = new SeatView { Frame = frame };
             view.NameText = MakeText("Name", inner.transform, new Vector2(0f, 52f), new Vector2(230f, 34f), 24f, TextAlignmentOptions.Center);
             view.StackText = MakeText("Stack", inner.transform, new Vector2(-58f, 22f), new Vector2(120f, 30f), 22f, TextAlignmentOptions.Center);
             view.BetText = MakeText("Bet", inner.transform, new Vector2(58f, 22f), new Vector2(120f, 30f), 22f, TextAlignmentOptions.Center);
@@ -297,10 +315,10 @@ namespace KTC.Scene
 
         private Image MakePanel(string name, Transform parent, Vector2 pos, Vector2 size, Color color, bool stretch = false)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
             go.layer = 5;
-            var rt = (RectTransform)go.transform;
+            RectTransform rt = (RectTransform)go.transform;
             if (stretch)
             {
                 rt.anchorMin = Vector2.zero;
@@ -313,7 +331,7 @@ namespace KTC.Scene
                 rt.anchoredPosition = pos;
                 rt.sizeDelta = size;
             }
-            var image = go.GetComponent<Image>();
+            Image image = go.GetComponent<Image>();
             image.color = color;
             image.raycastTarget = false;
             return image;
@@ -321,13 +339,13 @@ namespace KTC.Scene
 
         private TMP_Text MakeText(string name, Transform parent, Vector2 pos, Vector2 size, float fontSize, TextAlignmentOptions alignment)
         {
-            var go = new GameObject(name, typeof(RectTransform));
+            GameObject go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             go.layer = 5;
-            var rt = (RectTransform)go.transform;
+            RectTransform rt = (RectTransform)go.transform;
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
-            var text = go.AddComponent<TextMeshProUGUI>();
+            TextMeshProUGUI text = go.AddComponent<TextMeshProUGUI>();
             text.fontSize = fontSize;
             text.color = TEXT_COLOR;
             text.alignment = alignment;
@@ -337,11 +355,11 @@ namespace KTC.Scene
 
         private Button MakeButton(string name, Transform parent, Vector2 pos, string label, UnityEngine.Events.UnityAction onClick, out TMP_Text labelText)
         {
-            var image = MakePanel(name, parent, pos, new Vector2(170f, 64f), PANEL_COLOR);
+            Image image = MakePanel(name, parent, pos, new Vector2(170f, 64f), PANEL_COLOR);
             image.raycastTarget = true;
-            var button = image.gameObject.AddComponent<Button>();
+            Button button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
-            var colors = button.colors;
+            ColorBlock colors = button.colors;
             colors.highlightedColor = new Color(0.2f, 0.2f, 0.28f, 1f);
             colors.pressedColor = ACCENT_COLOR;
             colors.disabledColor = new Color(0.09f, 0.09f, 0.12f, 1f);
@@ -354,25 +372,25 @@ namespace KTC.Scene
 
         private CardView MakeCard(Transform parent, Vector2 pos, Vector2 size, float fontSize)
         {
-            var bg = MakePanel("Card", parent, pos, size, CARD_BACK_COLOR);
-            var label = MakeText("Label", bg.transform, Vector2.zero, size, fontSize, TextAlignmentOptions.Center);
+            Image bg = MakePanel("Card", parent, pos, size, CARD_BACK_COLOR);
+            TMP_Text label = MakeText("Label", bg.transform, Vector2.zero, size, fontSize, TextAlignmentOptions.Center);
             return new CardView { Background = bg, Label = label };
         }
 
         private sealed class SeatView
         {
-            public Image Frame;
-            public TMP_Text NameText;
-            public TMP_Text StackText;
-            public TMP_Text BetText;
-            public TMP_Text StateText;
-            public CardView[] Cards;
+            public Image Frame = null;
+            public TMP_Text NameText = null;
+            public TMP_Text StackText = null;
+            public TMP_Text BetText = null;
+            public TMP_Text StateText = null;
+            public CardView[] Cards = null;
         }
 
         private sealed class CardView
         {
-            public Image Background;
-            public TMP_Text Label;
+            public Image Background = null;
+            public TMP_Text Label = null;
 
             public void ShowFace(Card card)
             {

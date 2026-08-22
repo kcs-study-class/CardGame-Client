@@ -18,11 +18,42 @@ Go サーバー (CardGame-Server) は末尾の Go 章のみ。迷ったらこの
 | ローカル変数 / 引数 | camelCase | `raiseTo`, `viewerSeat` |
 
 ### bool の命名
-- プロパティ / static: `Is` / `Has` + PascalCase — `IsComplete`, `HasSave`
+- プロパティ / static: `Is` / `Has` / `Can` + PascalCase — `IsComplete`, `HasSave`, `CanRaise`
 - インスタンスフィールド (変数) はアンスコ付き — `_isPlaying`, `_prepared`
-- **`Can` は使わない方向** (可否は `Is〜Allowed` / `〜Enabled` などで表現)。
-  ※ 既存プロトコルの `canCheck` / `canCall` / `canRaise` (Messages.cs / API.md / Go) は
-  wire 互換のため当面維持。プロトコル改版時に合わせて改名する
+
+### 変数の宣言
+- **`var` は使用禁止**。型を明示する
+  ```csharp
+  // Bad 👎
+  var seat = state.seats[index];
+  // Good 👍
+  SeatStateMessage seat = state.seats[index];
+  ```
+- **フィールドは宣言時に必ず初期化する** — `= 0;` / `= 0f;` / `= false;` / `= null;` / `= default;`
+  ```csharp
+  private int _hoge = 0;
+  private TMP_Text _label = null;
+  private MotionHandle _motion = default;
+  ```
+  ※ 例外: `const` / `readonly` (コンストラクタ代入) / struct のインスタンスフィールド
+  (C# の言語制約で初期化子を書けない)
+
+### 演算子の制限
+- **null合体演算子 (`??` / `??=`) は禁止** — 単段の三項演算子か if で書く
+  ```csharp
+  // Bad 👎
+  _config = config ?? new Config();
+  // Good 👍
+  _config = config != null ? config : new Config();
+  ```
+- **三項演算子のネスト禁止** — 2段以上になる場合は if / else if か switch で書く
+  ```csharp
+  // Bad 👎
+  string s = a ? "A" : b ? "B" : "";
+  // Good 👍
+  string s = "";
+  if (a) { s = "A"; } else if (b) { s = "B"; }
+  ```
 
 ### 禁止 (他流儀の混入)
 - `m_` / `s_` プレフィックス (Unity 内部ソースの流儀)

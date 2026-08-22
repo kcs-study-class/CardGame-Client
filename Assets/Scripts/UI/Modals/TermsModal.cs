@@ -11,7 +11,7 @@ namespace KTC.UI
     /// </summary>
     public class TermsModal : ModalBase
     {
-        [SerializeField, FormerlySerializedAs("agreeButton")] private Button _agreeButton;
+        [SerializeField, FormerlySerializedAs("agreeButton")] private Button _agreeButton = null;
 
         private void Awake()
         {
@@ -21,7 +21,7 @@ namespace KTC.UI
         private void Start()
         {
             // ScrollRect のクランプで初期位置が下端に張り付くため、先頭へ戻す
-            var scroll = GetComponentInChildren<ScrollRect>();
+            ScrollRect scroll = GetComponentInChildren<ScrollRect>();
             if (scroll != null)
             {
                 scroll.verticalNormalizedPosition = 1f;

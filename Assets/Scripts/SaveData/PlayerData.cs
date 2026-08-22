@@ -8,14 +8,14 @@ namespace KTC.SaveData
     public sealed class PlayerData
     {
         public string PlayerName = "";
-        public long Chips;
+        public long Chips = 0;
         public int Level = 1;
 
         /// <summary>チュートリアル進行フラグ (ビットフィールド)。</summary>
-        public uint TutorialFlags;
+        public uint TutorialFlags = 0;
 
         /// <summary>利用規約に同意済みか (初回フロー判定)。</summary>
-        public bool IsTermsAccepted;
+        public bool IsTermsAccepted = false;
 
         // ---- 設定 ----
         public float MasterVolume = 1f;
@@ -24,10 +24,10 @@ namespace KTC.SaveData
         public bool EffectsEnabled = true;
 
         // ---- 成長・戦績 (v2)。サーバー移行後は DB (CardGame-Server/Docs/DB.md) が正となる ----
-        public long Xp;
-        public int MatchesPlayed;
-        public int HandsPlayed;
-        public int HandsWon;
+        public long Xp = 0;
+        public int MatchesPlayed = 0;
+        public int HandsPlayed = 0;
+        public int HandsWon = 0;
 
         /// <summary>累計XPからレベルを算出する (100XPごとに1レベル、Lv.1開始)。</summary>
         public static int LevelForXp(long xp) => 1 + (int)(xp / 100);

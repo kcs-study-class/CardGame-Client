@@ -19,8 +19,16 @@ namespace UnityFramework.SaveData
 
         public SaveKeys(byte[] aesKey, byte[] hmacKey)
         {
-            AesKey = aesKey ?? throw new ArgumentNullException(nameof(aesKey));
-            HmacKey = hmacKey ?? throw new ArgumentNullException(nameof(hmacKey));
+            if (aesKey == null)
+            {
+                throw new ArgumentNullException(nameof(aesKey));
+            }
+            AesKey = aesKey;
+            if (hmacKey == null)
+            {
+                throw new ArgumentNullException(nameof(hmacKey));
+            }
+            HmacKey = hmacKey;
             if (aesKey.Length != 32 || hmacKey.Length != 32)
             {
                 throw new ArgumentException("鍵は 32 byte (SHA-256 導出) を想定しています。");
@@ -46,7 +54,7 @@ namespace UnityFramework.SaveData
 
         private static byte[] Sha256(string text)
         {
-            using (var sha = SHA256.Create())
+            using (SHA256 sha = SHA256.Create())
             {
                 return sha.ComputeHash(Encoding.UTF8.GetBytes(text));
             }

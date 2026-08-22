@@ -36,7 +36,7 @@ namespace KTC.Poker.Session
             }
 
             // コールにチップが必要な局面: 弱いハンド・高すぎるコールは降りる
-            var me = FindSeat(view);
+            SeatStateMessage me = FindSeat(view);
             bool expensive = me != null && legal.callAmount * 20 > Math.Max(1, me.stack) * 3; // スタックの15%超
             if (strength < 0.35f || (strength < 0.5f && expensive))
             {
@@ -48,12 +48,12 @@ namespace KTC.Poker.Session
         /// <summary>現時点のハンド強度を 0..1 で概算する (プリフロップはヒューリスティック、フロップ以降は役評価)。</summary>
         private static float EstimateStrength(TableStateMessage view)
         {
-            var me = FindSeat(view);
+            SeatStateMessage me = FindSeat(view);
             if (me == null || me.holeCards == null || me.holeCards.Length < 2)
             {
                 return 0.3f;
             }
-            if (!Card.TryFromValue(me.holeCards[0], out var c1) || !Card.TryFromValue(me.holeCards[1], out var c2))
+            if (!Card.TryFromValue(me.holeCards[0], out Card c1) || !Card.TryFromValue(me.holeCards[1], out Card c2))
             {
                 return 0.3f;
             }
@@ -71,10 +71,10 @@ namespace KTC.Poker.Session
                 return Math.Min(value, 0.62f);
             }
 
-            var cards = new List<Card>(7) { c1, c2 };
+            List<Card> cards = new List<Card>(7) { c1, c2 };
             foreach (byte packed in view.communityCards)
             {
-                if (Card.TryFromValue(packed, out var card))
+                if (Card.TryFromValue(packed, out Card card))
                 {
                     cards.Add(card);
                 }
@@ -93,7 +93,7 @@ namespace KTC.Poker.Session
 
         private static SeatStateMessage FindSeat(TableStateMessage view)
         {
-            foreach (var seat in view.seats)
+            foreach (SeatStateMessage seat in view.seats)
             {
                 if (seat.seat == view.yourSeat)
                 {

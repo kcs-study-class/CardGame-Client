@@ -9,9 +9,9 @@ namespace UnityFramework
     /// <typeparam name="T">継承する具体型 (CRTP)</typeparam>
     public abstract class SingletonMonoBehaviour<T> : MonoBehaviour where T : SingletonMonoBehaviour<T>
     {
-        private static T CachedInstance;
+        private static T CachedInstance = null;
         private static readonly object Lock = new object();
-        private static bool IsQuitting;
+        private static bool IsQuitting = false;
 
         /// <summary>
         /// インスタンスが生成済みかどうか。Instance アクセスによる自動生成を避けたい場合に利用。
@@ -38,7 +38,7 @@ namespace UnityFramework
 
                     if (!Application.isPlaying) return null;
 
-                    var go = new GameObject($"[{typeof(T).Name}]");
+                    GameObject go = new GameObject($"[{typeof(T).Name}]");
                     CachedInstance = go.AddComponent<T>();
                     DontDestroyOnLoad(go);
                     return CachedInstance;

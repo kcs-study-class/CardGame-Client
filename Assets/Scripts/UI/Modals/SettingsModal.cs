@@ -15,17 +15,17 @@ namespace KTC.UI
     /// </summary>
     public class SettingsModal : ModalBase
     {
-        [SerializeField, FormerlySerializedAs("masterSlider")] private Slider _masterSlider;
-        [SerializeField, FormerlySerializedAs("bgmSlider")] private Slider _bgmSlider;
-        [SerializeField, FormerlySerializedAs("seSlider")] private Slider _seSlider;
-        [SerializeField, FormerlySerializedAs("effectsButton")] private Button _effectsButton;
-        [SerializeField, FormerlySerializedAs("effectsLabel")] private TMP_Text _effectsLabel;
-        [SerializeField, FormerlySerializedAs("closeButton")] private Button _closeButton;
+        [SerializeField, FormerlySerializedAs("masterSlider")] private Slider _masterSlider = null;
+        [SerializeField, FormerlySerializedAs("bgmSlider")] private Slider _bgmSlider = null;
+        [SerializeField, FormerlySerializedAs("seSlider")] private Slider _seSlider = null;
+        [SerializeField, FormerlySerializedAs("effectsButton")] private Button _effectsButton = null;
+        [SerializeField, FormerlySerializedAs("effectsLabel")] private TMP_Text _effectsLabel = null;
+        [SerializeField, FormerlySerializedAs("closeButton")] private Button _closeButton = null;
 
         protected override bool CloseOnBackdropClick => true;
 
-        private SaveDataService _saveService;
-        private PlayerData _data;
+        private SaveDataService _saveService = null;
+        private PlayerData _data = null;
 
         private void Awake()
         {

@@ -1,5 +1,6 @@
 using Cysharp.Text;
 using KTC.Poker.Session;
+using KTC.SaveData;
 using KTC.UI;
 using TMPro;
 using UnityEngine;
@@ -19,19 +20,19 @@ namespace KTC.Scene
     public class Lobby : MonoBehaviour, IScenePreparer
     {
         [Header("選択肢 (値順に割り当て)")]
-        [SerializeField, FormerlySerializedAs("seatButtons")] private Button[] _seatButtons;   // 2人 / 4人 / 6人
-        [SerializeField, FormerlySerializedAs("stackButtons")] private Button[] _stackButtons;  // 100 / 200 / 500
+        [SerializeField, FormerlySerializedAs("seatButtons")] private Button[] _seatButtons = null; // 2人 / 4人 / 6人
+        [SerializeField, FormerlySerializedAs("stackButtons")] private Button[] _stackButtons = null; // 100 / 200 / 500
 
         [Header("ブラインド")]
-        [SerializeField, FormerlySerializedAs("blindsButton")] private Button _blindsButton;
-        [SerializeField, FormerlySerializedAs("blindsLabel")] private TextMeshProUGUI _blindsLabel;
+        [SerializeField, FormerlySerializedAs("blindsButton")] private Button _blindsButton = null;
+        [SerializeField, FormerlySerializedAs("blindsLabel")] private TextMeshProUGUI _blindsLabel = null;
 
         [Header("操作")]
-        [SerializeField, FormerlySerializedAs("startButton")] private Button _startButton;
-        [SerializeField, FormerlySerializedAs("backButton")] private Button _backButton;
+        [SerializeField, FormerlySerializedAs("startButton")] private Button _startButton = null;
+        [SerializeField, FormerlySerializedAs("backButton")] private Button _backButton = null;
 
         [Header("所持チップ表示")]
-        [SerializeField, FormerlySerializedAs("chipsText")] private TMP_Text _chipsText;
+        [SerializeField, FormerlySerializedAs("chipsText")] private TMP_Text _chipsText = null;
 
         private static readonly int[] SEAT_OPTIONS = { 2, 4, 6 };
         private static readonly int[] STACK_OPTIONS = { 100, 200, 500 };
@@ -40,10 +41,10 @@ namespace KTC.Scene
         private int _selectedStack = 200;
         private int _selectedSmallBlind = 1;
         private int _selectedBigBlind = 2;
-        private long _chips;
-        private bool _isTransitioning;
-        private bool _prepared;
-        private bool _blindsModalOpen;
+        private long _chips = 0;
+        private bool _isTransitioning = false;
+        private bool _prepared = false;
+        private bool _blindsModalOpen = false;
 
         private void Awake()
         {
@@ -69,7 +70,7 @@ namespace KTC.Scene
                 return;
             }
             _prepared = true;
-            _chips = KTC.SaveData.SaveDataService.CreateDefault().Load().Chips;
+            _chips = SaveDataService.CreateDefault().Load().Chips;
 
             // 現在の選択がバイインできない場合は払える最大の選択肢へ落とす
             if (_selectedStack > _chips)
@@ -135,7 +136,7 @@ namespace KTC.Scene
             _blindsModalOpen = true;
             try
             {
-                var modal = await ModalController.Instance.OpenAsync<BlindsModal>("Modals/Blinds");
+                BlindsModal modal = await ModalController.Instance.OpenAsync<BlindsModal>("Modals/Blinds");
                 if (modal == null)
                 {
                     return;
@@ -167,8 +168,8 @@ namespace KTC.Scene
             else
             {
                 // バイインを所持チップから差し引く (精算は InGameTable が最終スタックを書き戻す)
-                var saveService = KTC.SaveData.SaveDataService.CreateDefault();
-                var data = saveService.Load();
+                SaveDataService saveService = SaveDataService.CreateDefault();
+                PlayerData data = saveService.Load();
                 if (data.Chips < _selectedStack)
                 {
                     _chips = data.Chips;
@@ -182,8 +183,7 @@ namespace KTC.Scene
                 GameLaunch.LastBuyIn = _selectedStack;
             }
 
-            var config = new LocalGameSessionConfig
-            {
+            LocalGameSessionConfig config = new LocalGameSessionConfig {
                 SeatCount = _selectedSeats,
                 StartingStack = _selectedStack,
                 SmallBlind = _selectedSmallBlind,

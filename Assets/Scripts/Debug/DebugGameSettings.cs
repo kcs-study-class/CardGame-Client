@@ -12,19 +12,19 @@ namespace KTC.Scene
     public static class DebugGameSettings
     {
         /// <summary>0 以外なら乱数シードを固定 (リプレイ可能な対戦になる)。</summary>
-        public static int FixedSeed;
+        public static int FixedSeed = 0;
 
         /// <summary>"As Kd 2c ..." 形式の積み込みデッキ。空なら通常シャッフル。</summary>
         public static string RiggedDeckText = "";
 
         /// <summary>CPU の手札を公開する (リダクション無効化)。</summary>
-        public static bool RevealCpuCards;
+        public static bool RevealCpuCards = false;
 
         /// <summary>自分の手番を自動でチェック/コールする (モンキーテスト)。</summary>
-        public static bool AutoPlay;
+        public static bool AutoPlay = false;
 
         /// <summary>演出 (配布アニメ/思考ディレイ/ポット移動) をスキップする。</summary>
-        public static bool SkipEffects;
+        public static bool SkipEffects = false;
 
         /// <summary>デバッグ設定を卓設定に反映する。</summary>
         public static void Apply(LocalGameSessionConfig config)
@@ -35,11 +35,11 @@ namespace KTC.Scene
             }
             config.RevealAllHoleCards = RevealCpuCards;
 
-            var deckText = RiggedDeckText;
+            string deckText = RiggedDeckText;
             if (!string.IsNullOrWhiteSpace(deckText))
             {
                 // 不正表記はここで例外になり Lobby 側のログで気づける
-                var cards = deckText.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                Card[] cards = deckText.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(Card.Parse)
                     .ToArray();
                 config.DeckFactory = () => new Deck(cards);

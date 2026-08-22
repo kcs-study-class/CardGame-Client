@@ -23,8 +23,8 @@ namespace UnityFramework.Network
         private readonly SynchronizationContext _mainThread;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
-        private ClientWebSocket _socket;
-        private bool _disposed;
+        private ClientWebSocket _socket = null;
+        private bool _disposed = false;
 
         /// <summary>接続確立時 (メインスレッド)。</summary>
         public event Action Connected;
@@ -105,12 +105,12 @@ namespace UnityFramework.Network
 
         private async Task ReceiveLoopAsync()
         {
-            var buffer = new byte[64 * 1024];
+            byte[] buffer = new byte[64 * 1024];
             try
             {
                 while (!_cts.IsCancellationRequested && _socket.State == WebSocketState.Open)
                 {
-                    using (var stream = new MemoryStream())
+                    using (MemoryStream stream = new MemoryStream())
                     {
                         WebSocketReceiveResult result;
                         do
