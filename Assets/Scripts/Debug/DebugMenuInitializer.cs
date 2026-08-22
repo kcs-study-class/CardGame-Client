@@ -99,6 +99,14 @@ namespace KTC.Scene
                 EvaluateHand);
             menu.AddLabel("カード", "役判定結果", () => _handEvalResult);
 
+            // ---- 表示 ----
+            menu.AddToggle("表示", "SafeArea模擬 (ノッチ端末)",
+                () => UnityFramework.ScreenWatcher.SimulatedSafeAreaNormalized != null,
+                value => UnityFramework.ScreenWatcher.SimulatedSafeAreaNormalized =
+                    value ? new Rect(0.06f, 0.06f, 0.88f, 0.94f) : (Rect?)null);
+            menu.AddLabel("表示", "実効SafeArea", () => UnityFramework.ScreenWatcher.EffectiveSafeArea.ToString());
+            menu.AddLabel("表示", "解像度", () => ZString.Format("{0}x{1}", Screen.width, Screen.height));
+
             // ---- 通信 (サーバー結合。RemoteGameSession は生徒課題) ----
             menu.AddToggle("通信", "接続先: サーバー",
                 () => KTC.Scene.GameLaunch.UseRemoteSession,
