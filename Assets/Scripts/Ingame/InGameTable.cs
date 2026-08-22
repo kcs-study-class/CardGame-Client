@@ -28,7 +28,7 @@ namespace KTC.Scene
     /// - ハンド終了はポット移動演出のあとに結果表示
     /// セッション側 (ローカル/リモート) はこの仕組みを知らない = シーム無変更。
     /// </summary>
-    public class InGameTable : MonoBehaviour, IScenePreparer
+    public class InGameTable : SceneBase
     {
         [SerializeField, FormerlySerializedAs("canvas")] private Canvas _canvas = null;
         [SerializeField, Tooltip("シーン配置のカードデッキ。配布アニメの発射元"), FormerlySerializedAs("deckAnchor")] private Transform _deckAnchor = null;
@@ -69,7 +69,6 @@ namespace KTC.Scene
         private bool _isLeaving = false;
         private float _errorClearAt = 0f;
         private float _nextAutoActionAt = 0f;
-        private bool _prepared = false;
         private bool _effectsEnabledInSave = true;
 
         // プレゼンテーション
@@ -157,13 +156,8 @@ namespace KTC.Scene
             _allInButton.gameObject.SetActive(false);
         }
 
-        public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
+        protected override async Awaitable OnPrepareAsync(System.Threading.CancellationToken cancellationToken)
         {
-            if (_prepared)
-            {
-                return;
-            }
-            _prepared = true;
             _font = await ResourceController.Instance.LoadAsync<TMP_FontAsset>(FONT_ADDRESS, cancellationToken);
 
             await LoadCardTexturesAsync(cancellationToken);
@@ -188,15 +182,6 @@ namespace KTC.Scene
             _stateSubscription = _session.StateUpdated.Subscribe(OnStateUpdated);
             _errorSubscription = _session.ErrorOccurred.Subscribe(OnSessionError);
             _session.Connect();
-        }
-
-        private async void Start()
-        {
-            await Awaitable.NextFrameAsync(destroyCancellationToken);
-            if (!_prepared)
-            {
-                await PrepareAsync(destroyCancellationToken);
-            }
         }
 
         private void OnDestroy()

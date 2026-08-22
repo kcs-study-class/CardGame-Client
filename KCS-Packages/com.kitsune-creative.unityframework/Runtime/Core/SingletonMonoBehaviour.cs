@@ -7,7 +7,7 @@ namespace UnityFramework
     /// シーンに存在しなければ自動生成され、ルート階層の場合は DontDestroyOnLoad で永続化される。
     /// </summary>
     /// <typeparam name="T">継承する具体型 (CRTP)</typeparam>
-    public abstract class SingletonMonoBehaviour<T> : MonoBehaviour where T : SingletonMonoBehaviour<T>
+    public abstract class SingletonMonoBehaviour<T> : MonoBehaviourBase where T : SingletonMonoBehaviour<T>
     {
         private static T CachedInstance = null;
         private static readonly object Lock = new object();

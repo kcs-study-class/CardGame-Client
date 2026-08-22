@@ -19,7 +19,7 @@ Go サーバー (CardGame-Server) は末尾の Go 章のみ。迷ったらこの
 
 ### bool の命名
 - プロパティ / static: `Is` / `Has` / `Can` + PascalCase — `IsComplete`, `HasSave`, `CanRaise`
-- インスタンスフィールド (変数) はアンスコ付き — `_isPlaying`, `_prepared`
+- インスタンスフィールド (変数) はアンスコ付き — `_isPlaying`, `_isPrepared`
 
 ### 変数の宣言
 - **`var` は使用禁止**。型を明示する
@@ -63,6 +63,19 @@ Go サーバー (CardGame-Server) は末尾の Go 章のみ。迷ったらこの
 - [.editorconfig](../.editorconfig) — Roslyn 命名ルール + var 禁止 (Rider / VS / dotnet format 共通)
 - [CardGame-Client.sln.DotSettings](../CardGame-Client.sln.DotSettings) — Rider/ReSharper 固有
   (**Unity の [SerializeField] 専用の命名種別**を `_camelCase` に設定。こちらが Unity プラグインの既定を上書きする)
+
+### 基底クラス
+- **MonoBehaviour を直接継承しない**。必ず `UnityFramework.MonoBehaviourBase` を継承する
+  (シングルトンは `SingletonMonoBehaviour<T>`、モーダルは `ModalBase`、いずれも MonoBehaviourBase 派生)
+- **シーンのルートコンポーネントは `UnityFramework.SceneManagement.SceneBase`** を継承し、
+  準備処理は `OnPrepareAsync` に書く (`_prepared` フラグ / Start フォールバック / 遷移二重起動ガードは基底が持つ)
+  ```csharp
+  public class Home : SceneBase
+  {
+      protected override async Awaitable OnPrepareAsync(CancellationToken cancellationToken) { ... }
+      private void OnPlay() { if (!TryBeginTransition()) return; ... }
+  }
+  ```
 
 ### SerializeField の注意
 - 既存の `[SerializeField]` を改名するときは **必ず `[FormerlySerializedAs("旧名")]`** を付け、

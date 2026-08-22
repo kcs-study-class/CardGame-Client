@@ -241,3 +241,33 @@ await SceneController.Instance.UnloadSceneAsync(SceneId.HUD, id => id.ToSceneNam
 ### 再生成
 
 Build Settings のシーン追加・削除・並び替え後はメニューから再実行してください。生成ファイルは上書きされます。
+
+## SceneBase (シーンコントローラ基底)
+
+各シーンのルートコンポーネントは `SceneBase` を継承する。`IScenePreparer` の定型をまとめている:
+
+- `PrepareAsync` — SceneController がフェードインの前に呼ぶ。2回目以降は無視 (1回実行保証)
+- `OnStartAsync` — 既定は「エディタで直接再生したとき」のフォールバック (1フレーム後に未準備なら `PrepareAsync`)
+- `TryBeginTransition()` / `CancelTransition()` / `IsTransitioning` — ボタン連打などによる遷移の二重起動防止
+
+```csharp
+public class Home : SceneBase
+{
+    protected override async Awaitable OnPrepareAsync(CancellationToken cancellationToken)
+    {
+        await LoadAssetsAsync(cancellationToken);   // アセットロード / UI 構築 / BGM
+    }
+
+    private async void OnPlayClicked()
+    {
+        if (!TryBeginTransition())
+        {
+            return;                                   // 既に遷移中
+        }
+        await SceneController.Instance.LoadSceneWithFadeAsync(SceneId.Lobby, SceneIdExtensions.ToSceneName);
+    }
+}
+```
+
+Start 時に別処理を挟みたい場合は `OnStartAsync` を override し、最後に `base.OnStartAsync()` を呼ぶ
+(例: 必要なデータが無ければ別シーンへ退避)。

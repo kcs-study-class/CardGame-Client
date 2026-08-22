@@ -7,6 +7,7 @@ using KTC.Poker.Domain;
 using KTC.SaveData;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityFramework;
 using UnityFramework.Debugging;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
@@ -179,7 +180,7 @@ namespace KTC.Scene
     }
 
     /// <summary>F3 でデバッグメニューを開閉するホットキー。</summary>
-    public class DebugMenuHotkey : MonoBehaviour
+    public class DebugMenuHotkey : MonoBehaviourBase
     {
         private void Update()
         {

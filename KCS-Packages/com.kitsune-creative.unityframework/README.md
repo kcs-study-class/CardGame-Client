@@ -5,6 +5,8 @@ Unity 6 (6000.0+) 向けの基礎フレームワーク。null 安全な拡張メ
 ## 特徴
 
 - **拡張メソッド** — Unity Object の "fake null" 対応 / GameObject・Transform・Vector ヘルパー / コレクション操作
+- **MonoBehaviourBase** — 全 MonoBehaviour の共通基底 (Transform キャッシュ / クラス名付きログ / GetOrAddComponent)
+- **SceneBase** — シーンコントローラ基底。準備 (`OnPrepareAsync`) の1回実行保証・エディタ直接再生フォールバック・遷移二重起動防止
 - **SingletonMonoBehaviour\<T\>** — スレッドセーフなシングルトン基底クラス
 - **SafeLogger** — リリースビルドで `Log`/`LogWarning` が自動的に除去される `[Conditional]` ロガー
 - **ServiceLocator** — 型キーの簡易 DI
@@ -112,7 +114,7 @@ if (res.IsSuccess) Use(res.Data);
 詳細は `Documentation~/` 配下を参照:
 
 - [拡張メソッド](Documentation~/extensions.md) — null チェック、GameObject、Transform、Vector、コレクション、文字列
-- [コア機能](Documentation~/core.md) — SingletonMonoBehaviour、SafeLogger、ServiceLocator、ResourceController
+- [コア機能](Documentation~/core.md) — MonoBehaviourBase、SingletonMonoBehaviour、SafeLogger、ServiceLocator、ResourceController
 - [サウンド](Documentation~/audio.md) — SoundController、Unity/CRI バックエンド、Preload、Enum 生成
 - [シーン](Documentation~/scene.md) — SceneController、TransitionController、Transition シーン、Enum 生成
 - [ネットワーク](Documentation~/network.md) — NetworkControllerBase、レスポンスハンドリング、認証
@@ -132,6 +134,7 @@ Packages/com.kitsune-creative.unityframework/
 │   │   ├── UnitySoundBackend.cs
 │   │   └── CriAdxSoundBackend.cs       (#if UNITY_FRAMEWORK_USE_CRI)
 │   ├── Core/
+│   │   ├── MonoBehaviourBase.cs
 │   │   ├── SingletonMonoBehaviour.cs
 │   │   ├── SafeLogger.cs
 │   │   └── ServiceLocator.cs
@@ -149,6 +152,7 @@ Packages/com.kitsune-creative.unityframework/
 │   ├── Resource/
 │   │   └── ResourceController.cs
 │   └── SceneManagement/
+│       ├── SceneBase.cs
 │       ├── SceneController.cs
 │       ├── TransitionController.cs
 │       └── ITransition.cs
