@@ -9,8 +9,8 @@ namespace UnityFramework
     /// </summary>
     public static class ServiceLocator
     {
-        private static readonly Dictionary<Type, object> s_services = new Dictionary<Type, object>();
-        private static readonly object s_lock = new object();
+        private static readonly Dictionary<Type, object> _services = new Dictionary<Type, object>();
+        private static readonly object _lock = new object();
 
         /// <summary>
         /// サービスを登録する。既に登録済みの場合は InvalidOperationException。
@@ -22,15 +22,15 @@ namespace UnityFramework
                 SafeLogger.LogError($"[ServiceLocator] service が null です。{typeof(T).Name} の登録をスキップしました。");
                 return;
             }
-            lock (s_lock)
+            lock (_lock)
             {
                 var type = typeof(T);
-                if (s_services.ContainsKey(type))
+                if (_services.ContainsKey(type))
                 {
                     SafeLogger.LogWarning($"[ServiceLocator] {type.Name} は既に登録されています。RegisterOrReplace を使うか、先に Unregister してください。登録をスキップしました。");
                     return;
                 }
-                s_services[type] = service;
+                _services[type] = service;
             }
         }
 
@@ -44,9 +44,9 @@ namespace UnityFramework
                 SafeLogger.LogError($"[ServiceLocator] service が null です。{typeof(T).Name} の登録をスキップしました。");
                 return;
             }
-            lock (s_lock)
+            lock (_lock)
             {
-                s_services[typeof(T)] = service;
+                _services[typeof(T)] = service;
             }
         }
 
@@ -55,9 +55,9 @@ namespace UnityFramework
         /// </summary>
         public static T Resolve<T>() where T : class
         {
-            lock (s_lock)
+            lock (_lock)
             {
-                if (s_services.TryGetValue(typeof(T), out var service))
+                if (_services.TryGetValue(typeof(T), out var service))
                 {
                     return (T)service;
                 }
@@ -71,9 +71,9 @@ namespace UnityFramework
         /// </summary>
         public static T TryResolve<T>() where T : class
         {
-            lock (s_lock)
+            lock (_lock)
             {
-                return s_services.TryGetValue(typeof(T), out var service) ? (T)service : null;
+                return _services.TryGetValue(typeof(T), out var service) ? (T)service : null;
             }
         }
 
@@ -82,9 +82,9 @@ namespace UnityFramework
         /// </summary>
         public static bool TryResolve<T>(out T service) where T : class
         {
-            lock (s_lock)
+            lock (_lock)
             {
-                if (s_services.TryGetValue(typeof(T), out var obj))
+                if (_services.TryGetValue(typeof(T), out var obj))
                 {
                     service = (T)obj;
                     return true;
@@ -99,9 +99,9 @@ namespace UnityFramework
         /// </summary>
         public static bool IsRegistered<T>() where T : class
         {
-            lock (s_lock)
+            lock (_lock)
             {
-                return s_services.ContainsKey(typeof(T));
+                return _services.ContainsKey(typeof(T));
             }
         }
 
@@ -110,9 +110,9 @@ namespace UnityFramework
         /// </summary>
         public static bool Unregister<T>() where T : class
         {
-            lock (s_lock)
+            lock (_lock)
             {
-                return s_services.Remove(typeof(T));
+                return _services.Remove(typeof(T));
             }
         }
 
@@ -121,9 +121,9 @@ namespace UnityFramework
         /// </summary>
         public static void Clear()
         {
-            lock (s_lock)
+            lock (_lock)
             {
-                s_services.Clear();
+                _services.Clear();
             }
         }
     }

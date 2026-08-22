@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace UnityFramework.SceneManagement
@@ -17,8 +18,8 @@ namespace UnityFramework.SceneManagement
     public class TransitionController : SingletonMonoBehaviour<TransitionController>
     {
         [Header("Fade Overlay")]
-        [SerializeField] private Color _fadeColor = Color.black;
-        [SerializeField] private int _sortingOrder = 32767;
+        [SerializeField, FormerlySerializedAs("_fadeColor")] private Color fadeColor = Color.black;
+        [SerializeField, FormerlySerializedAs("_sortingOrder")] private int sortingOrder = 32767;
 
         private Canvas _canvas;
         private CanvasGroup _canvasGroup;
@@ -46,10 +47,10 @@ namespace UnityFramework.SceneManagement
 
         public Color FadeColor
         {
-            get => _fadeColor;
+            get => fadeColor;
             set
             {
-                _fadeColor = value;
+                fadeColor = value;
                 if (_fadeImage != null) _fadeImage.color = value;
             }
         }
@@ -70,7 +71,7 @@ namespace UnityFramework.SceneManagement
 
             _canvas = canvasGo.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _canvas.sortingOrder = _sortingOrder;
+            _canvas.sortingOrder = sortingOrder;
 
             canvasGo.AddComponent<CanvasScaler>();
             canvasGo.AddComponent<GraphicRaycaster>();
@@ -89,7 +90,7 @@ namespace UnityFramework.SceneManagement
             rt.offsetMax = Vector2.zero;
 
             _fadeImage = imageGo.AddComponent<Image>();
-            _fadeImage.color = _fadeColor;
+            _fadeImage.color = fadeColor;
             _fadeImage.raycastTarget = true; // フェード時の入力ブロック用
         }
 
