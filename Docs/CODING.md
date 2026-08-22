@@ -58,6 +58,12 @@ Go サーバー (CardGame-Server) は末尾の Go 章のみ。迷ったらこの
 ### 禁止 (他流儀の混入)
 - `m_` / `s_` プレフィックス (Unity 内部ソースの流儀)
 
+### IDE への反映
+命名ルールと var 禁止は IDE 設定としてリポジトリに同梱している (Rider を開き直すと有効):
+- [.editorconfig](../.editorconfig) — Roslyn 命名ルール + var 禁止 (Rider / VS / dotnet format 共通)
+- [CardGame-Client.sln.DotSettings](../CardGame-Client.sln.DotSettings) — Rider/ReSharper 固有
+  (**Unity の [SerializeField] 専用の命名種別**を `_camelCase` に設定。こちらが Unity プラグインの既定を上書きする)
+
 ### SerializeField の注意
 - 既存の `[SerializeField]` を改名するときは **必ず `[FormerlySerializedAs("旧名")]`** を付け、
   シーン/プレハブの配線を守る (シーンベイク方式で参照が大量にあるため厳守)。
