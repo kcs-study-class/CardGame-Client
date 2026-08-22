@@ -17,10 +17,10 @@ namespace KTC.SaveData
     /// </summary>
     public sealed class SaveDataService
     {
-        public const string DefaultFileName = "save.bin";
+        public const string DEFAULT_FILE_NAME = "save.bin";
 
         // アプリ埋め込みシークレット。ローテーションすると既存セーブは全て読めなくなる点に注意
-        private const string AppSecret = "KTC-CardGame-2026-7f3a9c1e";
+        private const string APP_SECRET = "KTC-CardGame-2026-7f3a9c1e";
 
         private readonly EncryptedFileStore _store;
 
@@ -33,8 +33,8 @@ namespace KTC.SaveData
         public static SaveDataService CreateDefault()
         {
             return new SaveDataService(
-                Path.Combine(Application.persistentDataPath, DefaultFileName),
-                SaveKeys.DeriveForDevice(AppSecret));
+                Path.Combine(Application.persistentDataPath, DEFAULT_FILE_NAME),
+                SaveKeys.DeriveForDevice(APP_SECRET));
         }
 
         public bool HasSave => _store.HasFile;

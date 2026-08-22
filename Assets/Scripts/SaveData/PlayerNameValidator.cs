@@ -7,7 +7,7 @@ namespace KTC.SaveData
     /// </summary>
     public static class PlayerNameValidator
     {
-        public const int MaxLength = 8;
+        public const int MAX_LENGTH = 8;
 
         /// <summary>
         /// 検証して正規化名を返す。NG の場合は error に表示用メッセージが入る。
@@ -20,9 +20,9 @@ namespace KTC.SaveData
                 error = "名前を入力してください";
                 return false;
             }
-            if (normalized.Length > MaxLength)
+            if (normalized.Length > MAX_LENGTH)
             {
-                error = $"{MaxLength}文字以内で入力してください";
+                error = $"{MAX_LENGTH}文字以内で入力してください";
                 return false;
             }
             foreach (char c in normalized)

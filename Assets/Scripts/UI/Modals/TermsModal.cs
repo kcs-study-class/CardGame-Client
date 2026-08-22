@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework.UI;
 
@@ -10,11 +11,11 @@ namespace KTC.UI
     /// </summary>
     public class TermsModal : ModalBase
     {
-        [SerializeField] private Button agreeButton;
+        [SerializeField, FormerlySerializedAs("agreeButton")] private Button _agreeButton;
 
         private void Awake()
         {
-            agreeButton.onClick.AddListener(OnAgreeClicked);
+            _agreeButton.onClick.AddListener(OnAgreeClicked);
         }
 
         private void Start()
@@ -29,7 +30,7 @@ namespace KTC.UI
 
         private async void OnAgreeClicked()
         {
-            agreeButton.interactable = false; // 連打防止
+            _agreeButton.interactable = false; // 連打防止
             await CloseAsync();
         }
     }

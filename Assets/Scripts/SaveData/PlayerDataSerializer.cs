@@ -11,7 +11,7 @@ namespace KTC.SaveData
         /// ペイロードのデータバージョン。フィールドを追加・変更したら +1 し、
         /// Deserialize の switch に旧バージョンの読み取り (マイグレーション) を追加する。
         /// </summary>
-        public const int CurrentDataVersion = 2;
+        public const int CURRENT_DATA_VERSION = 2;
 
         public static byte[] Serialize(PlayerData data)
         {
@@ -22,7 +22,7 @@ namespace KTC.SaveData
             using (var stream = new MemoryStream())
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
             {
-                writer.Write(CurrentDataVersion);
+                writer.Write(CURRENT_DATA_VERSION);
                 writer.Write(data.PlayerName ?? "");
                 writer.Write(data.Chips);
                 writer.Write(data.Level);

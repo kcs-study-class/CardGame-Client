@@ -2,7 +2,7 @@ namespace KTC.SaveData
 {
     /// <summary>
     /// プレイヤーのローカルセーブデータ。
-    /// フィールドを追加したら PlayerDataSerializer の CurrentDataVersion を上げ、
+    /// フィールドを追加したら PlayerDataSerializer の CURRENT_DATA_VERSION を上げ、
     /// 旧バージョンからのマイグレーション処理を追加すること。
     /// </summary>
     public sealed class PlayerData

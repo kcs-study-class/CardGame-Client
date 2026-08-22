@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace UnityFramework.Debugging
@@ -24,11 +23,11 @@ namespace UnityFramework.Debugging
     [DisallowMultipleComponent]
     public class DebugMenuController : SingletonMonoBehaviour<DebugMenuController>
     {
-        [SerializeField, FormerlySerializedAs("_sortingOrder")] private int sortingOrder = 31000; // ModalCanvas(30000) より上、Fade(32767) より下
+        [SerializeField] private int _sortingOrder = 31000; // ModalCanvas(30000) より上、Fade(32767) より下
 
-        private const float LabelRefreshInterval = 0.25f;
-        private const int LogCapacity = 100;
-        private const int LogTailLines = 18;
+        private const float LABEL_REFRESH_INTERVAL = 0.25f;
+        private const int LOG_CAPACITY = 100;
+        private const int LOG_TAIL_LINES = 18;
 
         private Canvas _canvas;
         private GameObject _root;
@@ -80,7 +79,7 @@ namespace UnityFramework.Debugging
             {
                 return;
             }
-            _nextLabelRefresh = Time.unscaledTime + LabelRefreshInterval;
+            _nextLabelRefresh = Time.unscaledTime + LABEL_REFRESH_INTERVAL;
             foreach (var entry in _labels)
             {
                 if (!entry.text) continue;
@@ -201,7 +200,7 @@ namespace UnityFramework.Debugging
         {
             string prefix = type == LogType.Warning ? "[W] " : type == LogType.Error || type == LogType.Exception ? "[E] " : "";
             _logBuffer.Enqueue(prefix + condition);
-            while (_logBuffer.Count > LogCapacity)
+            while (_logBuffer.Count > LOG_CAPACITY)
             {
                 _logBuffer.Dequeue();
             }
@@ -211,7 +210,7 @@ namespace UnityFramework.Debugging
         {
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("---- 直近ログ ----");
-            int skip = Mathf.Max(0, _logBuffer.Count - LogTailLines);
+            int skip = Mathf.Max(0, _logBuffer.Count - LOG_TAIL_LINES);
             int index = 0;
             foreach (var line in _logBuffer)
             {
@@ -234,7 +233,7 @@ namespace UnityFramework.Debugging
             canvasGo.layer = 5;
             _canvas = canvasGo.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _canvas.sortingOrder = sortingOrder;
+            _canvas.sortingOrder = _sortingOrder;
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);

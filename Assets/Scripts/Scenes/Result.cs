@@ -4,6 +4,7 @@ using KTC.SaveData;
 using UnityFramework.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework;
 using UnityFramework.SceneManagement;
@@ -12,24 +13,24 @@ using UnityFramework.SceneManagement.Generated;
 namespace KTC.Scene
 {
     /// <summary>
-    /// リザルト画面。UI はシーン配置。順位行は rowTemplate を複製して並べる
+    /// リザルト画面。UI はシーン配置。順位行は _rowTemplate を複製して並べる
     /// (テンプレート自体をエディタで調整できる)。
     /// </summary>
     public class Result : MonoBehaviour, IScenePreparer
     {
-        [SerializeField] private TMP_Text myRankText;
-        [SerializeField] private TMP_Text profitText;
-        [SerializeField] private TMP_Text xpText;
-        [SerializeField] private Transform rowsContainer;
-        [SerializeField] private RectTransform rowTemplate; // 非アクティブで配置しておく
-        [SerializeField] private Button homeButton;
+        [SerializeField, FormerlySerializedAs("myRankText")] private TMP_Text _myRankText;
+        [SerializeField, FormerlySerializedAs("profitText")] private TMP_Text _profitText;
+        [SerializeField, FormerlySerializedAs("xpText")] private TMP_Text _xpText;
+        [SerializeField, FormerlySerializedAs("rowsContainer")] private Transform _rowsContainer;
+        [SerializeField, FormerlySerializedAs("rowTemplate")] private RectTransform _rowTemplate; // 非アクティブで配置しておく
+        [SerializeField, FormerlySerializedAs("homeButton")] private Button _homeButton;
 
         private bool _isTransitioning;
         private bool _prepared;
 
         private void Awake()
         {
-            homeButton.onClick.AddListener(OnGoHome);
+            _homeButton.onClick.AddListener(OnGoHome);
         }
 
         public async Awaitable PrepareAsync(System.Threading.CancellationToken cancellationToken)
@@ -43,7 +44,7 @@ namespace KTC.Scene
             {
                 BuildRanking();
             }
-            GameAudio.PlayBgm(GameAudio.MenuBgm);
+            GameAudio.PlayBgm(GameAudio.MENU_BGM);
             await Awaitables.Completed;
         }
 
@@ -75,7 +76,7 @@ namespace KTC.Scene
                 .ToList();
 
             int myRank = ranking.FindIndex(s => s.seat == mySeat) + 1;
-            myRankText.text = ZString.Format("あなたは {0}位!", myRank);
+            _myRankText.text = ZString.Format("あなたは {0}位!", myRank);
 
             // 収支 (バイインした対戦のみ。デバッグ起動は LastBuyIn=0 で非表示)
             if (GameLaunch.LastBuyIn > 0)
@@ -90,35 +91,35 @@ namespace KTC.Scene
                     }
                 }
                 int profit = myStack - GameLaunch.LastBuyIn;
-                profitText.gameObject.SetActive(true);
-                profitText.text = profit >= 0
+                _profitText.gameObject.SetActive(true);
+                _profitText.text = profit >= 0
                     ? ZString.Format("収支 +{0:N0}", profit)
                     : ZString.Format("収支 {0:N0}", profit);
-                profitText.color = profit > 0 ? QuickUi.Accent
+                _profitText.color = profit > 0 ? QuickUi.Accent
                     : profit < 0 ? QuickUi.Warn
                     : QuickUi.Text;
             }
             else
             {
-                profitText.gameObject.SetActive(false);
+                _profitText.gameObject.SetActive(false);
             }
 
             if (GameLaunch.LastXpGained > 0)
             {
-                xpText.gameObject.SetActive(true);
-                xpText.text = GameLaunch.LastLeveledUp
+                _xpText.gameObject.SetActive(true);
+                _xpText.text = GameLaunch.LastLeveledUp
                     ? ZString.Format("獲得XP +{0}  レベルアップ!", GameLaunch.LastXpGained)
                     : ZString.Format("獲得XP +{0}", GameLaunch.LastXpGained);
             }
             else
             {
-                xpText.gameObject.SetActive(false);
+                _xpText.gameObject.SetActive(false);
             }
 
             for (int i = 0; i < ranking.Count; i++)
             {
                 var seat = ranking[i];
-                var row = Instantiate(rowTemplate, rowsContainer);
+                var row = Instantiate(_rowTemplate, _rowsContainer);
                 row.gameObject.SetActive(true);
                 bool isMe = seat.seat == mySeat;
 

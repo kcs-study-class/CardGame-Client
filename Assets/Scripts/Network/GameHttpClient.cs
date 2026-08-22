@@ -13,23 +13,23 @@ using Cysharp.Net.Http;
 public static class GameHttpClient
 {
     // FIXME : 接続先はサーバー実装時に確定 (docker-compose の api ポートに合わせる)
-    public const string BaseAddress = "http://localhost:8081";
+    public const string BASE_ADDRESS = "http://localhost:8081";
 
-    private static HttpClient _shared;
+    private static HttpClient SharedInstance;
 
     public static HttpClient Shared
     {
         get
         {
-            if (_shared == null)
+            if (SharedInstance == null)
             {
-                _shared = new HttpClient(new YetAnotherHttpHandler())
+                SharedInstance = new HttpClient(new YetAnotherHttpHandler())
                 {
-                    BaseAddress = new Uri(BaseAddress),
+                    BaseAddress = new Uri(BASE_ADDRESS),
                     Timeout = TimeSpan.FromSeconds(10),
                 };
             }
-            return _shared;
+            return SharedInstance;
         }
     }
 }

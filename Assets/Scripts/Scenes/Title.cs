@@ -6,6 +6,7 @@ using KTC.UI;
 using LitMotion;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
 using UnityFramework.SceneManagement;
@@ -19,18 +20,18 @@ namespace KTC.Scene
     /// </summary>
     public class Title : MonoBehaviour
     {
-        [SerializeField] private CanvasGroup pressPromptGroup;
-        [SerializeField] private TMP_Text versionText;
+        [SerializeField, FormerlySerializedAs("pressPromptGroup")] private CanvasGroup _pressPromptGroup;
+        [SerializeField, FormerlySerializedAs("versionText")] private TMP_Text _versionText;
 
         [Header("演出設定")]
-        [SerializeField, Tooltip("待機中の点滅速度")]
-        private float blinkSpeed = 2f;
+        [SerializeField, Tooltip("待機中の点滅速度"), FormerlySerializedAs("blinkSpeed")]
+        private float _blinkSpeed = 2f;
 
-        [SerializeField, Tooltip("決定後の点滅速度")]
-        private float confirmedBlinkSpeed = 16f;
+        [SerializeField, Tooltip("決定後の点滅速度"), FormerlySerializedAs("confirmedBlinkSpeed")]
+        private float _confirmedBlinkSpeed = 16f;
 
-        [SerializeField, Tooltip("ローディング画面の最低表示時間 (秒)")]
-        private float loadingMinimumDuration = 1.0f;
+        [SerializeField, Tooltip("ローディング画面の最低表示時間 (秒)"), FormerlySerializedAs("loadingMinimumDuration")]
+        private float _loadingMinimumDuration = 1.0f;
 
         private IDisposable _anyButtonListener;
         private MotionHandle _blinkMotion;
@@ -42,13 +43,13 @@ namespace KTC.Scene
 
         private async void Start()
         {
-            if (versionText != null)
+            if (_versionText != null)
             {
-                versionText.text = ZString.Format("v{0}", Application.version);
+                _versionText.text = ZString.Format("v{0}", Application.version);
             }
-            if (pressPromptGroup != null)
+            if (_pressPromptGroup != null)
             {
-                pressPromptGroup.alpha = 0f; // ブート完了まで非表示 (完了時に点滅開始)
+                _pressPromptGroup.alpha = 0f; // ブート完了まで非表示 (完了時に点滅開始)
             }
             CreateBootStatusText();
             // ブート進行表示は日本語なので Noto を適用してから開始
@@ -59,7 +60,7 @@ namespace KTC.Scene
             {
                 _bootStatusText.font = noto;
             }
-            GameAudio.PlayBgm(GameAudio.MenuBgm);
+            GameAudio.PlayBgm(GameAudio.MENU_BGM);
             RunBootAsync();
         }
 
@@ -68,13 +69,13 @@ namespace KTC.Scene
         /// <summary>ブート進行表示 (バージョン表記と同じキャンバスの右下に生成)。</summary>
         private void CreateBootStatusText()
         {
-            if (versionText == null)
+            if (_versionText == null)
             {
                 return;
             }
             var go = new GameObject("BootStatusText", typeof(RectTransform));
-            go.layer = versionText.gameObject.layer;
-            go.transform.SetParent(versionText.transform.parent, false);
+            go.layer = _versionText.gameObject.layer;
+            go.transform.SetParent(_versionText.transform.parent, false);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = new Vector2(1f, 0f);
             rt.anchorMax = new Vector2(1f, 0f);
@@ -82,9 +83,9 @@ namespace KTC.Scene
             rt.anchoredPosition = new Vector2(-30f, 20f);
             rt.sizeDelta = new Vector2(1000f, 36f);
             var text = go.AddComponent<TextMeshProUGUI>();
-            text.font = versionText.font;
+            text.font = _versionText.font;
             text.fontSize = 22f;
-            text.color = versionText.color;
+            text.color = _versionText.color;
             text.alignment = TextAlignmentOptions.MidlineRight;
             text.raycastTarget = false;
             _bootStatusText = text;
@@ -116,7 +117,7 @@ namespace KTC.Scene
             {
                 _bootCompleted = true;
                 SetBootStatus("");
-                StartBlink(blinkSpeed);
+                StartBlink(_blinkSpeed);
                 _anyButtonListener = InputSystem.onAnyButtonPress.CallOnce(_ => OnAnyButtonPressed());
             }
             else
@@ -150,7 +151,7 @@ namespace KTC.Scene
         /// <summary>プロンプト点滅 (LitMotion)。speed は従来の sin 角速度と互換の指定。</summary>
         private void StartBlink(float speed)
         {
-            if (pressPromptGroup == null)
+            if (_pressPromptGroup == null)
             {
                 return;
             }
@@ -162,7 +163,7 @@ namespace KTC.Scene
             _blinkMotion = LMotion.Create(0.15f, 1f, halfPeriod)
                 .WithLoops(-1, LoopType.Yoyo)
                 .WithEase(Ease.InOutSine)
-                .Bind(pressPromptGroup, static (alpha, group) => group.alpha = alpha)
+                .Bind(_pressPromptGroup, static (alpha, group) => group.alpha = alpha)
                 .AddTo(gameObject);
         }
 
@@ -173,7 +174,7 @@ namespace KTC.Scene
                 return;
             }
             _isTransitioning = true;
-            StartBlink(confirmedBlinkSpeed); // 決定の高速点滅
+            StartBlink(_confirmedBlinkSpeed); // 決定の高速点滅
 
             // ---- 初回フロー: 利用規約同意 → プレイヤー名入力 ----
             var saveService = SaveDataService.CreateDefault();
@@ -211,7 +212,7 @@ namespace KTC.Scene
                 SceneId.Home,
                 SceneId.TransitionLoading,
                 SceneIdExtensions.ToSceneName,
-                minimumDuration: loadingMinimumDuration);
+                minimumDuration: _loadingMinimumDuration);
         }
     }
 }

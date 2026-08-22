@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityFramework.Resource;
 
@@ -23,9 +22,9 @@ namespace UnityFramework.UI
     public class ModalController : SingletonMonoBehaviour<ModalController>
     {
         [Header("Modal Canvas")]
-        [SerializeField, FormerlySerializedAs("_sortingOrder")] private int sortingOrder = 30000; // TransitionCanvas (32767) より下
-        [SerializeField, FormerlySerializedAs("_dimColor")] private Color dimColor = new Color(0f, 0f, 0f, 0.6f);
-        [SerializeField, FormerlySerializedAs("_referenceResolution")] private Vector2 referenceResolution = new Vector2(1920f, 1080f);
+        [SerializeField] private int _sortingOrder = 30000; // TransitionCanvas (32767) より下
+        [SerializeField] private Color _dimColor = new Color(0f, 0f, 0f, 0.6f);
+        [SerializeField] private Vector2 _referenceResolution = new Vector2(1920f, 1080f);
 
         private Canvas _canvas;
         private RectTransform _contentRoot;
@@ -55,11 +54,11 @@ namespace UnityFramework.UI
 
             _canvas = canvasGo.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _canvas.sortingOrder = sortingOrder;
+            _canvas.sortingOrder = _sortingOrder;
 
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = referenceResolution;
+            scaler.referenceResolution = _referenceResolution;
             scaler.matchWidthOrHeight = 0.5f;
 
             canvasGo.AddComponent<GraphicRaycaster>();
@@ -75,7 +74,7 @@ namespace UnityFramework.UI
             dimRt.offsetMin = Vector2.zero;
             dimRt.offsetMax = Vector2.zero;
             _dim = dimGo.AddComponent<Image>();
-            _dim.color = dimColor;
+            _dim.color = _dimColor;
             _dim.raycastTarget = true;
             var dimButton = dimGo.AddComponent<Button>();
             dimButton.transition = Selectable.Transition.None;

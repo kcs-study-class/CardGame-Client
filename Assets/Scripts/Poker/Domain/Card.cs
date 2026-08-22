@@ -52,15 +52,15 @@ namespace KTC.Poker.Domain
     /// </summary>
     public readonly struct Card : IEquatable<Card>
     {
-        public const byte RankMask = 0b0000_1111; // bit 0..3
-        public const byte SuitMask = 0b0011_0000; // bit 4..5
-        public const int SuitShift = 4;
+        public const byte RANK_MASK = 0b0000_1111; // bit 0..3
+        public const byte SUIT_MASK = 0b0011_0000; // bit 4..5
+        public const int SUIT_SHIFT = 4;
 
         private readonly byte _value;
 
         public Card(Rank rank, Suit suit)
         {
-            _value = (byte)(((int)suit << SuitShift) | (int)rank);
+            _value = (byte)(((int)suit << SUIT_SHIFT) | (int)rank);
         }
 
         private Card(byte value)
@@ -71,8 +71,8 @@ namespace KTC.Poker.Domain
         /// <summary>パック済み byte 値。通信ではこの値をそのまま送受信する。</summary>
         public byte Value => _value;
 
-        public Rank Rank => (Rank)(_value & RankMask);
-        public Suit Suit => (Suit)((_value & SuitMask) >> SuitShift);
+        public Rank Rank => (Rank)(_value & RANK_MASK);
+        public Suit Suit => (Suit)((_value & SUIT_MASK) >> SUIT_SHIFT);
 
         /// <summary>未公開カード (裏面)。byte 値 0。</summary>
         public static Card None => default;
@@ -104,11 +104,11 @@ namespace KTC.Poker.Domain
             {
                 return true; // None
             }
-            if ((value & ~(RankMask | SuitMask)) != 0)
+            if ((value & ~(RANK_MASK | SUIT_MASK)) != 0)
             {
                 return false; // 予約ビットが立っている
             }
-            int rank = value & RankMask;
+            int rank = value & RANK_MASK;
             if (rank < 2 || rank > 14)
             {
                 return false;
@@ -117,9 +117,9 @@ namespace KTC.Poker.Domain
             return true;
         }
 
-        private const string RankChars = "23456789TJQKA";
+        private const string RANK_CHARS = "23456789TJQKA";
         // Suit enum の値順 (♠♥♦♣) に対応
-        private const string SuitChars = "shdc";
+        private const string SUIT_CHARS = "shdc";
 
         /// <summary>"As" / "Td" 形式の2文字表記に変換する。None は "??"。</summary>
         public override string ToString()
@@ -128,7 +128,7 @@ namespace KTC.Poker.Domain
             {
                 return "??";
             }
-            return string.Concat(RankChars[(int)Rank - 2], SuitChars[(int)Suit]);
+            return string.Concat(RANK_CHARS[(int)Rank - 2], SUIT_CHARS[(int)Suit]);
         }
 
         /// <summary>"A♠" "10♥" 等のUI向け表示文字列。None は "🂠" 相当の "??"。</summary>
@@ -175,8 +175,8 @@ namespace KTC.Poker.Domain
             {
                 return false;
             }
-            int rankIndex = RankChars.IndexOf(char.ToUpperInvariant(text[0]));
-            int suitIndex = SuitChars.IndexOf(char.ToLowerInvariant(text[1]));
+            int rankIndex = RANK_CHARS.IndexOf(char.ToUpperInvariant(text[0]));
+            int suitIndex = SUIT_CHARS.IndexOf(char.ToLowerInvariant(text[1]));
             if (rankIndex < 0 || suitIndex < 0)
             {
                 return false;

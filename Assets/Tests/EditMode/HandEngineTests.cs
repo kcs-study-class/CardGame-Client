@@ -16,11 +16,11 @@ namespace KTC.Poker.Tests
         /// s1: 2c,3c / s2: 7d,8d / s0: 9h,Th / ボード: 4s 5s Jc Qd Kh
         /// → seat0 が KQJT9 ストレートで勝つ。
         /// </summary>
-        private const string Deck3P = "2c 7d 9h 3c 8d Th 4s 5s Jc Qd Kh";
+        private const string DECK_3P = "2c 7d 9h 3c 8d Th 4s 5s Jc Qd Kh";
 
         private static HandEngine NewEngine3P(int stack = 200)
         {
-            return new HandEngine(1, 2, new[] { stack, stack, stack }, 0, Rigged(Deck3P));
+            return new HandEngine(1, 2, new[] { stack, stack, stack }, 0, Rigged(DECK_3P));
         }
 
         private static void AssertChipConservation(HandEngine engine, int initialTotal)

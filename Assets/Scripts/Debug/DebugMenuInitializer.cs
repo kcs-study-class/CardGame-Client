@@ -19,8 +19,8 @@ namespace KTC.Scene
     /// </summary>
     public static class DebugMenuInitializer
     {
-        private static readonly OffsetTimeProvider DebugTime = new OffsetTimeProvider();
-        private static string _handEvalResult = "(未実行)";
+        private static readonly OffsetTimeProvider DEBUG_TIME = new OffsetTimeProvider();
+        private static string HandEvalResult = "(未実行)";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Initialize()
@@ -69,12 +69,12 @@ namespace KTC.Scene
 
             // ---- 時刻 ----
             menu.AddLabel("時刻", "ゲーム内時刻 (UTC)", () => GameClock.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-            menu.AddLabel("時刻", "オフセット", () => DebugTime.Offset.ToString());
+            menu.AddLabel("時刻", "オフセット", () => DEBUG_TIME.Offset.ToString());
             menu.AddButton("時刻", "+1時間", () => AddTimeOffset(TimeSpan.FromHours(1)));
             menu.AddButton("時刻", "+1日", () => AddTimeOffset(TimeSpan.FromDays(1)));
             menu.AddButton("時刻", "リセット", () =>
             {
-                DebugTime.Offset = TimeSpan.Zero;
+                DEBUG_TIME.Offset = TimeSpan.Zero;
                 GameClock.Provider = new SystemTimeProvider();
             });
 
@@ -97,7 +97,7 @@ namespace KTC.Scene
             menu.AddInput("カード", "役判定 (5〜7枚)",
                 () => "",
                 EvaluateHand);
-            menu.AddLabel("カード", "役判定結果", () => _handEvalResult);
+            menu.AddLabel("カード", "役判定結果", () => HandEvalResult);
 
             // ---- 表示 ----
             menu.AddToggle("表示", "SafeArea模擬 (ノッチ端末)",
@@ -153,8 +153,8 @@ namespace KTC.Scene
 
         private static void AddTimeOffset(TimeSpan delta)
         {
-            DebugTime.Offset += delta;
-            GameClock.Provider = DebugTime;
+            DEBUG_TIME.Offset += delta;
+            GameClock.Provider = DEBUG_TIME;
         }
 
         private static void EvaluateHand(string text)
@@ -169,11 +169,11 @@ namespace KTC.Scene
                     .Select(Card.Parse)
                     .ToArray();
                 var value = HandEvaluator.Evaluate(cards);
-                _handEvalResult = ZString.Format("{0} {1}", value.DisplayName, value);
+                HandEvalResult = ZString.Format("{0} {1}", value.DisplayName, value);
             }
             catch (Exception e)
             {
-                _handEvalResult = ZString.Format("エラー: {0}", e.Message);
+                HandEvalResult = ZString.Format("エラー: {0}", e.Message);
             }
         }
     }

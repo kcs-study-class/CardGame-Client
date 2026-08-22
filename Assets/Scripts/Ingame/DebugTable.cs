@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using KTC.Poker.Domain;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
@@ -14,23 +15,23 @@ namespace KTC.Scene
     /// </summary>
     public class DebugTable : MonoBehaviour
     {
-        [SerializeField] private Canvas canvas;
+        [SerializeField, FormerlySerializedAs("canvas")] private Canvas _canvas;
 
         [Header("卓設定")]
-        [SerializeField, Range(2, 9)] private int seatCount = 4;
-        [SerializeField] private int startingStack = 200;
-        [SerializeField] private int smallBlind = 1;
-        [SerializeField] private int bigBlind = 2;
-        [SerializeField, Tooltip("0 なら毎回ランダム。固定するとリプレイ可能")] private int randomSeed = 0;
+        [SerializeField, Range(2, 9), FormerlySerializedAs("seatCount")] private int _seatCount = 4;
+        [SerializeField, FormerlySerializedAs("startingStack")] private int _startingStack = 200;
+        [SerializeField, FormerlySerializedAs("smallBlind")] private int _smallBlind = 1;
+        [SerializeField, FormerlySerializedAs("bigBlind")] private int _bigBlind = 2;
+        [SerializeField, Tooltip("0 なら毎回ランダム。固定するとリプレイ可能"), FormerlySerializedAs("randomSeed")] private int _randomSeed = 0;
 
-        private static readonly Color FeltColor = new Color(0.055f, 0.055f, 0.086f, 1f);
-        private static readonly Color PanelColor = new Color(0.125f, 0.125f, 0.173f, 1f);
-        private static readonly Color AccentColor = new Color(0.878f, 0.706f, 0.361f, 1f);
-        private static readonly Color TextColor = new Color(0.925f, 0.925f, 0.949f, 1f);
-        private static readonly Color CardFaceColor = new Color(0.941f, 0.902f, 0.824f, 1f);
-        private static readonly Color CardBackColor = new Color(0.173f, 0.227f, 0.396f, 1f);
-        private static readonly Color RedSuitColor = new Color(0.78f, 0.16f, 0.16f, 1f);
-        private static readonly Color BlackSuitColor = new Color(0.12f, 0.12f, 0.14f, 1f);
+        private static readonly Color FELT_COLOR = new Color(0.055f, 0.055f, 0.086f, 1f);
+        private static readonly Color PANEL_COLOR = new Color(0.125f, 0.125f, 0.173f, 1f);
+        private static readonly Color ACCENT_COLOR = new Color(0.878f, 0.706f, 0.361f, 1f);
+        private static readonly Color TEXT_COLOR = new Color(0.925f, 0.925f, 0.949f, 1f);
+        private static readonly Color CARD_FACE_COLOR = new Color(0.941f, 0.902f, 0.824f, 1f);
+        private static readonly Color CARD_BACK_COLOR = new Color(0.173f, 0.227f, 0.396f, 1f);
+        private static readonly Color RED_SUIT_COLOR = new Color(0.78f, 0.16f, 0.16f, 1f);
+        private static readonly Color BLACK_SUIT_COLOR = new Color(0.12f, 0.12f, 0.14f, 1f);
 
         private HandEngine _engine;
         private int[] _stacks;
@@ -53,11 +54,11 @@ namespace KTC.Scene
 
         private void Start()
         {
-            _random = randomSeed == 0 ? new System.Random() : new System.Random(randomSeed);
-            _stacks = new int[seatCount];
-            for (int i = 0; i < seatCount; i++)
+            _random = _randomSeed == 0 ? new System.Random() : new System.Random(_randomSeed);
+            _stacks = new int[_seatCount];
+            for (int i = 0; i < _seatCount; i++)
             {
-                _stacks[i] = startingStack;
+                _stacks[i] = _startingStack;
             }
             EnsureEventSystem();
             BuildUi();
@@ -69,18 +70,18 @@ namespace KTC.Scene
         private void StartNextHand()
         {
             // 飛んだ席はデバッグ用に自動リバイ
-            for (int i = 0; i < seatCount; i++)
+            for (int i = 0; i < _seatCount; i++)
             {
                 if (_stacks[i] <= 0)
                 {
-                    _stacks[i] = startingStack;
+                    _stacks[i] = _startingStack;
                 }
             }
             _handNumber++;
-            _buttonIndex = (_buttonIndex + 1) % seatCount;
+            _buttonIndex = (_buttonIndex + 1) % _seatCount;
             var deck = new Deck();
             deck.Shuffle(_random);
-            _engine = new HandEngine(smallBlind, bigBlind, _stacks, _buttonIndex, deck);
+            _engine = new HandEngine(_smallBlind, _bigBlind, _stacks, _buttonIndex, deck);
             Render();
         }
 
@@ -90,7 +91,7 @@ namespace KTC.Scene
             if (_engine.IsComplete)
             {
                 var finals = _engine.Result.FinalStacks;
-                for (int i = 0; i < seatCount; i++)
+                for (int i = 0; i < _seatCount; i++)
                 {
                     _stacks[i] = finals[i];
                 }
@@ -132,7 +133,7 @@ namespace KTC.Scene
 
         private void Render()
         {
-            for (int i = 0; i < seatCount; i++)
+            for (int i = 0; i < _seatCount; i++)
             {
                 RenderSeat(_seatViews[i], _engine.Seats[i]);
             }
@@ -184,7 +185,7 @@ namespace KTC.Scene
             view.NameText.text = $"Seat {seat.SeatIndex}{badge}";
             view.StackText.text = $"Stack {seat.Stack}";
             view.BetText.text = seat.StreetBet > 0 ? $"Bet {seat.StreetBet}" : "";
-            view.Frame.color = isTurn ? AccentColor : PanelColor;
+            view.Frame.color = isTurn ? ACCENT_COLOR : PANEL_COLOR;
 
             string state = seat.HasFolded ? "FOLD" : seat.IsAllIn ? "ALL-IN" : "";
             view.StateText.text = state;
@@ -242,8 +243,8 @@ namespace KTC.Scene
 
         private void BuildUi()
         {
-            var root = canvas.transform;
-            MakePanel("Background", root, Vector2.zero, Vector2.zero, FeltColor, stretch: true);
+            var root = _canvas.transform;
+            MakePanel("Background", root, Vector2.zero, Vector2.zero, FELT_COLOR, stretch: true);
 
             // コミュニティカード + ポット
             _communityViews = new CardView[5];
@@ -252,12 +253,12 @@ namespace KTC.Scene
                 _communityViews[i] = MakeCard(root, new Vector2((i - 2) * 95f, 60f), new Vector2(84f, 118f), 40f);
             }
             _potText = MakeText("PotText", root, new Vector2(0f, -40f), new Vector2(400f, 44f), 34f, TextAlignmentOptions.Center);
-            _potText.color = AccentColor;
+            _potText.color = ACCENT_COLOR;
 
             // 席 (楕円配置、seat0 が真下)
-            for (int i = 0; i < seatCount; i++)
+            for (int i = 0; i < _seatCount; i++)
             {
-                float angle = i * Mathf.PI * 2f / seatCount;
+                float angle = i * Mathf.PI * 2f / _seatCount;
                 var pos = new Vector2(Mathf.Sin(angle) * 720f, -Mathf.Cos(angle) * 330f + 20f);
                 _seatViews.Add(MakeSeatView(root, i, pos));
             }
@@ -265,7 +266,7 @@ namespace KTC.Scene
             // ステータス・結果表示
             _statusText = MakeText("StatusText", root, new Vector2(0f, 500f), new Vector2(1200f, 44f), 30f, TextAlignmentOptions.Center);
             _resultText = MakeText("ResultText", root, new Vector2(0f, 180f), new Vector2(900f, 200f), 28f, TextAlignmentOptions.Center);
-            _resultText.color = AccentColor;
+            _resultText.color = ACCENT_COLOR;
 
             // アクションボタン (右下)
             _foldButton = MakeButton("FoldButton", root, new Vector2(-570f, -480f), "Fold", OnFold, out _);
@@ -277,15 +278,15 @@ namespace KTC.Scene
 
         private SeatView MakeSeatView(Transform parent, int index, Vector2 pos)
         {
-            var frame = MakePanel($"Seat{index}", parent, pos, new Vector2(250f, 150f), PanelColor);
-            var inner = MakePanel("Inner", frame.transform, Vector2.zero, new Vector2(242f, 142f), FeltColor);
+            var frame = MakePanel($"Seat{index}", parent, pos, new Vector2(250f, 150f), PANEL_COLOR);
+            var inner = MakePanel("Inner", frame.transform, Vector2.zero, new Vector2(242f, 142f), FELT_COLOR);
             var view = new SeatView { Frame = frame };
             view.NameText = MakeText("Name", inner.transform, new Vector2(0f, 52f), new Vector2(230f, 34f), 24f, TextAlignmentOptions.Center);
             view.StackText = MakeText("Stack", inner.transform, new Vector2(-58f, 22f), new Vector2(120f, 30f), 22f, TextAlignmentOptions.Center);
             view.BetText = MakeText("Bet", inner.transform, new Vector2(58f, 22f), new Vector2(120f, 30f), 22f, TextAlignmentOptions.Center);
-            view.BetText.color = AccentColor;
+            view.BetText.color = ACCENT_COLOR;
             view.StateText = MakeText("State", inner.transform, new Vector2(72f, -34f), new Vector2(100f, 34f), 24f, TextAlignmentOptions.Center);
-            view.StateText.color = RedSuitColor;
+            view.StateText.color = RED_SUIT_COLOR;
             view.Cards = new[]
             {
                 MakeCard(inner.transform, new Vector2(-70f, -34f), new Vector2(56f, 78f), 26f),
@@ -328,7 +329,7 @@ namespace KTC.Scene
             rt.sizeDelta = size;
             var text = go.AddComponent<TextMeshProUGUI>();
             text.fontSize = fontSize;
-            text.color = TextColor;
+            text.color = TEXT_COLOR;
             text.alignment = alignment;
             text.raycastTarget = false;
             return text;
@@ -336,13 +337,13 @@ namespace KTC.Scene
 
         private Button MakeButton(string name, Transform parent, Vector2 pos, string label, UnityEngine.Events.UnityAction onClick, out TMP_Text labelText)
         {
-            var image = MakePanel(name, parent, pos, new Vector2(170f, 64f), PanelColor);
+            var image = MakePanel(name, parent, pos, new Vector2(170f, 64f), PANEL_COLOR);
             image.raycastTarget = true;
             var button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             var colors = button.colors;
             colors.highlightedColor = new Color(0.2f, 0.2f, 0.28f, 1f);
-            colors.pressedColor = AccentColor;
+            colors.pressedColor = ACCENT_COLOR;
             colors.disabledColor = new Color(0.09f, 0.09f, 0.12f, 1f);
             button.colors = colors;
             button.onClick.AddListener(onClick);
@@ -353,7 +354,7 @@ namespace KTC.Scene
 
         private CardView MakeCard(Transform parent, Vector2 pos, Vector2 size, float fontSize)
         {
-            var bg = MakePanel("Card", parent, pos, size, CardBackColor);
+            var bg = MakePanel("Card", parent, pos, size, CARD_BACK_COLOR);
             var label = MakeText("Label", bg.transform, Vector2.zero, size, fontSize, TextAlignmentOptions.Center);
             return new CardView { Background = bg, Label = label };
         }
@@ -375,14 +376,14 @@ namespace KTC.Scene
 
             public void ShowFace(Card card)
             {
-                Background.color = CardFaceColor;
+                Background.color = CARD_FACE_COLOR;
                 Label.text = card.ToSymbolString();
-                Label.color = card.IsRedSuit ? RedSuitColor : BlackSuitColor;
+                Label.color = card.IsRedSuit ? RED_SUIT_COLOR : BLACK_SUIT_COLOR;
             }
 
             public void ShowBack()
             {
-                Background.color = CardBackColor;
+                Background.color = CARD_BACK_COLOR;
                 Label.text = "";
             }
         }
