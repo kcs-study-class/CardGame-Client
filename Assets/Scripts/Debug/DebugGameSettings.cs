@@ -23,6 +23,9 @@ namespace KTC.Scene
         /// <summary>自分の手番を自動でチェック/コールする (モンキーテスト)。</summary>
         public static bool AutoPlay = false;
 
+        /// <summary>AutoPlay 時にオールインする (決着を早めるアグレッシブモード)。</summary>
+        public static bool AutoPlayAllIn = false;
+
         /// <summary>演出 (配布アニメ/思考ディレイ/ポット移動) をスキップする。</summary>
         public static bool SkipEffects = false;
 
