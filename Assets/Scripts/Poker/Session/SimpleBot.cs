@@ -71,6 +71,7 @@ namespace KTC.Poker.Session
                 return Math.Min(value, 0.62f);
             }
 
+            // FIXME:都度新規インスタンスが作成されるので、使いまわし用のTempを作成して置き換える.
             List<Card> cards = new List<Card>(7) { c1, c2 };
             foreach (byte packed in view.communityCards)
             {
