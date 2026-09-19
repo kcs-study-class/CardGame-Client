@@ -20,6 +20,71 @@ MonoBehaviour:
         _value: 
     _addressRules:
       _internalList:
+      - _id: 4fd9665c-8c72-4276-b85b-6be28028e8eb
+        _addressableGroup: {fileID: 11400000, guid: e02023c5481ee374db9864e9a31d2a1b, type: 2}
+        _control:
+          _value: 0
+        _assetGroups:
+          _internalList:
+          - _id: 7a2ebc46-a25d-40c6-9313-7e13e68eaff6
+            _name:
+              _value: Default Asset Group
+            _filters:
+              _internalList: []
+        _addressProviderInternal:
+          rid: 7200824196524933193
+      - _id: b94cda38-9b68-46ce-a6a8-1d12ef14f30a
+        _addressableGroup: {fileID: 11400000, guid: 6615820cf15b7ce45b66256b9510cddf, type: 2}
+        _control:
+          _value: 0
+        _assetGroups:
+          _internalList:
+          - _id: 4d5677bb-720f-49ed-bbcb-c12cf7f5f80b
+            _name:
+              _value: Default Asset Group
+            _filters:
+              _internalList: []
+        _addressProviderInternal:
+          rid: 7200824196524933194
+      - _id: 69470768-c5ed-431a-bc92-079749f8dc26
+        _addressableGroup: {fileID: 11400000, guid: 1d3cb84072a7ab94585cfd28c730e718, type: 2}
+        _control:
+          _value: 0
+        _assetGroups:
+          _internalList:
+          - _id: 627d049b-3ecd-46b8-be68-7414c185e20b
+            _name:
+              _value: Default Asset Group
+            _filters:
+              _internalList: []
+        _addressProviderInternal:
+          rid: 7200824196524933195
+      - _id: de47e19a-da33-432d-8a29-1d2713a96cd6
+        _addressableGroup: {fileID: 11400000, guid: 1f305c9f5572bed41af8b4a5c4a62bd3, type: 2}
+        _control:
+          _value: 0
+        _assetGroups:
+          _internalList:
+          - _id: 961be75d-2c9c-4b67-be07-dd6ed66d39b6
+            _name:
+              _value: Default Asset Group
+            _filters:
+              _internalList: []
+        _addressProviderInternal:
+          rid: 7200824196524933196
+      - _id: 9a37ba93-04cf-4d2f-8b05-3ebcb156bb64
+        _addressableGroup: {fileID: 11400000, guid: e08fa2973232a8a4ab0ebd916289f8ed, type: 2}
+        _control:
+          _value: 0
+        _assetGroups:
+          _internalList:
+          - _id: 746c08c0-aca5-4be1-ad9c-e69ac88c98bb
+            _name:
+              _value: Default Asset Group
+            _filters:
+              _internalList: []
+        _addressProviderInternal:
+          rid: 7200824196524933197
       - _id: 04c55214-7728-4bf4-a8b4-86f9f4dc9773
         _addressableGroup: {fileID: 11400000, guid: f449d39c0879d1b4dac129ef381b6abf, type: 2}
         _control:
@@ -61,6 +126,41 @@ MonoBehaviour:
         _pattern: 
         _replacement: 
     - rid: 6161738341526798590
+      type: {class: AssetPathBasedAddressProvider, ns: SmartAddresser.Editor.Core.Models.LayoutRules.AddressRules, asm: SmartAddresser.Editor}
+      data:
+        _source: 2
+        _replaceWithRegex: 0
+        _pattern: 
+        _replacement: 
+    - rid: 7200824196524933193
+      type: {class: AssetPathBasedAddressProvider, ns: SmartAddresser.Editor.Core.Models.LayoutRules.AddressRules, asm: SmartAddresser.Editor}
+      data:
+        _source: 2
+        _replaceWithRegex: 0
+        _pattern: 
+        _replacement: 
+    - rid: 7200824196524933194
+      type: {class: AssetPathBasedAddressProvider, ns: SmartAddresser.Editor.Core.Models.LayoutRules.AddressRules, asm: SmartAddresser.Editor}
+      data:
+        _source: 2
+        _replaceWithRegex: 0
+        _pattern: 
+        _replacement: 
+    - rid: 7200824196524933195
+      type: {class: AssetPathBasedAddressProvider, ns: SmartAddresser.Editor.Core.Models.LayoutRules.AddressRules, asm: SmartAddresser.Editor}
+      data:
+        _source: 2
+        _replaceWithRegex: 0
+        _pattern: 
+        _replacement: 
+    - rid: 7200824196524933196
+      type: {class: AssetPathBasedAddressProvider, ns: SmartAddresser.Editor.Core.Models.LayoutRules.AddressRules, asm: SmartAddresser.Editor}
+      data:
+        _source: 2
+        _replaceWithRegex: 0
+        _pattern: 
+        _replacement: 
+    - rid: 7200824196524933197
       type: {class: AssetPathBasedAddressProvider, ns: SmartAddresser.Editor.Core.Models.LayoutRules.AddressRules, asm: SmartAddresser.Editor}
       data:
         _source: 2

@@ -182,10 +182,20 @@ namespace KTC.Scene
             _stateSubscription = _session.StateUpdated.Subscribe(OnStateUpdated);
             _errorSubscription = _session.ErrorOccurred.Subscribe(OnSessionError);
             _session.Connect();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugActive = this;
+#endif
         }
 
         private void OnDestroy()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (DebugActive == this)
+            {
+                DebugActive = null;
+            }
+#endif
             _stateSubscription?.Dispose();
             _errorSubscription?.Dispose();
             if (_session != null)
@@ -221,12 +231,54 @@ namespace KTC.Scene
                 }
                 else if (_lastState.isYourTurn)
                 {
-                    OnCheckCall();
+                    if (DebugGameSettings.AutoPlayAllIn)
+                    {
+                        OnAllIn();
+                    }
+                    else
+                    {
+                        OnCheckCall();
+                    }
                     _nextAutoActionAt = Time.unscaledTime + 0.3f;
                 }
             }
 #endif
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // ---- AI/自動テスト用フック (KTC.Debugging.AIDebugBridge から利用。本番ビルドには含めない) ----
+
+        /// <summary>現在アクティブな InGameTable (シーンに1つ)。未起動なら null。</summary>
+        public static InGameTable DebugActive { get; private set; } = null;
+
+        /// <summary>画面に提示済みの最新スナップショット (入力判定に使うのと同じもの)。未受信なら null。</summary>
+        public TableStateMessage DebugPresentedState => _lastState;
+
+        /// <summary>演出遅延に左右されない最新受信スナップショット。未受信なら null。</summary>
+        public TableStateMessage DebugLatestState => _latestReceived;
+
+        /// <summary>プレゼンテーション演出の再生中か (アクション送信の可否判断に使える)。</summary>
+        public bool DebugIsPresenting => _presenting;
+
+        /// <summary>アクションを直接注入する (UIボタンを介さずに送信)。amount は RaiseTo のみ使用。</summary>
+        public void DebugSendAction(int actionType, int amount)
+        {
+            if (_session == null)
+            {
+                return;
+            }
+            _session.SendAction(new PlayerActionMessage { actionType = actionType, amount = amount });
+        }
+
+        /// <summary>次ハンドへ進む (ready 送信)。</summary>
+        public void DebugSendReady()
+        {
+            if (_session != null)
+            {
+                _session.SendReady();
+            }
+        }
+#endif
 
         // ---- カードテクスチャ ----
 

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
+using UnityEngine.UI;
 using UnityFramework;
 using UnityFramework.SceneManagement;
 using UnityFramework.SceneManagement.Generated;
@@ -34,6 +35,8 @@ namespace KTC.Scene
 
         [SerializeField, Tooltip("ローディング画面の最低表示時間 (秒)"), FormerlySerializedAs("loadingMinimumDuration")]
         private float _loadingMinimumDuration = 1.0f;
+
+        [SerializeField] private Button _plessWindowButton = default;
 
         private IDisposable _anyButtonListener = null;
         private MotionHandle _blinkMotion = default;

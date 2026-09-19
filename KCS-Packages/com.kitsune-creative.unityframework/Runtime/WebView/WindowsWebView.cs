@@ -3,6 +3,10 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
+#if UNITY_EDITOR
+using System.Reflection;
+using UnityEditor;
+#endif
 
 namespace UnityFramework.WebViews
 {
@@ -17,6 +21,14 @@ namespace UnityFramework.WebViews
         [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr hWnd, uint cmd);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder name, int maxCount);
         [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hWnd, IntPtr insertAfter, int x, int y, int w, int h, uint flags);
+        [DllImport("user32.dll")] private static extern bool ScreenToClient(IntPtr hWnd, ref Win32Point point);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Win32Point
+        {
+            public int X;
+            public int Y;
+        }
 
         private const uint GW_CHILD = 5;
         private const uint GW_HWNDNEXT = 2;
@@ -30,7 +42,7 @@ namespace UnityFramework.WebViews
         private IntPtr _hostWindow = default;
         private RectOffset _margins = new RectOffset();
         private string _pendingUrl = null;
-        private Win32Rect _lastClient = default;
+        private Win32Rect _lastArea = default;
 
         /// <summary>コントローラ生成中 (コールバック待ち)。</summary>
         public bool IsCreating { get; private set; }
@@ -60,7 +72,7 @@ namespace UnityFramework.WebViews
                 return true; // 生成中。完了時に _pendingUrl が開かれる
             }
 
-            _hostWindow = GetActiveWindow();
+            _hostWindow = ResolveHostWindow();
             if (_hostWindow == IntPtr.Zero)
             {
                 LastError = "ウィンドウハンドルを取得できませんでした。";
@@ -86,6 +98,29 @@ namespace UnityFramework.WebViews
             return true;
         }
 
+        /// <summary>
+        /// WebView2 を載せるウィンドウを決める。
+        /// エディタ: どのエディタウィンドウがアクティブでも、Game View を含むメインウィンドウに載せる
+        /// (Addressables Report 等の別ウィンドウがアクティブだとそちらに載ってしまうため)。
+        /// スタンドアロン: アクティブウィンドウ (= ゲームウィンドウ)。取れなければプロセスのメインウィンドウ。
+        /// </summary>
+        private static IntPtr ResolveHostWindow()
+        {
+#if UNITY_EDITOR
+            IntPtr editorMainWindow = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+            if (editorMainWindow != IntPtr.Zero)
+            {
+                return editorMainWindow;
+            }
+#endif
+            IntPtr activeWindow = GetActiveWindow();
+            if (activeWindow != IntPtr.Zero)
+            {
+                return activeWindow;
+            }
+            return System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+        }
+
         public void Navigate(string url)
         {
             if (_webView != null)
@@ -98,7 +133,10 @@ namespace UnityFramework.WebViews
             }
         }
 
-        /// <summary>ホストウィンドウのリサイズに追従する (毎フレーム呼んでよい)。</summary>
+        /// <summary>
+        /// ホストウィンドウのリサイズに追従する (毎フレーム呼んでよい)。
+        /// スタンドアロンではウィンドウのクライアント領域全体、エディタでは Game View の描画領域に合わせる。
+        /// </summary>
         public void UpdateBounds(bool force = false)
         {
             if (_controller == null || _hostWindow == IntPtr.Zero)
@@ -109,22 +147,120 @@ namespace UnityFramework.WebViews
             {
                 return;
             }
-            if (!force && client.Right == _lastClient.Right && client.Bottom == _lastClient.Bottom)
+
+            Win32Rect area = client;
+            float marginScale = 1f; // マージンはゲーム解像度基準。エディタでは表示倍率に合わせて縮める
+#if UNITY_EDITOR
+            if (EditorGameViewLocator.TryGetTargetRect(_hostWindow, out Win32Rect gameViewArea))
+            {
+                area = gameViewArea;
+                if (Screen.width > 0)
+                {
+                    marginScale = (gameViewArea.Right - gameViewArea.Left) / (float)Screen.width;
+                }
+            }
+#endif
+            if (!force && IsSameRect(area, _lastArea))
             {
                 return;
             }
-            _lastClient = client;
+            _lastArea = area;
+
+            int left = Mathf.RoundToInt(_margins.left * marginScale);
+            int top = Mathf.RoundToInt(_margins.top * marginScale);
+            int right = Mathf.RoundToInt(_margins.right * marginScale);
+            int bottom = Mathf.RoundToInt(_margins.bottom * marginScale);
             Win32Rect bounds = new Win32Rect
             {
-                Left = _margins.left,
-                Top = _margins.top,
-                Right = Math.Max(_margins.left, client.Right - _margins.right),
-                Bottom = Math.Max(_margins.top, client.Bottom - _margins.bottom),
+                Left = area.Left + left,
+                Top = area.Top + top,
+                Right = Math.Max(area.Left + left, area.Right - right),
+                Bottom = Math.Max(area.Top + top, area.Bottom - bottom),
             };
             _controller.put_Bounds(bounds);
             _controller.NotifyParentWindowPositionChanged();
             BringToTop();
         }
+
+        private static bool IsSameRect(Win32Rect a, Win32Rect b)
+        {
+            return a.Left == b.Left && a.Top == b.Top && a.Right == b.Right && a.Bottom == b.Bottom;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// エディタの Game View の「ゲーム画面が描画されている矩形」をホストウィンドウのクライアント座標 (物理ピクセル) で返す。
+        /// UnityEditor.GameView の internal プロパティ (viewInWindow / targetInView) をリフレクションで参照し、
+        /// 取れない場合はツールバー分を除いたウィンドウ全体にフォールバックする。
+        /// Game View がメインウィンドウから切り離されている (別 HWND) 場合は範囲外になり正しく表示できない。
+        /// </summary>
+        private static class EditorGameViewLocator
+        {
+            private const float TOOLBAR_HEIGHT = 21f; // Game View 上部のツールバー (ポイント)
+            private const BindingFlags MEMBER_FLAGS = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            private static readonly Type GAME_VIEW_TYPE = Type.GetType("UnityEditor.GameView,UnityEditor");
+            private static readonly PropertyInfo VIEW_IN_WINDOW = GAME_VIEW_TYPE != null ? GAME_VIEW_TYPE.GetProperty("viewInWindow", MEMBER_FLAGS) : null;
+            private static readonly PropertyInfo TARGET_IN_VIEW = GAME_VIEW_TYPE != null ? GAME_VIEW_TYPE.GetProperty("targetInView", MEMBER_FLAGS) : null;
+
+            private static EditorWindow CachedGameView = null;
+
+            public static bool TryGetTargetRect(IntPtr hostWindow, out Win32Rect rect)
+            {
+                rect = default;
+                EditorWindow gameView = FindGameView();
+                if (gameView == null)
+                {
+                    return false;
+                }
+
+                Rect windowRect = gameView.position; // スクリーン座標 (ポイント)。タブ見出しは含まない
+                Rect target = new Rect(0f, TOOLBAR_HEIGHT, windowRect.width, windowRect.height - TOOLBAR_HEIGHT);
+                if (VIEW_IN_WINDOW != null && TARGET_IN_VIEW != null)
+                {
+                    Rect viewInWindow = (Rect)VIEW_IN_WINDOW.GetValue(gameView);
+                    Rect targetInView = (Rect)TARGET_IN_VIEW.GetValue(gameView);
+                    target = new Rect(
+                        viewInWindow.x + targetInView.x,
+                        viewInWindow.y + targetInView.y,
+                        targetInView.width,
+                        targetInView.height);
+                }
+
+                float pixelsPerPoint = EditorGUIUtility.pixelsPerPoint;
+                Win32Point topLeft = new Win32Point
+                {
+                    X = Mathf.RoundToInt((windowRect.x + target.xMin) * pixelsPerPoint),
+                    Y = Mathf.RoundToInt((windowRect.y + target.yMin) * pixelsPerPoint),
+                };
+                Win32Point bottomRight = new Win32Point
+                {
+                    X = Mathf.RoundToInt((windowRect.x + target.xMax) * pixelsPerPoint),
+                    Y = Mathf.RoundToInt((windowRect.y + target.yMax) * pixelsPerPoint),
+                };
+                if (!ScreenToClient(hostWindow, ref topLeft) || !ScreenToClient(hostWindow, ref bottomRight))
+                {
+                    return false;
+                }
+                rect = new Win32Rect { Left = topLeft.X, Top = topLeft.Y, Right = bottomRight.X, Bottom = bottomRight.Y };
+                return rect.Right > rect.Left && rect.Bottom > rect.Top;
+            }
+
+            private static EditorWindow FindGameView()
+            {
+                if (CachedGameView != null)
+                {
+                    return CachedGameView;
+                }
+                if (GAME_VIEW_TYPE == null)
+                {
+                    return null;
+                }
+                UnityEngine.Object[] views = Resources.FindObjectsOfTypeAll(GAME_VIEW_TYPE);
+                CachedGameView = views.Length > 0 ? (EditorWindow)views[0] : null;
+                return CachedGameView;
+            }
+        }
+#endif
 
         /// <summary>
         /// WebView2 の子ウィンドウを兄弟の最前面へ上げる。

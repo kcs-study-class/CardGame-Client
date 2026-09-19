@@ -1,0 +1,9 @@
+{
+  "name": "kcs-video",
+  "version-string": "0.1.0",
+  "description": "KcsVideo native plugin dependencies (VP8 decoder)",
+  "dependencies": [
+    "libvpx"
+  ],
+  "builtin-baseline": "127402f1c75bb3d5ff6bce04b285faa4930a5aca"
+}
